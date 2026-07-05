@@ -297,7 +297,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="border-t border-border overflow-hidden"
             >
-              <div className="bg-muted/60 px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+              <div className="bg-background px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
                 {hasContent ? (
                   <DndContext
                     sensors={sensors}
@@ -453,7 +453,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     </h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto leading-relaxed">
                       {canEdit
-                        ? 'Add a hotel, an activity, a reservation — the day takes shape from here.'
+                        ? 'Add a hotel, an activity, a reservation, and the day takes shape from here.'
                         : 'This day is unplanned.'}
                     </p>
                     {canEdit && (

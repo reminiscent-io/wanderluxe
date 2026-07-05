@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateDateArray } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { addOwnerToTripShares } from '@/services/travelers';
+import { track } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, MapPin, Pen, CalendarDays, Camera, Loader2 } from 'lucide-react';
@@ -120,6 +121,12 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
         await addOwnerToTripShares(trip.trip_id, user.id);
         const days = generateDateArray(startDate, endDate);
         await createTripDays(trip.trip_id, days);
+        track('trip_created', {
+          trip_id: trip.trip_id,
+          destination: primaryDestination || null,
+          duration_days: days.length,
+          has_cover_image: Boolean(coverImageUrl),
+        });
         onSubmit(trip.trip_id);
       }
     } catch (error) {

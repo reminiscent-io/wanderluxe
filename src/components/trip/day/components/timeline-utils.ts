@@ -150,21 +150,21 @@ export const getTimePeriod = (time?: string): TimePeriod => {
   const hm = parseTimeToHM(time);
   if (!hm) return 'no-time';
   const hour = hm.h;
-  
-  if (hour >= 5 && hour < 9) return 'early-morning';
-  if (hour >= 9 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
+
+  if (hour < 9) return 'early-morning';
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  if (hour < 21) return 'evening';
   return 'night';
 };
 
 export const getPeriodLabel = (period: TimePeriod): string => {
   const labels: Record<TimePeriod, string> = {
-    'early-morning': '🌅 Early Morning',
-    'morning': '☀️ Morning',
-    'afternoon': '🌤️ Afternoon',
-    'evening': '🌆 Evening',
-    'night': '🌙 Night',
+    'early-morning': 'Early Morning',
+    'morning': 'Morning',
+    'afternoon': 'Afternoon',
+    'evening': 'Evening',
+    'night': 'Night',
     'no-time': 'Unscheduled',
   };
   return labels[period];
@@ -305,13 +305,13 @@ const generateTransportGroupTitle = (items: TimelineItem[]): string => {
   const allSameArrival = firstArrival && items.every(item =>
     extractIata(item.data?.arrival_location) === firstArrival
   );
-  if (allSameArrival) return `Group Arrivals: ${firstArrival}`;
+  if (allSameArrival) return `${items.length} ${typeLabel.toLowerCase()} into ${firstArrival}`;
 
   const firstDeparture = extractIata(items[0].data?.departure_location);
   const allSameDeparture = firstDeparture && items.every(item =>
     extractIata(item.data?.departure_location) === firstDeparture
   );
-  if (allSameDeparture) return `Group Departures: ${firstDeparture}`;
+  if (allSameDeparture) return `${items.length} ${typeLabel.toLowerCase()} out of ${firstDeparture}`;
 
   return `${items.length} ${typeLabel}`;
 };

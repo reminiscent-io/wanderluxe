@@ -173,20 +173,27 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   useEffect(() => {
     if (activity.start_time) setStartTime(activity.start_time);
     if (activity.end_time) setEndTime(activity.end_time);
-
-    // Determine if existing activity uses a preset duration or custom end time
-    if (activity.start_time && activity.end_time) {
-      const duration = calculateDuration(activity.start_time, activity.end_time);
-      const matchingPreset = DURATION_PRESETS.find(p => p.minutes === duration);
-      if (matchingPreset) {
-        setSelectedDuration(matchingPreset.minutes);
-        setUseCustomEndTime(false);
-      } else if (duration !== null) {
-        setSelectedDuration(null);
-        setUseCustomEndTime(true);
-      }
-    }
   }, [activity.start_time, activity.end_time]);
+
+  // Detect preset vs. custom end time ONCE when loading an existing activity.
+  // Must not re-run on live edits, or picking a preset-length custom end time
+  // would flip useCustomEndTime off and unmount the picker mid-selection.
+  const didInitDurationMode = React.useRef(false);
+  useEffect(() => {
+    if (didInitDurationMode.current || !activityId) return;
+    if (!activity.start_time || !activity.end_time) return;
+
+    const duration = calculateDuration(activity.start_time, activity.end_time);
+    const matchingPreset = DURATION_PRESETS.find(p => p.minutes === duration);
+    if (matchingPreset) {
+      setSelectedDuration(matchingPreset.minutes);
+      setUseCustomEndTime(false);
+    } else if (duration !== null) {
+      setSelectedDuration(null);
+      setUseCustomEndTime(true);
+    }
+    didInitDurationMode.current = true;
+  }, [activityId, activity.start_time, activity.end_time]);
 
   // Sync local startTime with parent activity
   useEffect(() => {

@@ -66,11 +66,13 @@ const timelineManagementItems = {
 
 interface SidebarProps {
   tripId: string | undefined;
+  tripPath?: string;
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) => {
+const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPath }, ref) => {
+  const tabBase = tripPath ?? (tripId ? `/trip/${tripId}` : undefined);
   const { user, subscriptionTier, avatarUrl, fullName } = useAuth();
   const queryClient = useQueryClient();
   const sidebar = useSidebarState(tripId);
@@ -184,7 +186,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId }, ref) 
           {tripNavItems.map(item => (
             <div key={item.title}>
               <NavLink
-                to={`/trip/${tripId}/${item.href}`}
+                to={tabBase ? `${tabBase}/${item.href}` : `/trip/${tripId}/${item.href}`}
                 onClick={() => {
                   if (window.innerWidth < 768) setIsOpen(false);
                 }}

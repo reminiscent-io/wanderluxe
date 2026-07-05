@@ -28,7 +28,7 @@ const GroupedEventCard: React.FC<Props> = ({
   onTransportationClick,
   onReservationClick,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleEventClick = (item: typeof items[0]) => {
     if (item.type === 'activity' && onActivityClick && item.data) {
@@ -53,7 +53,7 @@ const GroupedEventCard: React.FC<Props> = ({
       <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3">
         {/* Column 1: Timeline Rail - Node */}
         <div className="relative flex flex-col items-center">
-          <div className="relative w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 bg-card border-2 border-sand-500/60 z-10" />
+          <div className="relative w-3 h-3 rounded-full flex-shrink-0 mt-1 bg-card border-2 border-sand-500 z-10" />
         </div>
 
         {/* Column 2: Time Label + Grouped Card */}
@@ -65,10 +65,10 @@ const GroupedEventCard: React.FC<Props> = ({
             </span>
           )}
 
-          {/* Grouped Event Card */}
+          {/* Grouped Event Row */}
           <div className="relative flex-1 min-w-0">
             <div
-              className="bg-card rounded-card shadow-warm-sm hover:shadow-warm p-3 sm:p-4 cursor-pointer transition-shadow duration-200 border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="-mx-2 px-2 py-1.5 sm:py-2 cursor-pointer rounded-md hover:bg-secondary/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
               role="button"
               tabIndex={0}
               onClick={() => setIsExpanded(!isExpanded)}
@@ -115,12 +115,12 @@ const GroupedEventCard: React.FC<Props> = ({
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden mt-2"
                 >
-                  <div className="space-y-2 pl-4 border-l border-border">
+                  <div className="space-y-1 pl-4 border-l border-border">
                     {items.map((item) => (
                       <div key={item.id} className="relative">
-                        {/* Individual event card - simplified version */}
+                        {/* Individual event row - typographic */}
                         <div
-                          className="bg-secondary/50 rounded-md shadow-warm-sm hover:shadow-warm p-3 cursor-pointer transition-shadow duration-200 border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                          className="-mx-2 px-2 py-1.5 cursor-pointer rounded-md hover:bg-secondary/40 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                           role="button"
                           tabIndex={0}
                           onClick={(e) => { e.stopPropagation(); handleEventClick(item); }}

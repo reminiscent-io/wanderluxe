@@ -4,9 +4,8 @@ import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
-import ShareTripDialog from './ShareTripDialog';
 import { Button } from '@/components/ui/button';
-import { Share2, CalendarDays, ListTree, CalendarPlus } from 'lucide-react';
+import { CalendarDays, ListTree, CalendarPlus } from 'lucide-react';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
@@ -53,7 +52,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
 
@@ -203,7 +201,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       )}
 
       {/* Timeline column: full width below lg, 58% from lg+ */}
-      <div className="w-full lg:w-[58%] px-4 md:px-6 pt-4 md:pt-6 space-y-6">
+      <div className="w-full lg:w-[58%] px-0 sm:px-4 md:px-6 pt-4 md:pt-6 space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center gap-4 min-w-0">
             <h2 className="font-display text-2xl tracking-tight text-foreground shrink-0">
@@ -230,14 +228,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
                 <CalendarDays className="h-3.5 w-3.5" /><span className="hidden sm:inline">Calendar</span>
               </button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-            >
-              <Share2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
             {canEdit && (
               <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
                 <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -248,12 +238,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           </div>
         </header>
 
-        <ShareTripDialog
-          tripId={tripId}
-          tripDestination={tripDestination || 'Trip'}
-          open={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
-        />
         {canEdit && (
           <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
         )}

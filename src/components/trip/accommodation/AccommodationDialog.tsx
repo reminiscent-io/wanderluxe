@@ -21,6 +21,7 @@ interface AccommodationDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Accommodation;
   onSuccess: () => void;
+  preselectedDate?: string; // Day the user clicked "Add to this day" on
   destination?: string; // Trip destination to bias search results
 }
 
@@ -30,6 +31,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
   onOpenChange,
   initialData,
   onSuccess,
+  preselectedDate,
   destination,
 }) => {
   const queryClient = useQueryClient();
@@ -153,6 +155,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             onCancel={() => onOpenChange(false)}
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
+            preselectedDate={preselectedDate}
             onDelete={handleDelete}
             tripId={tripId}
             destination={destination}

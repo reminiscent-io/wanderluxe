@@ -102,6 +102,7 @@ interface RestaurantReservationFormProps {
   tripId: string;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
+  preselectedDate?: string; // Day the user clicked "Add to this day" on
   destination?: string; // Trip destination to bias search results
 }
 
@@ -114,6 +115,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripId,
   tripArrivalDate,
   tripDepartureDate,
+  preselectedDate,
   destination,
 }) => {
   const { toast } = useToast();
@@ -147,6 +149,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const getPreselectedDate = () => {
     if (resolvedDate) return resolvedDate;
     if (defaultValues?.reservation_date) return defaultValues.reservation_date;
+    // For a new reservation, default to the day the user clicked on
+    if (!defaultValues?.id && preselectedDate) return preselectedDate;
     if (defaultValues?.day_id && tripDates.length > 0) return tripDates[0];
     return tripDates.length > 0 ? tripDates[0] : '';
   };

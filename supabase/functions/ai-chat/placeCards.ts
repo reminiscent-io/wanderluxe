@@ -251,7 +251,7 @@ export function enrichPlaceCards(
   const drops: EnrichDrop[] = [];
 
   rawCards.forEach((raw, idx) => {
-    if (typeof raw.place_id !== 'string' || !raw.place_id) {
+    if (!raw || typeof raw !== 'object' || typeof raw.place_id !== 'string' || !raw.place_id) {
       drops.push({ index: idx, reason: 'missing_place_id' });
       return;
     }

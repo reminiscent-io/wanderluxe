@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { supabase } from '@/integrations/supabase/client';
 import { useBufferedStreaming } from '@/hooks/useBufferedStreaming';
+import { track } from '@/lib/analytics';
 import type {
   AIChatMessage,
   AIUsageInfo,
@@ -615,11 +616,16 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
   // Route sendMessage to the appropriate handler
   const sendMessage = useCallback(async (content: string): Promise<void> => {
+    track('ai_chat_message_sent', {
+      trip_id: tripId,
+      anonymous: isAnonymous,
+      message_length: content.length,
+    });
     if (isAnonymous) {
       return sendMessageAnon(content);
     }
     return sendMessageAuth(content);
-  }, [isAnonymous, sendMessageAnon, sendMessageAuth]);
+  }, [isAnonymous, sendMessageAnon, sendMessageAuth, tripId]);
 
   // Clear thread/conversation
   const clearThread = useCallback(async (): Promise<void> => {

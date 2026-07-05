@@ -190,7 +190,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div
       className={cn(
-        'flex gap-3 py-3',
+        'group flex gap-3 py-3',
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}
     >
@@ -238,7 +238,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {isUser ? (
           <div
             className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm leading-relaxed overflow-hidden',
+              'rounded-2xl px-4 py-2.5 text-sm leading-snug overflow-hidden',
               'bg-earth-500 text-background rounded-tr-sm'
             )}
           >
@@ -288,28 +288,37 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         )}
 
-        {/* Message footer - hide for extraction result messages */}
+        {/* Message footer — the time + copy meta. Bound tight to the bubble
+            (mt-0.5, indented to the bubble's edge) so it reads as that
+            message's own line rather than a control orphaned in the gutter.
+            With day dividers now anchoring the date, the per-message time is
+            secondary: on hover-capable devices it stays out of the way until
+            you focus the message; on touch it's always present so the copy
+            target is reachable without a hover. */}
         {!hasExtractedItems && (
           <div
             className={cn(
-              'flex items-center gap-2 mt-1 text-xs text-sand-500',
-              isUser ? 'flex-row-reverse' : 'flex-row'
+              'flex items-center gap-1.5 mt-0.5 text-[11px] text-sand-500 transition-opacity duration-150',
+              'opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100',
+              isUser ? 'flex-row-reverse pr-1.5' : 'flex-row pl-1.5'
             )}
           >
             <span className="tabular-nums">{formatTime(message.created_at)}</span>
 
-            {/* Copy button for assistant messages */}
+            {/* Copy button for assistant messages — 44px touch target on
+                mobile, collapsed back to inline-meta size on pointer devices. */}
             {!isUser && !isStreaming && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleCopy}
-                className="h-6 w-6 p-0 text-sand-400 hover:text-earth-600 hover:bg-sand-100"
+                aria-label={copied ? 'Copied' : 'Copy message'}
+                className="h-11 w-11 sm:h-6 sm:w-6 -my-2 sm:my-0 p-0 text-sand-400 hover:text-earth-600 hover:bg-sand-100"
               >
                 {copied ? (
-                  <Check className="w-3 h-3" />
+                  <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                 ) : (
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                 )}
               </Button>
             )}

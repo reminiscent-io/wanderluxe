@@ -33,7 +33,7 @@ async function startDevServer() {
 
   const httpServer = createServer(app);
 
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001;
 
   httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`Combined dev server running on port ${PORT}`);

@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { differenceInDays } from 'date-fns';
 import Navigation from "../components/Navigation";
 import { Button } from "@/components/ui/button";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { usePublicTrips } from '@/hooks/usePublicTrips';
 import TripCard from '../components/trip/TripCard';
 import { Plus } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import SEO, { SITE_URL } from '@/components/SEO';
-
+import { buildTripPath } from '@/utils/tripUrl';
 import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { useTravelStats } from '@/hooks/useTravelStats';
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
@@ -20,6 +19,14 @@ import {
   TripSearch,
   TravelYearSection,
 } from '@/components/trip/dashboard';
+
+/** Whole-number nights between arrival and departure, or null if dates are missing. */
+const getNights = (trip: Trip): number | null => {
+  if (!trip.arrival_date || !trip.departure_date) return null;
+  const ms = new Date(trip.departure_date).getTime() - new Date(trip.arrival_date).getTime();
+  if (Number.isNaN(ms) || ms <= 0) return null;
+  return Math.max(1, Math.round(ms / 86_400_000));
+};
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -38,23 +45,7 @@ const Explore = () => {
     }
   }, [session]);
 
-  const { data: publicTrips, isLoading } = useQuery({
-    queryKey: ['public-trips'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('*')
-        .eq('is_public', true)
-        .order('arrival_date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching public trips:', error);
-        throw error;
-      }
-
-      return data as Trip[];
-    },
-  });
+  const { data: publicTrips, isLoading } = usePublicTrips();
 
   // Search filter — matches destination, primary_destination, and date text
   const filteredTrips = useMemo(() => {
@@ -184,11 +175,11 @@ const Explore = () => {
     ? {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        name: "Curated luxury trip itineraries",
+        name: "Curated trip itineraries",
         itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
-          url: `${SITE_URL}/trip/${trip.trip_id}`,
+          url: `${SITE_URL}${buildTripPath(trip)}`,
           name: trip.destination,
         })),
       }
@@ -199,14 +190,14 @@ const Explore = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <SEO
-        title="Explore curated luxury trip itineraries"
-        description="Discover hand-crafted luxury travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
+        title="Explore curated trip itineraries"
+        description="Discover hand-crafted travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
         canonicalPath="/explore"
         jsonLd={itemListJsonLd}
       />
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
-        <h1 className="sr-only">Explore curated luxury trip itineraries</h1>
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
+        <h1 className="sr-only">Explore curated trip itineraries</h1>
 
         {/* Hero — single primary surface */}
         <motion.div
@@ -221,7 +212,7 @@ const Explore = () => {
               daysUntil={daysUntilNextTrip!}
               onViewTrip={() => {
                 handleTripClick(nextTrip, 'Hero');
-                navigate(`/trip/${nextTrip.trip_id}`);
+                navigate(buildTripPath(nextTrip));
               }}
               className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
             />
@@ -239,22 +230,33 @@ const Explore = () => {
           <TravelYearSection data={travelStats.dailyActivity} />
         )}
 
-        {/* Search + conversion CTA */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        {/* Search + secondary CTA — single row, hero already carries the sunset CTA */}
+        <div className="mb-8 flex items-center gap-2 sm:gap-3">
           <TripSearch
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search destinations, dates..."
             ariaLabel="Search public trips"
-            className="flex-1"
+            className="flex-1 max-w-none sm:max-w-md"
           />
+          {/* Full label on tablet+ */}
           <Button
             onClick={handleCtaClick}
-            variant="sunset"
-            className="font-semibold whitespace-nowrap"
+            variant="outline"
+            className="hidden sm:inline-flex shrink-0 font-medium whitespace-nowrap"
           >
             <Plus className="h-4 w-4 mr-2" />
             {session ? 'Plan a trip' : 'Get started'}
+          </Button>
+          {/* Icon-only 44×44 on mobile to keep the fold breathable */}
+          <Button
+            onClick={handleCtaClick}
+            variant="outline"
+            size="icon"
+            className="sm:hidden shrink-0 h-11 w-11 rounded-card"
+            aria-label={session ? 'Plan a trip' : 'Get started'}
+          >
+            <Plus className="h-5 w-5" />
           </Button>
         </div>
 
@@ -269,7 +271,7 @@ const Explore = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {/* Currently Traveling */}
             {currentTrips.length > 0 && (
               <section className="relative" aria-labelledby="explore-section-current">
@@ -281,21 +283,18 @@ const Explore = () => {
                 />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {currentTrips.map((trip) => (
-                    <div
+                    <TripCard
                       key={trip.trip_id}
-                      onClick={() => handleTripClick(trip, 'Current')}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Current'); }}
-                    >
-                      <TripCard
-                        trip={{
-                          ...trip,
-                          start_date: trip.arrival_date,
-                          end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                        }}
-                        isExample={true}
-                      />
-                    </div>
+                      trip={{
+                        ...trip,
+                        start_date: trip.arrival_date,
+                        end_date: trip.departure_date,
+                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
+                      }}
+                      isExample={true}
+                      linkTo={buildTripPath(trip)}
+                      onNavigate={() => handleTripClick(trip, 'Current')}
+                    />
                   ))}
                 </div>
               </section>
@@ -309,23 +308,20 @@ const Explore = () => {
                 count={filteredUpcomingTrips.length}
               />
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
-                    <div
+                    <TripCard
                       key={trip.trip_id}
-                      onClick={() => handleTripClick(trip, 'Upcoming')}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Upcoming'); }}
-                    >
-                      <TripCard
-                        trip={{
-                          ...trip,
-                          start_date: trip.arrival_date,
-                          end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                        }}
-                        isExample={true}
-                      />
-                    </div>
+                      trip={{
+                        ...trip,
+                        start_date: trip.arrival_date,
+                        end_date: trip.departure_date,
+                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
+                      }}
+                      isExample={true}
+                      linkTo={buildTripPath(trip)}
+                      onNavigate={() => handleTripClick(trip, 'Upcoming')}
+                    />
                   ))}
                 </div>
               ) : (
@@ -346,23 +342,20 @@ const Explore = () => {
                 muted
               />
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
-                    <div
+                    <TripCard
                       key={trip.trip_id}
-                      onClick={() => handleTripClick(trip, 'Past')}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleTripClick(trip, 'Past'); }}
-                    >
-                      <TripCard
-                        trip={{
-                          ...trip,
-                          start_date: trip.arrival_date,
-                          end_date: trip.departure_date,
-                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                        }}
-                        isExample={true}
-                      />
-                    </div>
+                      trip={{
+                        ...trip,
+                        start_date: trip.arrival_date,
+                        end_date: trip.departure_date,
+                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
+                      }}
+                      isExample={true}
+                      linkTo={buildTripPath(trip)}
+                      onNavigate={() => handleTripClick(trip, 'Past')}
+                    />
                   ))}
                 </div>
               ) : (
@@ -390,6 +383,52 @@ const Explore = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* All destinations — a crawlable hub. Always lists every public
+            destination (independent of the search filter and the card grids
+            above) so search engines find a descriptive <a href> to each
+            itinerary in the server-rendered HTML, fixing the orphaned pages. */}
+        {totalPublicTrips > 0 && (
+          <nav
+            aria-labelledby="all-destinations-heading"
+            className="mt-16 pt-10 border-t border-sand-200"
+          >
+            <h2
+              id="all-destinations-heading"
+              className="font-display text-2xl md:text-3xl text-earth-700"
+            >
+              All destinations
+            </h2>
+            <p className="text-earth-500 text-sm mt-1 mb-6">
+              Browse every curated itinerary.
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
+              {(publicTrips || [])
+                .filter((trip) => trip && trip.slug && trip.is_public && trip.destination)
+                .map((trip) => {
+                  const nights = getNights(trip);
+                  return (
+                    <li key={trip.trip_id}>
+                      <Link
+                        to={buildTripPath(trip)}
+                        onClick={() => handleTripClick(trip, 'All destinations')}
+                        className="group inline-flex items-baseline gap-2 text-earth-700 hover:text-sunset-600 transition-colors"
+                      >
+                        <span className="font-medium underline-offset-4 group-hover:underline">
+                          {trip.destination}
+                        </span>
+                        {nights && (
+                          <span className="text-sm text-earth-400">
+                            — {nights} {nights === 1 ? 'night' : 'nights'}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+            </ul>
+          </nav>
         )}
       </div>
     </div>

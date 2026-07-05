@@ -13,11 +13,46 @@ const app = express();
 // Trust first proxy (Replit, Cloudflare, etc.) for accurate rate limiting
 app.set('trust proxy', 1);
 
+// Canonical host enforcement: collapse www → apex and http → https for the
+// production domain with a single 301, so Google sees one canonical origin
+// (https://wanderluxe.io) instead of indexing duplicate homepage variants.
+// Scoped to wanderluxe.io only, so Replit preview domains, Cloud Run health
+// checks, and localhost are untouched. GET/HEAD only — never redirect API
+// writes or CORS preflight.
+const CANONICAL_HOST = 'wanderluxe.io';
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  // Strip any port so wanderluxe.io:443 still matches the canonical apex.
+  const host = (req.headers.host || '').toLowerCase().split(':')[0];
+  if (host !== CANONICAL_HOST && host !== `www.${CANONICAL_HOST}`) return next();
+  const proto = ((req.headers['x-forwarded-proto'] as string | undefined) || req.protocol || '')
+    .split(',')[0]
+    .trim();
+  const needsHttps = proto === 'http';
+  const needsApex = host.startsWith('www.');
+  if (needsHttps || needsApex) {
+    // Re-anchor on the hardcoded canonical origin, carrying over only the path +
+    // query parsed from the (untrusted) request URL. Reading .pathname/.search
+    // discards any host the input might smuggle in — protocol-relative ("//host")
+    // and backslash forms resolve away, and an absolute URL's host is dropped — so
+    // the redirect target's host is never user-controlled. Closes CodeQL
+    // js/server-side-unvalidated-url-redirection.
+    const { pathname, search } = new URL(req.originalUrl, `https://${CANONICAL_HOST}`);
+    return res.redirect(301, `https://${CANONICAL_HOST}${pathname}${search}`);
+  }
+  next();
+});
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:5001'];
 
-const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /wanderluxe\.io$/];
+// The wanderluxe.io pattern must be anchored so the domain is either the apex
+// (preceded by the scheme separator `//`) or a true subdomain (preceded by `.`).
+// A bare `wanderluxe\.io$` would also match attacker domains like
+// `evilwanderluxe.io`, which combined with `credentials: true` would leak
+// authenticated responses. (The replit patterns already require a leading `.`.)
+const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /(\/\/|\.)wanderluxe\.io(:\d+)?$/];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -87,19 +122,76 @@ const prerenderedAbout = path.join(distPath, 'about', 'index.html');
 const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
 const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
 
+// Build the allow-list of /explore/{slug} prerendered slugs by scanning dist/explore/*/index.html.
+// Membership check + strict slug regex means no user-controlled path can ever escape this set.
+const exploreSlugs = new Set<string>();
+try {
+  const exploreDir = path.join(distPath, 'explore');
+  if (fs.existsSync(exploreDir) && fs.statSync(exploreDir).isDirectory()) {
+    for (const entry of fs.readdirSync(exploreDir, { withFileTypes: true })) {
+      if (
+        entry.isDirectory() &&
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.name) &&
+        fs.existsSync(path.join(exploreDir, entry.name, 'index.html'))
+      ) {
+        exploreSlugs.add(entry.name);
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to scan prerendered /explore slugs:', err);
+}
+
+// UUID → slug redirect map, emitted by scripts/prerender.ts at build time.
+// Used to issue 301 redirects from legacy /trip/{uuid} URLs to /explore/{slug}.
+let uuidToSlug: Record<string, string> = {};
+try {
+  const redirectsPath = path.join(distPath, 'redirects.json');
+  if (fs.existsSync(redirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(redirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      uuidToSlug = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load redirects.json:', err);
+}
+
+const UUID_TRIP_PATH = /^\/trip\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/.*)?$/i;
+const EXPLORE_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+
 function prerenderedFileFor(normalizedPath: string): string | null {
   switch (normalizedPath) {
     case '/explore': return prerenderedExplore;
     case '/about': return prerenderedAbout;
     case '/terms': return prerenderedTerms;
     case '/privacy': return prerenderedPrivacy;
-    default: return null;
   }
+  const exploreMatch = EXPLORE_SLUG_PATH.exec(normalizedPath);
+  if (exploreMatch && exploreSlugs.has(exploreMatch[1])) {
+    return path.join(distPath, 'explore', exploreMatch[1], 'index.html');
+  }
+  return null;
 }
 
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+  // redirect:false so canonical no-trailing-slash routes (e.g. /explore/{slug},
+  // matching the sitemap + <link rel="canonical">) fall through to the
+  // SPA/prerender handler below and are served directly, instead of serve-static
+  // 301-redirecting them to a trailing-slash variant the canonical tag never
+  // points to. Static asset files (with extensions) are unaffected.
+  app.use(express.static(distPath, { redirect: false }));
+
+  // 301-redirect legacy /trip/{uuid} URLs for public trips to their /explore/{slug} canonical.
+  app.get(/^\/trip\/[0-9a-fA-F-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = UUID_TRIP_PATH.exec(req.path);
+    if (!match) return next();
+    const slug = uuidToSlug[match[1].toLowerCase()];
+    if (!slug) return next();
+    const suffix = match[2] ?? '';
+    return res.redirect(301, `/explore/${slug}${suffix}`);
+  });
 
   // Handle SPA routing - prefer prerendered HTML for known public routes,
   // fall back to index.html for everything else (client-side routing).

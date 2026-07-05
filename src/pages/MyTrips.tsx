@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
 import { Share2, EyeOff } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { parseLocal } from '@/utils/dateUtils';
 
 import { ActiveTripCard, NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
 import { useTravelStats } from '@/hooks/useTravelStats';
@@ -177,21 +178,29 @@ const MyTrips = () => {
 
   // Utility functions to categorize trips
   const getTripCategory = (trip: Trip): 'upcoming' | 'current' | 'past' => {
+    // Compare date-only values in the viewer's local time zone. The stored
+    // arrival/departure values are date-only strings (YYYY-MM-DD); parsing them
+    // with `new Date()` would treat them as UTC midnight and shift the trip a
+    // day in time zones behind UTC, so a current trip would drop off a day
+    // early. parseLocal anchors them to local midnight, making this time-zone
+    // agnostic and inclusive through the end of the departure day.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const arrivalDate = new Date(trip.arrival_date || '');
-    const departureDate = new Date(trip.departure_date || '');
-    
+    const arrivalDate = parseLocal(trip.arrival_date || '');
+    arrivalDate.setHours(0, 0, 0, 0);
+    const departureDate = parseLocal(trip.departure_date || '');
+    departureDate.setHours(0, 0, 0, 0);
+
     // Current trip: today is between arrival and departure (inclusive)
     if (today >= arrivalDate && today <= departureDate) {
       return 'current';
     }
-    
+
     // Upcoming trip: arrival date is in the future
     if (arrivalDate > today) {
       return 'upcoming';
     }
-    
+
     // Past trip: departure date is in the past
     return 'past';
   };
@@ -329,7 +338,7 @@ const MyTrips = () => {
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <Navigation />
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Hero — single primary surface */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -387,26 +396,44 @@ const MyTrips = () => {
           <TripSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
         
-        {/* Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2 mb-8" role="tablist" aria-label="Filter trips">
-          <FilterChip
-            active={tripFilter === 'all'}
-            onClick={() => setTripFilter('all')}
-            label="All trips"
-            count={totalMyTrips + totalSharedTrips}
+        {/* Filter Chips — scroll-rail on mobile, wrap on desktop */}
+        <div
+          className="relative -mx-4 mb-8 sm:mx-0"
+          role="tablist"
+          aria-label="Filter trips"
+        >
+          <div
+            className="flex items-center gap-2 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-0"
+            style={{ scrollSnapType: 'x proximity' }}
+          >
+            <FilterChip
+              active={tripFilter === 'all'}
+              onClick={() => setTripFilter('all')}
+              label="All trips"
+              count={totalMyTrips + totalSharedTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'mine'}
+              onClick={() => setTripFilter('mine')}
+              label="My trips"
+              count={totalMyTrips}
+            />
+            <FilterChip
+              active={tripFilter === 'shared'}
+              onClick={() => setTripFilter('shared')}
+              label="Shared with me"
+              count={totalSharedTrips}
+              icon={<Share2 className="h-3.5 w-3.5" />}
+            />
+          </div>
+          {/* Edge fades only on mobile rail */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-sand-50 to-transparent sm:hidden"
           />
-          <FilterChip
-            active={tripFilter === 'mine'}
-            onClick={() => setTripFilter('mine')}
-            label="My trips"
-            count={totalMyTrips}
-          />
-          <FilterChip
-            active={tripFilter === 'shared'}
-            onClick={() => setTripFilter('shared')}
-            label="Shared with me"
-            count={totalSharedTrips}
-            icon={<Share2 className="h-3.5 w-3.5" />}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-sand-50 to-transparent sm:hidden"
           />
         </div>
 
@@ -421,7 +448,7 @@ const MyTrips = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
             {showHidden && (
               <div className="bg-sand-100 border border-sand-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-earth-700 text-sm">
@@ -477,7 +504,7 @@ const MyTrips = () => {
               />
 
               {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {filteredUpcomingTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}
@@ -513,7 +540,7 @@ const MyTrips = () => {
               />
 
               {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                   {pastTrips.map((trip) => (
                     <TripCard
                       key={trip.trip_id}

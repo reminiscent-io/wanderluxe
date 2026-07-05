@@ -1199,6 +1199,8 @@ export type Database = {
           is_public: boolean
           primary_destination: string | null
           primary_destination_place_id: string | null
+          slug: string | null
+          summary: string | null
           timezone: string | null
           trip_id: string
           user_id: string
@@ -1220,6 +1222,8 @@ export type Database = {
           is_public?: boolean
           primary_destination?: string | null
           primary_destination_place_id?: string | null
+          slug?: string | null
+          summary?: string | null
           timezone?: string | null
           trip_id?: string
           user_id: string
@@ -1241,6 +1245,8 @@ export type Database = {
           is_public?: boolean
           primary_destination?: string | null
           primary_destination_place_id?: string | null
+          slug?: string | null
+          summary?: string | null
           timezone?: string | null
           trip_id?: string
           user_id?: string
@@ -1637,3 +1643,4 @@ export const Constants = {
     },
   },
 } as const
+
