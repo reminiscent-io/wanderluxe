@@ -17,6 +17,7 @@ export interface AccommodationFormData {
   cost?: string | null;
   currency?: string;
   hotel_place_id?: string | null;
+  timezone?: string | null;
   /** When true, clears the key photo (e.g. location changed) */
   clear_image_url?: boolean;
 }
@@ -122,6 +123,7 @@ export const addAccommodation = async (
         cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || null,
         hotel_place_id: formData.hotel_place_id || null,
+        timezone: formData.timezone || null,
         order_index: orderIndex,
       })
       .select("*")
@@ -171,6 +173,7 @@ export const updateAccommodation = async (
         cost: formData.cost ? parseFloat(formData.cost) : null,
         currency: formData.currency || null,
         hotel_place_id: formData.hotel_place_id || null,
+        timezone: formData.timezone || null,
     };
     // Clear the key photo when the location changed
     if (formData.clear_image_url) {

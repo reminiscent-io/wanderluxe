@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { setJunctionTravelers } from '@/services/travelers';
 import { WeatherData, getWeatherForDate, isToday } from '@/hooks/useWeather';
+import { useTripTimezone } from '@/hooks/useTripTimezone';
 
 interface TimelineContentProps {
   days?: TripDay[];
@@ -48,6 +49,7 @@ function buildActivityFormData(activity: DayActivity, dayDate: string): Activity
     location_phone: activity.location_phone || null,
     location_website: activity.location_website || null,
     location_rating: activity.location_rating || null,
+    timezone: activity.timezone ?? null,
   };
 }
 
@@ -64,6 +66,7 @@ function buildActivityPayload(form: ActivityFormData): Record<string, unknown> {
     location_phone: form.location_phone || null,
     location_website: form.location_website || null,
     location_rating: form.location_rating || null,
+    timezone: form.timezone ?? null,
   };
 }
 
@@ -102,6 +105,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
 
   const [newActivity, setNewActivity] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
+
+  // Hoisted so every CompactDayCard shares one lookup instead of one query per card (I1).
+  const { tripTimezone } = useTripTimezone(days[0]?.trip_id);
 
   if (!days.length) {
     return (
@@ -347,6 +353,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 currentWeather={isTodayDay ? weather?.current : undefined}
                 weatherLocation={tripDestination}
                 allForecasts={weather?.daily}
+                tripTimezone={tripTimezone}
               hotelStays={hotelStaysForDay(day, hotelStays)}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);

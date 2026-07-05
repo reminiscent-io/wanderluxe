@@ -135,7 +135,7 @@ const TimelineRow: React.FC<Props> = ({
 
   // Build the time label
   const timeLabel = item.time
-    ? formatTimeRange(item.time, item.endTime, item.type === 'transportation')
+    ? formatTimeRange(item.time, item.endTime, item.type === 'transportation', item.tzSuffix ?? '', item.endTzSuffix ?? '')
     : '';
 
   return (

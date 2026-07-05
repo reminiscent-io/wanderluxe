@@ -15,6 +15,7 @@ export interface ActivityFormData {
   location_phone?: string | null;
   location_website?: string | null;
   location_rating?: number | null;
+  timezone?: string | null;
 }
 
 // Define the database types (number-based for database storage)
@@ -36,6 +37,7 @@ export interface DayActivity {
   location_phone?: string | null;
   location_website?: string | null;
   location_rating?: number | null;
+  timezone?: string | null;
 }
 
 export interface TripDay {
@@ -103,6 +105,7 @@ export interface HotelStay {
   hotel_place_id: string | null;
   hotel_website: string | null;
   created_at: string;
+  timezone?: string | null;
 }
 
 export interface Transportation {
@@ -122,6 +125,8 @@ export interface Transportation {
   currency: Currency | null;
   is_paid: boolean;
   created_at: string;
+  departure_timezone?: string | null;
+  arrival_timezone?: string | null;
 }
 
 export interface RestaurantReservation {
@@ -142,6 +147,7 @@ export interface RestaurantReservation {
   rating: number | null;
   created_at: string;
   order_index: number;
+  timezone?: string | null;
 }
 
 export interface ExpenseItem {
@@ -202,4 +208,5 @@ export interface Trip {
   cover_image_photographer?: string | null;
   cover_image_photographer_username?: string | null;
   accommodations?: Accommodation[];
+  timezone?: string | null;
 }

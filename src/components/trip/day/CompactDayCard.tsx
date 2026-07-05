@@ -66,6 +66,7 @@ export interface CompactDayCardProps {
   currentWeather?: WeatherData['current'];
   weatherLocation?: string;
   allForecasts?: DailyForecast[];
+  tripTimezone?: string | null;
 }
 
 /** Map TimelineItem type to the Supabase table name */
@@ -93,6 +94,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   currentWeather,
   weatherLocation,
   allForecasts,
+  tripTimezone,
 }) => {
   // Check if day is in the past for auto-collapse (parse as local date to avoid UTC offset issues)
   const [year, month, day_] = (date.split('T')[0]).split('-').map(Number);
@@ -176,6 +178,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     hotelStays,
     transportations,
     reservations,
+    tripTimezone,
   });
 
   const dayTitle = title || new Date(date).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long' });

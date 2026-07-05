@@ -5,6 +5,7 @@ import { parseISO, isSameDay } from 'date-fns';
 import { fmtDate, fmtShort, fmtTime, minsFromTime, formatType, sameDay, fmtMoney } from './format';
 import { imageToCoverDataURI } from './images';
 import { PAGE } from './theme';
+import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
 import type { Tables } from '@/integrations/supabase/types';
 import type {
   PdfExportOptions, PdfTripData, Item, Day,
@@ -33,6 +34,13 @@ const TABLES = {
   dining: 'reservations',
   otherExpenses: 'other_expenses',
 } as const;
+
+/** Append a zone abbrev to a formatted time when the entity zone diverges. */
+function withTzSuffix(formatted: string, entityTz: string | null | undefined, tripTz: string | null, onDate: string): string {
+  if (!formatted) return formatted;
+  const suffix = shouldShowBadge(entityTz, tripTz) ? tzAbbrev(effectiveTz(entityTz, tripTz)!, onDate) : '';
+  return suffix ? `${formatted} ${suffix}` : formatted;
+}
 
 /* =========================================================================
    Data build (Supabase)
@@ -63,10 +71,12 @@ async function buildDays(
     supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.dining).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.otherExpenses).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.trip).select('budget').eq('trip_id', tripId).single(),
+    supabase.from(TABLES.trip).select('budget, timezone').eq('trip_id', tripId).single(),
   ]);
 
   if (daysErr) throw daysErr;
+
+  const tripTz: string | null = (tripRow?.timezone as string | null) ?? null;
 
   // Build budget data by category
   const catMap: Record<string, number> = {};
@@ -146,7 +156,7 @@ async function buildDays(
       items.push({
         type: 'accommodation',
         title: `${checkInOutLabel}: ${s.hotel}`,
-        time: t || 'All-day',
+        time: withTzSuffix(t, s.timezone, tripTz, String(day.date)) || 'All-day',
         details: s.hotel_details || undefined,
         location: s.hotel_address || undefined,
         cost: s.cost != null ? fmtMoney(s.cost, s.currency) : undefined,
@@ -168,9 +178,12 @@ async function buildDays(
         ? `Flight: ${t.provider}`
         : formattedType;
 
+      const labels = transportTzLabels(t.departure_timezone, t.arrival_timezone, tripTz, String(day.date));
       const startStr = fmtTime(t.start_time);
       const endStr = fmtTime(t.end_time);
-      const timeStr = startStr && endStr ? `${startStr} – ${endStr}` : (startStr || endStr || 'All-day');
+      const startLabeled = startStr && labels.dep ? `${startStr} ${labels.dep}` : startStr;
+      const endLabeled = endStr && labels.arr ? `${endStr} ${labels.arr}` : endStr;
+      const timeStr = startLabeled && endLabeled ? `${startLabeled} – ${endLabeled}` : (startLabeled || endLabeled || 'All-day');
 
       items.push({
         type: 'transportation',
@@ -194,7 +207,7 @@ async function buildDays(
         items.push({
           type: 'activity',
           title: a.title || 'Activity',
-          time: t || 'All-day',
+          time: withTzSuffix(t, a.timezone, tripTz, String(day.date)) || 'All-day',
           details: a.description || undefined,
           cost: a.cost != null ? fmtMoney(a.cost, a.currency) : undefined,
           sortKey: minsFromTime(t || '8:00 am'),
@@ -223,7 +236,7 @@ async function buildDays(
       items.push({
         type: 'dining',
         title: `Dining: ${r.restaurant_name}`,
-        time: t || 'All-day',
+        time: withTzSuffix(t, r.timezone, tripTz, String(day.date)) || 'All-day',
         details: r.notes || undefined,
         location: meta.join(' • ') || undefined,
         cost: r.cost != null ? fmtMoney(r.cost, r.currency) : undefined,

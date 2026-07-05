@@ -203,6 +203,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
       location_phone: dataToSave.location_phone || null,
       location_website: dataToSave.location_website || null,
       location_rating: dataToSave.location_rating || null,
+      timezone: dataToSave.timezone || null,
     };
 
     if (isEditMode) {
@@ -257,7 +258,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   return (
     <Dialog open={finalOpen} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription className="sr-only">

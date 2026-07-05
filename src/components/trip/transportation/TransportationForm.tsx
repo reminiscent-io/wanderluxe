@@ -14,6 +14,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
 import { getJunctionTravelerIds, setJunctionTravelers } from "@/services/travelers";
+import { useTripTimezone } from "@/hooks/useTripTimezone";
 
 type Transportation = Tables<"transportation">;
 
@@ -55,6 +56,8 @@ export default function TransportationForm({
     cost: z.number().nullable(),
     currency: z.string().min(1),
     travelers: z.array(z.string()).optional(),
+    departure_timezone: z.string().nullable().optional(),
+    arrival_timezone: z.string().nullable().optional(),
   });
 
   /* ------------------------------------------------------------------------ */
@@ -89,8 +92,23 @@ export default function TransportationForm({
       cost: initialData?.cost ?? null,
       currency: initialData?.currency ?? CURRENCIES[0],
       travelers: [],
+      departure_timezone: initialData?.departure_timezone ?? null,
+      arrival_timezone: initialData?.arrival_timezone ?? null,
     },
   });
+
+  /* ------------------- pre-fill timezones from trip default ------------------- */
+  const { tripTimezone } = useTripTimezone(tripId);
+  useEffect(() => {
+    if (!tripTimezone) return;
+    if (!form.getValues('departure_timezone') && !initialData?.departure_timezone) {
+      form.setValue('departure_timezone', tripTimezone);
+    }
+    if (!form.getValues('arrival_timezone') && !initialData?.arrival_timezone) {
+      form.setValue('arrival_timezone', tripTimezone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripTimezone]);
 
 
 
@@ -154,6 +172,8 @@ export default function TransportationForm({
       end_date: format(travelRange.end, "yyyy-MM-dd"),
       start_time: travelRange.startTime || null,
       end_time: travelRange.endTime || null,
+      departure_timezone: data.departure_timezone ?? null,
+      arrival_timezone: data.arrival_timezone ?? null,
       ...(data.type === "flight" && {
         flight_number: data.flight_number?.trim().toUpperCase() || null,
         scheduled_start_time: data.scheduled_start_time || null,

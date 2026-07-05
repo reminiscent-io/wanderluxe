@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { UseFormReturn, Controller, useWatch } from "react-hook-form";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, Globe, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import LuxuryDateTimeRangePicker, { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
 import LocationInputPair from "./LocationInputPair";
+import TimezoneSelect from "../_shared/TimezoneSelect";
 import {
   CURRENCIES,
   CURRENCY_NAMES,
@@ -70,6 +76,10 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
   const [lookupResult, setLookupResult] = useState<FlightStatusResponse | null>(null);
   const [lookupDate, setLookupDate] = useState<string>("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [tzOpen, setTzOpen] = useState(false);
+
+  const departureTimezone = useWatch({ control, name: "departure_timezone" }) as string | null | undefined;
+  const arrivalTimezone = useWatch({ control, name: "arrival_timezone" }) as string | null | undefined;
 
   // watch cost for formatted display
   const cost = useWatch({ control, name: "cost" }) as number | null;
@@ -258,6 +268,48 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         onToChange={(v) => setValue("arrival_location", v)}
         transportationType={form.getValues("type") as string}
       />
+
+      {/* Timezones (collapsible) */}
+      <div>
+        <Collapsible open={tzOpen} onOpenChange={setTzOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                Timezones{(departureTimezone || arrivalTimezone) ? `: ${departureTimezone ?? '—'} → ${arrivalTimezone ?? '—'}` : ''}
+              </span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${tzOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm text-muted-foreground">Departure timezone</Label>
+                <Controller
+                  name="departure_timezone"
+                  control={control}
+                  render={({ field }) => (
+                    <TimezoneSelect value={(field.value as string | null) ?? null} onChange={field.onChange} placeholder="Trip default" />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Arrival timezone</Label>
+                <Controller
+                  name="arrival_timezone"
+                  control={control}
+                  render={({ field }) => (
+                    <TimezoneSelect value={(field.value as string | null) ?? null} onChange={field.onChange} placeholder="Trip default" />
+                  )}
+                />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
 
       {/* Unified Date + Time Picker */}
       <LuxuryDateTimeRangePicker

@@ -44,6 +44,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         location_phone: activity.location_phone || null,
         location_website: activity.location_website || null,
         location_rating: activity.location_rating || null,
+        timezone: activity.timezone ?? null,
       };
 
       const { data, error } = await supabase
@@ -88,6 +89,7 @@ const DayActivityManager = ({ id, tripId, activities }: DayActivityManagerProps)
         location_phone: updatedActivity.location_phone || null,
         location_website: updatedActivity.location_website || null,
         location_rating: updatedActivity.location_rating || null,
+        timezone: updatedActivity.timezone ?? null,
       };
 
       // If date was changed, find the new day_id and update it

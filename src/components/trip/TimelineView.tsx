@@ -1,9 +1,12 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
+import { Button } from '@/components/ui/button';
+import { CalendarDays, ListTree, CalendarPlus } from 'lucide-react';
+import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
@@ -11,6 +14,8 @@ import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
 import { useWeather } from '@/hooks/useWeather';
 import ViewingStatusAvatars from './timeline/ViewingStatusAvatars';
+
+const TripCalendarView = lazy(() => import('./calendar/TripCalendarView'));
 
 interface TimelineViewProps {
   tripId: string;
@@ -47,6 +52,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { events, refreshEvents } = useTimelineEvents(tripId);
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
+  const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
 
   // Fetch weather for the trip destination (only for current/upcoming trips)
   // Prefer primary_destination if available, fallback to trip name
@@ -203,21 +210,59 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <ViewingStatusAvatars tripId={tripId} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <div className="inline-flex rounded-md border border-border bg-card p-0.5 mr-1">
+              <button
+                type="button"
+                aria-pressed={itineraryView === 'timeline'}
+                onClick={() => setItineraryView('timeline')}
+                className={`flex items-center gap-1 px-2.5 py-1 text-sm rounded-[0.4rem] transition-colors ${itineraryView === 'timeline' ? 'bg-sunset-500 text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <ListTree className="h-3.5 w-3.5" /><span className="hidden sm:inline">Timeline</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={itineraryView === 'calendar'}
+                onClick={() => setItineraryView('calendar')}
+                className={`flex items-center gap-1 px-2.5 py-1 text-sm rounded-[0.4rem] transition-colors ${itineraryView === 'calendar' ? 'bg-sunset-500 text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <CalendarDays className="h-3.5 w-3.5" /><span className="hidden sm:inline">Calendar</span>
+              </button>
+            </div>
+            {canEdit && (
+              <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
+                <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Add to calendar</span>
+              </Button>
+            )}
             <ExportPdfButton tripId={tripId} className="" />
           </div>
         </header>
 
-        <TimelineContent
-          days={days}
-          dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-          hotelStays={processedHotelStays}
-          onDayDelete={handleDayDelete}
-          tripArrivalDate={localTripDates.arrival_date || undefined}
-          tripDepartureDate={localTripDates.departure_date || undefined}
-          canEdit={canEdit}
-          weather={weather}
-          tripDestination={tripDestination}
-        />
+        {canEdit && (
+          <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
+        )}
+        {itineraryView === 'calendar' ? (
+          <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading calendar…</div>}>
+            <TripCalendarView
+              tripId={tripId}
+              tripDates={{ arrival_date: localTripDates.arrival_date, departure_date: localTripDates.departure_date }}
+              destination={tripDestination}
+              canEdit={canEdit}
+            />
+          </Suspense>
+        ) : (
+          <TimelineContent
+            days={days}
+            dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
+            hotelStays={processedHotelStays}
+            onDayDelete={handleDayDelete}
+            tripArrivalDate={localTripDates.arrival_date || undefined}
+            tripDepartureDate={localTripDates.departure_date || undefined}
+            canEdit={canEdit}
+            weather={weather}
+            tripDestination={tripDestination}
+          />
+        )}
       </div>
 
       {/* AI Assistant column: hidden below lg; sticky bottom-anchored from lg+ */}

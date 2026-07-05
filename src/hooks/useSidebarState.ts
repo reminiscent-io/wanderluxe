@@ -361,6 +361,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       cost: activity.cost ? String(activity.cost) : '',
       currency: (activity.currency as Currency) || 'USD',
       travelers: [], // Initialize empty travelers array - will be loaded by useEffect in ActivityForm
+      timezone: activity.timezone ?? null,
     });
   };
   const handleActivityDelete = async (id: string) => {
@@ -411,6 +412,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         location_phone: activity.location_phone || null,
         location_website: activity.location_website || null,
         location_rating: activity.location_rating || null,
+        timezone: activity.timezone ?? null,
       };
       const { data, error } = await supabase.from('day_activities').insert(newActivityEntry).select().single();
       if (error) throw error;
@@ -459,6 +461,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         location_phone: updatedActivity.location_phone || null,
         location_website: updatedActivity.location_website || null,
         location_rating: updatedActivity.location_rating || null,
+        timezone: updatedActivity.timezone ?? null,
       };
       const { error } = await supabase.from('day_activities').update(updates).eq('id', id);
       if (error) throw error;
