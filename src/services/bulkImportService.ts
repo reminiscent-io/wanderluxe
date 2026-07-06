@@ -47,7 +47,7 @@ async function findOrCreateDay(tripId: string, date: string | null, label: strin
   return newDay.day_id;
 }
 
-async function getNextOrderIndex(table: string, dayId: string): Promise<number> {
+async function getNextOrderIndex(table: 'day_activities' | 'reservations', dayId: string): Promise<number> {
   const { data } = await supabase
     .from(table)
     .select('order_index')
@@ -109,11 +109,13 @@ async function importAccommodation(
       .from('accommodations')
       .insert({
         trip_id: tripId,
+        title: strField(fields, 'name') || 'Unnamed Accommodation',
+        order_index: 0,
         hotel: strField(fields, 'name'),
         hotel_details: parts.join(' • '),
         hotel_url: strField(fields, 'website'),
-        hotel_checkin_date: strField(fields, 'check_in_date'),
-        hotel_checkout_date: strField(fields, 'check_out_date'),
+        hotel_checkin_date: strField(fields, 'check_in_date') || null,
+        hotel_checkout_date: strField(fields, 'check_out_date') || null,
         checkin_time: toDbTime(fields.check_in_time as string) || '15:00',
         checkout_time: toDbTime(fields.check_out_time as string) || '11:00',
         cost: costField(fields),

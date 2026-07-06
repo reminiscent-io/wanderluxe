@@ -1,4 +1,4 @@
-export type { Json } from './database';
+export type { Json, Database } from './database';
 export type { Tables, TablesInsert, TablesUpdate } from './tables';
 export type { Enums } from './enums';
 export type { CompositeTypes } from './composite';
