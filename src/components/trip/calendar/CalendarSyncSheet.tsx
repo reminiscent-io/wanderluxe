@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CalendarOff, Copy, Download, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,12 +41,12 @@ const CalendarSyncSheet: React.FC<CalendarSyncSheetProps> = ({ tripId, open, onO
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl sm:max-w-md sm:mx-auto">
-        <SheetHeader>
-          <SheetTitle className="font-display text-xl">Add trip to your calendar</SheetTitle>
-          <SheetDescription>Subscribe once and your calendar updates as the trip changes. Times show in the destination's local time.</SheetDescription>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent mobileSheet className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl">Add trip to your calendar</DialogTitle>
+          <DialogDescription>Subscribe once and your calendar updates as the trip changes. Times show in the destination's local time.</DialogDescription>
+        </DialogHeader>
 
         {!enabled ? (
           <div className="py-6">
@@ -86,8 +86,8 @@ const CalendarSyncSheet: React.FC<CalendarSyncSheetProps> = ({ tripId, open, onO
             </div>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };
 
