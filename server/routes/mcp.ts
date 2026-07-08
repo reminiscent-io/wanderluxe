@@ -101,7 +101,7 @@ function buildMcpServer(auth: { token: string; userId: string; email: string | n
     { name: 'wanderluxe', version: '0.2.0' },
     {
       instructions:
-        "Tools for reading and managing the user's WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Add items by date (YYYY-MM-DD); the server resolves the matching trip day. Times are 24h HH:MM, local to the destination. When a tool's required fields are not established from the conversation, ask the user rather than guessing — especially dates and names. To change a trip's dates in a way that would drop days containing items, the update_trip tool will first return the at-risk days for confirmation; re-call it with confirm_remove_days: true to proceed.",
+        "Tools for reading and managing the user's WanderLuxe trips. Call list_trips first to get trip IDs — they are not guessable. Add items by date (YYYY-MM-DD); the server resolves the matching trip day. Times are 24h HH:MM floating wall-clock values — never convert them between zones. Each trip has a default IANA timezone its times are read in; items carry an optional timezone (transportation: departure_timezone/arrival_timezone) that is display metadata only. Set an item's zone only when it differs from the trip default (e.g. a flight landing in another country); omit it to inherit, or pass null to clear an override. When a tool's required fields are not established from the conversation, ask the user rather than guessing — especially dates and names. To change a trip's dates in a way that would drop days containing items, the update_trip tool will first return the at-risk days for confirmation; re-call it with confirm_remove_days: true to proceed.",
     },
   );
 

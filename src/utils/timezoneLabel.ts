@@ -10,6 +10,17 @@ export function effectiveTz(
   return entityTz ?? tripTz ?? null;
 }
 
+/** Whether `tz` is a timezone id Intl can resolve (IANA ids and their aliases). */
+export function isValidTimeZone(tz: string): boolean {
+  if (!tz) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** DST-correct short zone label (EST vs EDT) evaluated at noon UTC on `onDate`. */
 export function tzAbbrev(tz: string, onDate: string): string {
   if (!tz || !onDate) return '';

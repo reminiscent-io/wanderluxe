@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { effectiveTz, tzAbbrev, shouldShowBadge, transportTzLabels, getTimezoneOptions } from './timezoneLabel';
+import { effectiveTz, tzAbbrev, shouldShowBadge, transportTzLabels, getTimezoneOptions, isValidTimeZone } from './timezoneLabel';
 
 describe('effectiveTz', () => {
   it('prefers the entity zone', () => {
@@ -80,5 +80,18 @@ describe('getTimezoneOptions', () => {
     expect(zones.length).toBeGreaterThan(10);
     expect(zones).toContain('America/New_York');
     expect(zones).toContain('Europe/London');
+  });
+});
+
+describe('isValidTimeZone', () => {
+  it('accepts real IANA zone ids', () => {
+    expect(isValidTimeZone('America/New_York')).toBe(true);
+    expect(isValidTimeZone('Asia/Tokyo')).toBe(true);
+    expect(isValidTimeZone('UTC')).toBe(true);
+  });
+  it('rejects garbage and city-only names', () => {
+    expect(isValidTimeZone('Tokyo')).toBe(false);
+    expect(isValidTimeZone('Not/AZone')).toBe(false);
+    expect(isValidTimeZone('')).toBe(false);
   });
 });
