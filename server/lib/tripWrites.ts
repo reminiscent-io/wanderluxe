@@ -114,6 +114,7 @@ export interface CreateTripInput {
   arrival_date: string;
   departure_date: string;
   budget?: number | null;
+  timezone?: string | null;
 }
 
 export async function createTrip(
@@ -142,6 +143,7 @@ export async function createTrip(
       arrival_date: input.arrival_date,
       departure_date: input.departure_date,
       budget: input.budget ?? null,
+      timezone: input.timezone ?? null,
       is_public: false,
     })
     .select('trip_id')
@@ -212,6 +214,7 @@ export interface UpdateTripInput {
   trip_id: string;
   destination?: string;
   budget?: number | null;
+  timezone?: string | null;
   arrival_date?: string;
   departure_date?: string;
   confirm_remove_days?: boolean;
@@ -248,6 +251,7 @@ export async function updateTrip(
   const fieldUpdates: Record<string, unknown> = {};
   if (input.destination !== undefined) fieldUpdates.destination = input.destination;
   if (input.budget !== undefined) fieldUpdates.budget = input.budget;
+  if (input.timezone !== undefined) fieldUpdates.timezone = input.timezone;
 
   if (!datesChanged) {
     if (Object.keys(fieldUpdates).length > 0) {
@@ -358,6 +362,7 @@ export interface AddActivityInput {
   amount_paid?: number;
   is_paid?: boolean;
   location_address?: string;
+  timezone?: string | null;
 }
 
 export async function addActivity(supabase: SupabaseClient, input: AddActivityInput) {
@@ -378,8 +383,9 @@ export async function addActivity(supabase: SupabaseClient, input: AddActivityIn
       amount_paid: input.amount_paid ?? null,
       is_paid: input.is_paid ?? null,
       location_address: input.location_address ?? null,
+      timezone: input.timezone ?? null,
     })
-    .select('id,day_id,title,description,start_time,end_time,cost,currency,amount_paid,is_paid,location_address')
+    .select('id,day_id,title,description,start_time,end_time,cost,currency,amount_paid,is_paid,location_address,timezone')
     .single();
   if (error || !data) throw new WriteError(`Failed to add activity: ${error?.message ?? 'no row returned'}`);
   return data;
@@ -397,6 +403,7 @@ export interface UpdateActivityInput {
   amount_paid?: number;
   is_paid?: boolean;
   location_address?: string;
+  timezone?: string | null;
 }
 
 export async function updateActivity(supabase: SupabaseClient, input: UpdateActivityInput) {
@@ -410,6 +417,7 @@ export async function updateActivity(supabase: SupabaseClient, input: UpdateActi
   if (input.amount_paid !== undefined) updates.amount_paid = input.amount_paid;
   if (input.is_paid !== undefined) updates.is_paid = input.is_paid;
   if (input.location_address !== undefined) updates.location_address = input.location_address;
+  if (input.timezone !== undefined) updates.timezone = input.timezone;
 
   // Changing the date re-resolves day_id (scoped to the activity's own trip).
   if (input.date !== undefined) {
@@ -431,7 +439,7 @@ export async function updateActivity(supabase: SupabaseClient, input: UpdateActi
     .from('day_activities')
     .update(updates)
     .eq('id', input.activity_id)
-    .select('id,day_id,title,description,start_time,end_time,cost,currency,amount_paid,is_paid,location_address')
+    .select('id,day_id,title,description,start_time,end_time,cost,currency,amount_paid,is_paid,location_address,timezone')
     .maybeSingle();
   if (error) throw new WriteError(`Failed to update activity: ${error.message}`);
   if (!data) throw new WriteError('Activity not found, or you do not have access to it.');
@@ -466,6 +474,7 @@ export interface AddDiningInput {
   currency?: string;
   amount_paid?: number;
   is_paid?: boolean;
+  timezone?: string | null;
 }
 
 export async function addDining(supabase: SupabaseClient, input: AddDiningInput) {
@@ -487,9 +496,10 @@ export async function addDining(supabase: SupabaseClient, input: AddDiningInput)
       currency: input.currency ?? null,
       amount_paid: input.amount_paid ?? null,
       is_paid: input.is_paid ?? null,
+      timezone: input.timezone ?? null,
     })
     .select(
-      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid',
+      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
     )
     .single();
   if (error || !data) throw new WriteError(`Failed to add dining reservation: ${error?.message ?? 'no row returned'}`);
@@ -509,6 +519,7 @@ export interface UpdateDiningInput {
   currency?: string;
   amount_paid?: number;
   is_paid?: boolean;
+  timezone?: string | null;
 }
 
 export async function updateDining(supabase: SupabaseClient, input: UpdateDiningInput) {
@@ -523,6 +534,7 @@ export async function updateDining(supabase: SupabaseClient, input: UpdateDining
   if (input.currency !== undefined) updates.currency = input.currency;
   if (input.amount_paid !== undefined) updates.amount_paid = input.amount_paid;
   if (input.is_paid !== undefined) updates.is_paid = input.is_paid;
+  if (input.timezone !== undefined) updates.timezone = input.timezone;
 
   if (input.date !== undefined) {
     const { data: existing, error: exErr } = await supabase
@@ -544,7 +556,7 @@ export async function updateDining(supabase: SupabaseClient, input: UpdateDining
     .update(updates)
     .eq('id', input.reservation_id)
     .select(
-      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid',
+      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
     )
     .maybeSingle();
   if (error) throw new WriteError(`Failed to update reservation: ${error.message}`);
@@ -611,6 +623,7 @@ export interface AddAccommodationInput {
   currency?: string;
   amount_paid?: number;
   is_paid?: boolean;
+  timezone?: string | null;
 }
 
 export async function addAccommodation(supabase: SupabaseClient, input: AddAccommodationInput) {
@@ -637,9 +650,10 @@ export async function addAccommodation(supabase: SupabaseClient, input: AddAccom
       currency: input.currency ?? null,
       amount_paid: input.amount_paid ?? null,
       is_paid: input.is_paid ?? null,
+      timezone: input.timezone ?? null,
     })
     .select(
-      'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid',
+      'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid,timezone',
     )
     .single();
   if (error || !data) throw new WriteError(`Failed to add accommodation: ${error?.message ?? 'no row returned'}`);
@@ -669,6 +683,7 @@ export interface UpdateAccommodationInput {
   currency?: string;
   amount_paid?: number;
   is_paid?: boolean;
+  timezone?: string | null;
 }
 
 export async function updateAccommodation(supabase: SupabaseClient, input: UpdateAccommodationInput) {
@@ -689,6 +704,7 @@ export async function updateAccommodation(supabase: SupabaseClient, input: Updat
   if (input.currency !== undefined) updates.currency = input.currency;
   if (input.amount_paid !== undefined) updates.amount_paid = input.amount_paid;
   if (input.is_paid !== undefined) updates.is_paid = input.is_paid;
+  if (input.timezone !== undefined) updates.timezone = input.timezone;
 
   if (Object.keys(updates).length === 0) {
     throw new WriteError('Nothing to update: provide at least one field to change.');
@@ -720,7 +736,7 @@ export async function updateAccommodation(supabase: SupabaseClient, input: Updat
     .update(updates)
     .eq('stay_id', input.stay_id)
     .select(
-      'stay_id,trip_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid',
+      'stay_id,trip_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid,timezone',
     )
     .maybeSingle();
   if (error) throw new WriteError(`Failed to update accommodation: ${error.message}`);
@@ -792,10 +808,12 @@ export interface AddTransportationInput {
   end_time?: string;
   cost?: number;
   currency?: string;
+  departure_timezone?: string | null;
+  arrival_timezone?: string | null;
 }
 
 const TRANSPORT_SELECT =
-  'id,type,provider,details,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency';
+  'id,type,provider,details,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency,departure_timezone,arrival_timezone';
 
 export async function addTransportation(supabase: SupabaseClient, input: AddTransportationInput) {
   const { data, error } = await supabase
@@ -815,6 +833,8 @@ export async function addTransportation(supabase: SupabaseClient, input: AddTran
       end_time: input.end_time ?? null,
       cost: input.cost ?? null,
       currency: input.currency ?? null,
+      departure_timezone: input.departure_timezone ?? null,
+      arrival_timezone: input.arrival_timezone ?? null,
     })
     .select(TRANSPORT_SELECT)
     .single();
@@ -837,6 +857,8 @@ export interface UpdateTransportationInput {
   end_time?: string;
   cost?: number;
   currency?: string;
+  departure_timezone?: string | null;
+  arrival_timezone?: string | null;
 }
 
 export async function updateTransportation(supabase: SupabaseClient, input: UpdateTransportationInput) {
@@ -854,6 +876,8 @@ export async function updateTransportation(supabase: SupabaseClient, input: Upda
   if (input.end_time !== undefined) updates.end_time = input.end_time;
   if (input.cost !== undefined) updates.cost = input.cost;
   if (input.currency !== undefined) updates.currency = input.currency;
+  if (input.departure_timezone !== undefined) updates.departure_timezone = input.departure_timezone;
+  if (input.arrival_timezone !== undefined) updates.arrival_timezone = input.arrival_timezone;
 
   if (Object.keys(updates).length === 0) {
     throw new WriteError('Nothing to update: provide at least one field to change.');

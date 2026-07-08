@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { isValidTimeZone } from '../../src/utils/timezoneLabel';
 import { summarizeCosts } from './budgetSummary';
 import {
   createTrip,
@@ -61,6 +62,27 @@ const timeField = z
 const currencyField = z
   .string()
   .regex(/^[A-Z]{3}$/, 'Use a 3-letter currency code, e.g. EUR');
+export const timezoneField = z
+  .string()
+  .refine(isValidTimeZone, 'Use an IANA timezone id, e.g. "Europe/Paris"');
+
+const ENTITY_TZ_DESCRIPTION =
+  'IANA timezone the times are local to, e.g. "Asia/Tokyo". Only set it when it differs from ' +
+  'the trip default; omit to inherit the trip default, or pass null to clear back to inheriting. ' +
+  'A display label only — times are stored as wall-clock values and never converted.';
+
+/** get_trip column lists. Exported so tests can pin the timezone columns. */
+export const GET_TRIP_SELECT = {
+  trip: 'trip_id,destination,arrival_date,departure_date,budget,timezone',
+  accommodations:
+    'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid,timezone',
+  transportation:
+    'id,type,provider,details,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency,departure_timezone,arrival_timezone',
+  activities:
+    'id,day_id,title,description,start_time,end_time,location_address,location_phone,location_website,cost,currency,amount_paid,is_paid,timezone',
+  dining:
+    'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,phone_number,website,cost,currency,amount_paid,is_paid,timezone',
+} as const;
 
 /**
  * Register every WanderLuxe tool on the given server. `supabase` is the
@@ -81,13 +103,13 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
     'list_trips',
     {
       description:
-        'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination, dates, and budget.',
+        'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination, dates, budget, and the trip default timezone.',
       annotations: READ_ONLY,
     },
     async () => {
       const { data, error } = await supabase
         .from('trips')
-        .select('trip_id,destination,arrival_date,departure_date,budget,created_at')
+        .select('trip_id,destination,arrival_date,departure_date,budget,timezone,created_at')
         .order('arrival_date', { ascending: false });
       if (error) return toolError(`Failed to list trips: ${error.message}`);
       return toolResult({ trips: data ?? [] });
@@ -98,7 +120,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
     'get_trip',
     {
       description:
-        'Get the full itinerary for one trip: day-by-day activities and dining reservations, plus accommodations and transportation. Use list_trips to find the trip_id.',
+        "Get the full itinerary for one trip: day-by-day activities and dining reservations, plus accommodations and transportation. Use list_trips to find the trip_id. All times are wall-clock values local to each item's timezone field; a null timezone means the trip's default timezone.",
       inputSchema: { trip_id: z.string().uuid().describe('Trip ID from list_trips') },
       annotations: READ_ONLY,
     },
@@ -106,7 +128,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
       const [tripRes, daysRes, staysRes, transportRes, activitiesRes, diningRes] = await Promise.all([
         supabase
           .from('trips')
-          .select('trip_id,destination,arrival_date,departure_date,budget')
+          .select(GET_TRIP_SELECT.trip)
           .eq('trip_id', trip_id)
           .maybeSingle(),
         supabase
@@ -116,26 +138,20 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
           .order('date'),
         supabase
           .from('accommodations')
-          .select(
-            'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid',
-          )
+          .select(GET_TRIP_SELECT.accommodations)
           .eq('trip_id', trip_id),
         supabase
           .from('transportation')
-          .select(
-            'id,type,provider,details,flight_number,confirmation_number,departure_location,arrival_location,start_date,start_time,end_date,end_time,cost,currency',
-          )
+          .select(GET_TRIP_SELECT.transportation)
           .eq('trip_id', trip_id)
           .order('start_date'),
         supabase
           .from('day_activities')
-          .select('id,day_id,title,description,start_time,end_time,location_address,location_phone,location_website,cost,currency,amount_paid,is_paid')
+          .select(GET_TRIP_SELECT.activities)
           .eq('trip_id', trip_id),
         supabase
           .from('reservations')
-          .select(
-            'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,phone_number,website,cost,currency,amount_paid,is_paid',
-          )
+          .select(GET_TRIP_SELECT.dining)
           .eq('trip_id', trip_id),
       ]);
 
@@ -236,6 +252,11 @@ function registerWriteTools(
         arrival_date: dateField.describe('First day of the trip (YYYY-MM-DD)'),
         departure_date: dateField.describe('Last day of the trip (YYYY-MM-DD)'),
         budget: z.number().positive().optional().describe('Total trip budget (optional)'),
+        timezone: timezoneField
+          .optional()
+          .describe(
+            'IANA timezone of the destination, e.g. "Asia/Tokyo" — the default zone trip times are read in. Set it when the destination is known. Label only; times are stored as wall-clock values and never converted.',
+          ),
       },
       annotations: WRITE,
     },
@@ -266,6 +287,12 @@ function registerWriteTools(
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
         destination: z.string().min(1).optional(),
         budget: z.number().positive().nullable().optional().describe('Set to null to clear the budget'),
+        timezone: timezoneField
+          .nullable()
+          .optional()
+          .describe(
+            'IANA default timezone for the trip, e.g. "Asia/Tokyo". Pass null to clear it (the app then re-resolves it from the destination). Label only; changing it never converts stored times.',
+          ),
         arrival_date: dateField.optional(),
         departure_date: dateField.optional(),
         confirm_remove_days: z
@@ -302,6 +329,7 @@ function registerWriteTools(
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -331,6 +359,7 @@ function registerWriteTools(
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -377,6 +406,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -407,6 +437,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -455,6 +486,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -487,6 +519,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
+        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -535,6 +568,18 @@ function registerWriteTools(
         end_time: timeField.optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        departure_timezone: timezoneField
+          .nullable()
+          .optional()
+          .describe(
+            'IANA timezone the departure date/time are local to, e.g. "America/New_York". Set both zones on cross-timezone legs like international flights. Omit to inherit the trip default. Label only — times are never converted.',
+          ),
+        arrival_timezone: timezoneField
+          .nullable()
+          .optional()
+          .describe(
+            'IANA timezone the arrival date/time are local to, e.g. "Europe/London". Set both zones on cross-timezone legs like international flights. Omit to inherit the trip default. Label only — times are never converted.',
+          ),
       },
       annotations: WRITE,
     },
@@ -567,6 +612,18 @@ function registerWriteTools(
         end_time: timeField.optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
+        departure_timezone: timezoneField
+          .nullable()
+          .optional()
+          .describe(
+            'IANA timezone the departure date/time are local to, e.g. "America/New_York". Pass null to clear back to inheriting the trip default. Label only — times are never converted.',
+          ),
+        arrival_timezone: timezoneField
+          .nullable()
+          .optional()
+          .describe(
+            'IANA timezone the arrival date/time are local to, e.g. "Europe/London". Pass null to clear back to inheriting the trip default. Label only — times are never converted.',
+          ),
       },
       annotations: WRITE_IDEMPOTENT,
     },
