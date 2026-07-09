@@ -5,7 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, ListTree, CalendarPlus } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CalendarDays, ListTree, CalendarPlus, FileDown, MoreHorizontal } from 'lucide-react';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
 import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
@@ -53,6 +59,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
+  const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
   const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
 
   // Fetch weather for the trip destination (only for current/upcoming trips)
@@ -209,32 +216,64 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             </h2>
             <ViewingStatusAvatars tripId={tripId} />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="inline-flex rounded-md border border-border bg-card p-0.5 mr-1">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <fieldset className="grid flex-1 min-w-0 grid-cols-2 rounded-md border border-border bg-card p-0.5 sm:inline-flex sm:flex-none">
+              <legend className="sr-only">Itinerary view</legend>
               <button
                 type="button"
                 aria-pressed={itineraryView === 'timeline'}
                 onClick={() => setItineraryView('timeline')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-sm rounded-[0.4rem] transition-colors ${itineraryView === 'timeline' ? 'bg-sunset-500 text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`flex min-h-[44px] items-center justify-center gap-1.5 px-3 text-sm rounded-[0.4rem] transition-colors sm:min-h-0 sm:py-1 ${itineraryView === 'timeline' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                <ListTree className="h-3.5 w-3.5" /><span className="hidden sm:inline">Timeline</span>
+                <ListTree className="h-3.5 w-3.5" />Timeline
               </button>
               <button
                 type="button"
                 aria-pressed={itineraryView === 'calendar'}
                 onClick={() => setItineraryView('calendar')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-sm rounded-[0.4rem] transition-colors ${itineraryView === 'calendar' ? 'bg-sunset-500 text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`flex min-h-[44px] items-center justify-center gap-1.5 px-3 text-sm rounded-[0.4rem] transition-colors sm:min-h-0 sm:py-1 ${itineraryView === 'calendar' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                <CalendarDays className="h-3.5 w-3.5" /><span className="hidden sm:inline">Calendar</span>
+                <CalendarDays className="h-3.5 w-3.5" />Calendar
               </button>
-            </div>
+            </fieldset>
+            {/* Desktop: rare actions stay as labeled buttons. */}
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={() => setIsSyncSheetOpen(true)}>
-                <CalendarPlus className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Add to calendar</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+                onClick={() => setIsSyncSheetOpen(true)}
+              >
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Add to calendar
               </Button>
             )}
-            <ExportPdfButton tripId={tripId} className="" />
+            <ExportPdfButton
+              tripId={tripId}
+              className="hidden sm:inline-flex"
+              open={isPdfExportOpen}
+              onOpenChange={setIsPdfExportOpen}
+            />
+            {/* Mobile: rare actions fold into an overflow menu with full labels. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-11 w-11 sm:hidden" aria-label="More actions">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canEdit && (
+                  <DropdownMenuItem onSelect={() => setIsSyncSheetOpen(true)}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Add to calendar
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={() => setIsPdfExportOpen(true)}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

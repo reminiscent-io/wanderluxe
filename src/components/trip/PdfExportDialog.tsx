@@ -20,14 +20,21 @@ interface PdfExportDialogProps {
   tripId: string;
   className?: string;
   onExport: (options: PdfExportOptions) => Promise<void>;
+  /** Controlled open state, so the dialog can also be launched from an overflow menu. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   tripId,
   className,
   onExport,
+  open,
+  onOpenChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = open ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState<PdfExportOptions>({
     showImages: true,
@@ -53,8 +60,8 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className={className}>
-          <FileDown className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Export PDF</span>
+          <FileDown className="mr-2 h-4 w-4" />
+          Export PDF
         </Button>
       </DialogTrigger>
       

@@ -26,9 +26,9 @@ const AddEntityPicker: React.FC<AddEntityPickerProps> = ({ open, onOpenChange, o
             key={type}
             type="button"
             onClick={() => onPick(type)}
-            className="flex flex-col items-center gap-2 rounded-card border border-border bg-card p-4 hover:border-sunset-400 transition-colors"
+            className="flex flex-col items-center gap-2 rounded-card border border-border bg-card p-4 hover:bg-accent transition-colors"
           >
-            <Icon className="h-5 w-5 text-sunset-500" />
+            <Icon className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium">{label}</span>
           </button>
         ))}
