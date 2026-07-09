@@ -70,25 +70,21 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
   };
 
   const handleContactClick = () => {
-    try {
-      if (user && tripId) {
-        window.gtag('event', 'advisor_contact', {
-          event_category: 'Booking',
-          event_label: tripId,
-          user_id: user.id,
-          value: 1,
-        });
-
-        window.open('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
-
-        toast({
-          title: "Redirecting to Fora Travel",
-          description: "Opening Kevin's profile page for booking assistance",
-        });
-      }
-    } catch (error) {
-      console.error('Error tracking advisor contact:', error);
+    if (user && tripId) {
+      window.gtag?.('event', 'advisor_contact', {
+        event_category: 'Booking',
+        event_label: tripId,
+        user_id: user.id,
+        value: 1,
+      });
     }
+
+    window.open('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
+
+    toast({
+      title: "Redirecting to Fora Travel",
+      description: "Opening Kevin's profile page for booking assistance",
+    });
   };
 
   return (
@@ -104,7 +100,8 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
       {/* Primary: Expedia self-serve booking */}
-      <Card className="flex flex-col p-5 sm:p-6">
+      {/* min-w-0: without it the advisor card's chip rail inflates the shared grid track past the viewport on mobile */}
+      <Card className="flex min-w-0 flex-col p-5 sm:p-6">
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
             Search Expedia
@@ -146,7 +143,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
       </Card>
 
       {/* Secondary: Human travel advisor */}
-      <Card className="flex flex-col p-5 sm:p-6">
+      <Card className="flex min-w-0 flex-col p-5 sm:p-6">
         <div className="mb-5 flex items-baseline justify-between gap-3">
           <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
             Or speak with an advisor
