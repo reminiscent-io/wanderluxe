@@ -17,7 +17,6 @@ import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
 import { computeSlotMinTime, DEFAULT_SLOT_MIN_TIME } from './slotWindow';
 import { applyDropPatch } from './calendarMutations';
-import { Button } from '@/components/ui/button';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
@@ -139,23 +138,19 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
 
   return (
     <div className="wl-calendar space-y-3">
-      <CalendarToolbar title={title} activeView={activeView} onViewChange={changeView} onPrev={() => api()?.prev()} onNext={() => api()?.next()} onToday={() => api()?.today()} />
+      <CalendarToolbar
+        title={title}
+        activeView={activeView}
+        onViewChange={changeView}
+        onPrev={() => api()?.prev()}
+        onNext={() => api()?.next()}
+        onToday={() => api()?.today()}
+        dayWindow={showDayWindowToggle ? { expanded: showFullDay, onToggle: () => setShowFullDay((v) => !v) } : null}
+      />
       {isEmpty && (
         <div className="rounded-card border border-dashed border-border bg-card/60 p-10 text-center">
           <p className="font-display text-xl text-foreground">Your itinerary is empty</p>
           <p className="mt-1 text-sm text-muted-foreground">Tap a day to add your first stop.</p>
-        </div>
-      )}
-      {showDayWindowToggle && (
-        <div className="-mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => setShowFullDay((v) => !v)}
-          >
-            {showFullDay ? 'Hide early morning' : 'Show full day'}
-          </Button>
         </div>
       )}
       <div className={isEmpty ? 'opacity-40' : ''}>

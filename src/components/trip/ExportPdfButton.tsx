@@ -9,6 +9,8 @@ import { exportItineraryPdf } from '@/services/pdfmake-export'; // new pdfMake h
 interface ExportPdfButtonProps {
   tripId: string;
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -18,6 +20,8 @@ interface ExportPdfButtonProps {
 const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
   tripId,
   className,
+  open,
+  onOpenChange,
 }) => {
   /** Called by PdfExportDialog when the user presses “Export PDF” */
   const handleExport = async (options: PdfExportOptions) => {
@@ -29,6 +33,8 @@ const ExportPdfButton: React.FC<ExportPdfButtonProps> = ({
       tripId={tripId}
       className={className}
       onExport={handleExport}
+      open={open}
+      onOpenChange={onOpenChange}
     />
   );
 };
