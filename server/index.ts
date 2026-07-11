@@ -83,7 +83,10 @@ app.use(helmet({
       frameAncestors: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
     },
   },
-  crossOriginEmbedderPolicy: { policy: "credentialless" },
+  // COEP disabled: any COEP value (require-corp or credentialless) blocks the
+  // cross-origin Expedia widget iframe, whose responses carry no CORP/COEP
+  // headers. Nothing in the app needs crossOriginIsolated (no SharedArrayBuffer).
+  crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
