@@ -18,6 +18,7 @@ import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
+import AssistantDock from './ai-assistant/AssistantDock';
 import { useWeather } from '@/hooks/useWeather';
 import ViewingStatusAvatars from './timeline/ViewingStatusAvatars';
 
@@ -61,6 +62,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
   const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
+  // Desktop assistant visibility. Defaults open on every load (deliberately unpersisted).
+  const [assistantOpen, setAssistantOpen] = useState(true);
 
   // Fetch weather for the trip destination (only for current/upcoming trips)
   // Prefer primary_destination if available, fallback to trip name
@@ -207,8 +210,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         <div className="absolute inset-0 bg-background/40 z-20" aria-hidden="true" />
       )}
 
-      {/* Timeline column: full width below lg, 58% from lg+ */}
-      <div className="w-full lg:w-[58%] px-0 sm:px-4 md:px-6 pt-4 md:pt-6 space-y-6">
+      {/* Itinerary column: full width below lg; from lg+ 58% beside the docked
+          assistant, full width when it's collapsed or floating over the calendar */}
+      <div
+        data-testid="itinerary-column"
+        className={`w-full px-0 sm:px-4 md:px-6 pt-4 md:pt-6 space-y-6 ${
+          itineraryView === 'timeline' && assistantOpen ? 'lg:w-[58%]' : 'lg:w-full'
+        }`}
+      >
         <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center gap-4 min-w-0">
             <h2 className="font-display text-2xl tracking-tight text-foreground shrink-0">
@@ -304,18 +313,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         )}
       </div>
 
-      {/* AI Assistant column: hidden below lg; sticky bottom-anchored from lg+ */}
-      <div className="hidden lg:block lg:w-[42%] lg:pr-6 lg:pt-6">
-        <div
-          className="sticky"
-          style={{
-            top: 'calc(var(--app-nav-h, 56px) + 0.5rem)',
-            height: 'calc(100dvh - var(--app-nav-h, 56px) - 1rem)',
-          }}
-        >
-          <AIAssistantPanel tripId={tripId} />
-        </div>
-      </div>
+      <AssistantDock
+        open={assistantOpen}
+        mode={itineraryView === 'calendar' ? 'overlay' : 'docked'}
+        onOpen={() => setAssistantOpen(true)}
+      >
+        <AIAssistantPanel tripId={tripId} onCollapse={() => setAssistantOpen(false)} />
+      </AssistantDock>
     </div>
   );
 };
