@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -17,6 +17,8 @@ import type { AIUsageInfo, AIChatMessage, ChatFileAttachment, ExtractedItem, Pla
 
 interface AIAssistantPanelProps {
   tripId: string;
+  /** Renders a collapse button in the header when provided (desktop dock). */
+  onCollapse?: () => void;
 }
 
 function markItemsCreated(
@@ -51,11 +53,10 @@ function applyItemStatusUpdate(
   });
 }
 
-const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
+const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse }) => {
   const queryClient = useQueryClient();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Extraction state
   const [extractionMessages, setExtractionMessages] = useState<AIChatMessage[]>([]);
@@ -295,26 +296,23 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title={isCollapsed ? 'Expand' : 'Collapse'}
-            aria-label={isCollapsed ? 'Expand assistant' : 'Collapse assistant'}
-          >
-            {isCollapsed ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
+          {onCollapse && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCollapse}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title="Collapse"
+              aria-label="Collapse assistant"
+            >
               <ChevronDown className="w-4 h-4" />
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
 
-        {/* Collapsible content */}
-        {!isCollapsed && (
-          <>
-            {/* Messages area */}
+        {/* Content — always rendered; visibility is the dock's job */}
+        <>
+          {/* Messages area */}
             <ChatMessageList
               messages={allMessages}
               isLoading={isLoading || isExtracting}
@@ -362,8 +360,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId }) => {
                   : "Ask about your trip or attach a booking..."
               }
             />
-          </>
-        )}
+        </>
       </div>
 
       {/* Paywall modal */}
