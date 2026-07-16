@@ -286,8 +286,6 @@ const TripDetails = () => {
             className="relative flex-1 w-full z-10 min-h-screen rounded-t-[28px] bg-sand-50 -mt-6"
             style={{
               boxShadow: '0 -10px 40px -5px rgba(0,0,0,0.10)',
-              backdropFilter: 'blur(2px)',
-              WebkitBackdropFilter: 'blur(2px)',
             }}
           >
 
