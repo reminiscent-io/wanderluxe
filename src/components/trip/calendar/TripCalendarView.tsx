@@ -173,6 +173,15 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           events={events}
           slotMinTime={slotMinTime}
           eventContent={(arg) => <CalendarEventChip arg={arg} />}
+          eventClassNames={(arg) => [`wl-ev-${(arg.event.extendedProps as { entityType?: CalendarEntityType }).entityType ?? 'activity'}`]}
+          dayHeaderContent={(arg) =>
+            arg.view.type.startsWith('timeGrid') ? (
+              <div className="flex flex-col items-center gap-0.5 py-1 font-sans">
+                <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{format(arg.date, 'EEE')}</span>
+                <span className={`font-display text-xl leading-none ${arg.isToday ? 'text-primary' : 'text-foreground'}`}>{format(arg.date, 'd')}</span>
+              </div>
+            ) : undefined
+          }
           datesSet={(arg) => {
             setTitle(arg.view.title);
             const start = format(arg.start, 'yyyy-MM-dd');
