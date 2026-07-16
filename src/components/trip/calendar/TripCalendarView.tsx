@@ -12,7 +12,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { useCalendarEvents } from './useCalendarEvents';
 import { useCalendarRealtime } from './useCalendarRealtime';
 import CalendarToolbar, { type CalendarViewName } from './CalendarToolbar';
-import CalendarEventChip from './CalendarEventChip';
+import CalendarEventPeek from './CalendarEventPeek';
 import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
 import { computeSlotMinTime, DEFAULT_SLOT_MIN_TIME } from './slotWindow';
@@ -172,7 +172,7 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           validRange={validRange}
           events={events}
           slotMinTime={slotMinTime}
-          eventContent={(arg) => <CalendarEventChip arg={arg} />}
+          eventContent={(arg) => <CalendarEventPeek arg={arg} />}
           eventClassNames={(arg) => [`wl-ev-${(arg.event.extendedProps as { entityType?: CalendarEntityType }).entityType ?? 'activity'}`]}
           dayHeaderContent={(arg) =>
             arg.view.type.startsWith('timeGrid') ? (
