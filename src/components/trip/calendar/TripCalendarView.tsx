@@ -12,7 +12,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { useCalendarEvents } from './useCalendarEvents';
 import { useCalendarRealtime } from './useCalendarRealtime';
 import CalendarToolbar, { type CalendarViewName } from './CalendarToolbar';
-import CalendarEventChip from './CalendarEventChip';
+import CalendarEventPeek from './CalendarEventPeek';
 import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
 import { computeSlotMinTime, DEFAULT_SLOT_MIN_TIME } from './slotWindow';
@@ -172,7 +172,16 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           validRange={validRange}
           events={events}
           slotMinTime={slotMinTime}
-          eventContent={(arg) => <CalendarEventChip arg={arg} />}
+          eventContent={(arg) => <CalendarEventPeek arg={arg} />}
+          eventClassNames={(arg) => [`wl-ev-${(arg.event.extendedProps as { entityType?: CalendarEntityType }).entityType ?? 'activity'}`]}
+          dayHeaderContent={(arg) =>
+            arg.view.type.startsWith('timeGrid') ? (
+              <div className="flex flex-col items-center gap-0.5 py-1 font-sans">
+                <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{format(arg.date, 'EEE')}</span>
+                <span className={`font-display text-xl leading-none ${arg.isToday ? 'text-primary' : 'text-foreground'}`}>{format(arg.date, 'd')}</span>
+              </div>
+            ) : undefined
+          }
           datesSet={(arg) => {
             setTitle(arg.view.title);
             const start = format(arg.start, 'yyyy-MM-dd');
