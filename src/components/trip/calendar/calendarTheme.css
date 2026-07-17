@@ -32,7 +32,9 @@
   color: hsl(var(--muted-foreground));
   font-size: 0.72rem;
 }
-.wl-calendar .fc-timegrid-slot { height: 2.6em; }
+/* Dense rows: 30-min slot ≈ 21px, so the default 7am–10pm window (~625px) fits a laptop viewport.
+   line-height must shrink with it — FC injects an nbsp into empty slots, whose 1.5-line box would floor rows at 24px. */
+.wl-calendar .fc-timegrid-slot { height: 1.3em; line-height: 1.1; }
 /* Half-hour rules fade to a whisper; the hour lines carry the grid. */
 .wl-calendar .fc-timegrid-slot-minor { border-top-color: color-mix(in srgb, hsl(var(--border)) 40%, transparent); }
 

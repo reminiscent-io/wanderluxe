@@ -74,17 +74,35 @@ describe('TripCalendarView', () => {
     expect(slot(container, '04:00:00')).not.toBeInTheDocument();
   });
 
+  it('ends the time grid at 10pm by default', () => {
+    const { container } = renderCalendar(FUTURE_TRIP);
+    expect(slot(container, '21:30:00')).toBeInTheDocument();
+    expect(slot(container, '22:00:00')).not.toBeInTheDocument();
+  });
+
+  it('raises the grid end to fit an event that runs past 10pm', () => {
+    mockEvents = [LOUVRE, { id: 'reservation:r1', title: 'Late dinner', start: '2030-03-01T21:30:00', end: '2030-03-01T23:00:00', allDay: false, extendedProps: { entityType: 'dining', record: { id: 'r1' } } }];
+    const { container } = renderCalendar(FUTURE_TRIP);
+    expect(slot(container, '22:30:00')).toBeInTheDocument();
+    expect(slot(container, '23:00:00')).not.toBeInTheDocument();
+  });
+
   it('expands to the full 24-hour day and collapses back', () => {
     const { container } = renderCalendar(FUTURE_TRIP);
     fireEvent.click(screen.getByRole('button', { name: 'Show full day' }));
     expect(slot(container, '00:00:00')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide early morning' }));
+    expect(slot(container, '23:30:00')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Hide extra hours' }));
     expect(slot(container, '00:00:00')).not.toBeInTheDocument();
+    expect(slot(container, '23:30:00')).not.toBeInTheDocument();
     expect(slot(container, '07:00:00')).toBeInTheDocument();
   });
 
   it('hides the toggle when nothing is collapsed', () => {
-    mockEvents = [{ id: 'activity:a2', title: 'Midnight snack', start: '2030-03-01T00:30:00', allDay: false, extendedProps: { entityType: 'activity', record: { id: 'a2' } } }];
+    mockEvents = [
+      { id: 'activity:a2', title: 'Midnight snack', start: '2030-03-01T00:30:00', allDay: false, extendedProps: { entityType: 'activity', record: { id: 'a2' } } },
+      { id: 'activity:a3', title: 'Stargazing', start: '2030-03-01T23:15:00', allDay: false, extendedProps: { entityType: 'activity', record: { id: 'a3' } } },
+    ];
     renderCalendar(FUTURE_TRIP);
     expect(screen.queryByRole('button', { name: 'Show full day' })).not.toBeInTheDocument();
   });

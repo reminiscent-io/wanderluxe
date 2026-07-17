@@ -15,7 +15,7 @@ import CalendarToolbar, { type CalendarViewName } from './CalendarToolbar';
 import CalendarEventPeek from './CalendarEventPeek';
 import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
-import { computeSlotMinTime, DEFAULT_SLOT_MIN_TIME } from './slotWindow';
+import { computeSlotMinTime, computeSlotMaxTime, DEFAULT_SLOT_MIN_TIME, DEFAULT_SLOT_MAX_TIME } from './slotWindow';
 import { applyDropPatch } from './calendarMutations';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
@@ -112,13 +112,19 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
   const dialogTripDates = { arrival_date: tripDates.arrival_date ?? '', departure_date: tripDates.departure_date ?? '' };
   const isEmpty = !isLoading && events.length === 0;
 
-  // Grid starts at 7am (earlier if an event demands it); "Show full day" reveals the hidden early hours.
+  // Grid spans 7am–10pm (widened if an event demands it); "Show full day" reveals the hidden hours.
   const collapsedSlotMin = useMemo(
     () => (visibleRange ? computeSlotMinTime(events, visibleRange.start, visibleRange.end) : DEFAULT_SLOT_MIN_TIME),
     [events, visibleRange],
   );
+  const collapsedSlotMax = useMemo(
+    () => (visibleRange ? computeSlotMaxTime(events, visibleRange.start, visibleRange.end) : DEFAULT_SLOT_MAX_TIME),
+    [events, visibleRange],
+  );
   const slotMinTime = showFullDay ? '00:00:00' : collapsedSlotMin;
-  const showDayWindowToggle = activeView.startsWith('timeGrid') && collapsedSlotMin !== '00:00:00';
+  const slotMaxTime = showFullDay ? '24:00:00' : collapsedSlotMax;
+  const showDayWindowToggle = activeView.startsWith('timeGrid')
+    && (collapsedSlotMin !== '00:00:00' || collapsedSlotMax !== '24:00:00');
 
   const closeAndRefresh = () => { setEditing(null); setAdding(null); invalidateAll(); };
 
@@ -172,6 +178,7 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           validRange={validRange}
           events={events}
           slotMinTime={slotMinTime}
+          slotMaxTime={slotMaxTime}
           eventContent={(arg) => <CalendarEventPeek arg={arg} />}
           eventClassNames={(arg) => [`wl-ev-${(arg.event.extendedProps as { entityType?: CalendarEntityType }).entityType ?? 'activity'}`]}
           dayHeaderContent={(arg) =>

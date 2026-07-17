@@ -12,7 +12,7 @@ interface CalendarToolbarProps {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
-  /** Early-morning day-window toggle; null hides it (month/list views, or nothing collapsed). */
+  /** Day-window toggle for the hidden early/late hours; null hides it (month/list views, or nothing collapsed). */
   dayWindow?: { expanded: boolean; onToggle: () => void } | null;
 }
 
@@ -48,7 +48,7 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({ title, activeView, on
           className="min-h-[44px] px-2 text-xs text-muted-foreground sm:min-h-0 sm:h-7"
           onClick={dayWindow.onToggle}
         >
-          {dayWindow.expanded ? 'Hide early morning' : 'Show full day'}
+          {dayWindow.expanded ? 'Hide extra hours' : 'Show full day'}
         </Button>
       )}
       <fieldset className="grid w-full min-w-0 grid-cols-4 rounded-md border border-border bg-card p-0.5 sm:inline-flex sm:w-auto">
