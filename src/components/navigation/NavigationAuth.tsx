@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserAvatar from "./UserAvatar";
 
@@ -12,6 +13,15 @@ const NavigationAuth = () => {
     <motion.div className="flex items-center space-x-4">
       {session ? (
         <>
+          <motion.button
+            onClick={() => navigate("/create-trip")}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Create trip"
+            className="md:hidden flex h-9 w-9 items-center justify-center rounded-full transition-colors bg-earth-500 text-white hover:bg-earth-600"
+          >
+            <Plus className="h-5 w-5" aria-hidden="true" />
+          </motion.button>
           <motion.button
             onClick={() => navigate("/create-trip")}
             whileHover={{ scale: 1.05 }}
