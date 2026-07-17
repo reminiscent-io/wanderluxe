@@ -10,8 +10,8 @@ const ICONS: Record<CalendarEntityType, React.ComponentType<{ className?: string
   transportation: Plane,
 };
 
-/** Timed timegrid events at least this tall get the stacked (title over time) layout. */
-const STACK_MIN_MINUTES = 45;
+/** Timed timegrid events at least this long get the stacked (title over time) layout — at the dense slot height (~42px/hour) anything shorter can't fit two lines. */
+const STACK_MIN_MINUTES = 60;
 
 const CalendarEventChip: React.FC<{ arg: EventContentArg }> = ({ arg }) => {
   const { entityType, tzBadge } = arg.event.extendedProps as { entityType: CalendarEntityType; tzBadge?: string };
@@ -26,7 +26,7 @@ const CalendarEventChip: React.FC<{ arg: EventContentArg }> = ({ arg }) => {
 
   if (stacked) {
     return (
-      <div className="wl-chip-stacked flex h-full min-w-0 flex-col gap-0.5 px-2 py-1.5" data-entity-type={entityType}>
+      <div className="wl-chip-stacked flex h-full min-w-0 flex-col gap-0.5 px-2 py-1" data-entity-type={entityType}>
         <span className="flex min-w-0 items-center gap-1.5">
           <Icon className="wl-chip-icon h-3 w-3 shrink-0 opacity-70" aria-hidden data-testid={`chip-icon-${entityType}`} />
           <span className="truncate font-sans text-xs font-medium leading-tight">{arg.event.title}</span>
