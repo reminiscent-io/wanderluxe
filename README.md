@@ -106,14 +106,14 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 - ⚡ **Edge Functions** — 13 serverless Deno functions
 - 🔌 **WebSocket Subscriptions** — Live collaboration magic
 - 💳 **Stripe** — Pro subscription billing
-- 📧 **Mailgun** — Share notifications & trip reminder emails
+- 📧 **SendGrid + Mailgun** — Share notifications & trip reminder emails
 
 </td>
 </tr>
 </table>
 
 ### 🌐 External APIs & Integrations
-**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
+**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **SendGrid** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
 
 ---
 
@@ -215,7 +215,8 @@ GOOGLE_PLACES_API_KEY=...     # google-places-proxy, timezone-proxy
 OPENWEATHERMAP_API_KEY=...    # weather-proxy (5-day forecasts)
 AERODATABOX_API_KEY=...       # flight-status-proxy (flight-number lookup; free tier: 600 calls/mo)
 SERPER_API_KEY=...            # ai-chat web search (bookable restaurant links)
-MAILGUN_API_KEY=...           # share notifications + trip reminders
+SENDGRID_API_KEY=...          # share notification emails
+MAILGUN_API_KEY=...           # trip reminder emails
 MAILGUN_DOMAIN=...
 EXCHANGE_RATE_API=...         # update-exchange-rates (multi-currency budgets)
 CRON_SECRET=...               # auth for scheduled functions (reminders, exchange rates)
@@ -229,6 +230,7 @@ CRON_SECRET=...               # auth for scheduled functions (reminders, exchang
 - **Google Gemini**: Get your API key from [Google AI Studio](https://aistudio.google.com/apikey)
 - **OpenWeatherMap**: Free tier at [openweathermap.org/api](https://openweathermap.org/api)
 - **Stripe**: Get your keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+- **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
 - **Mailgun**: Create an account at [mailgun.com](https://www.mailgun.com)
 - **Serper**: Sign up at [serper.dev](https://serper.dev)
 - **AeroDataBox**: Subscribe via [RapidAPI](https://rapidapi.com/aedbx-aedbx/api/aerodatabox) (free tier: 600 calls/mo)
