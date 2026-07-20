@@ -8,10 +8,10 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)](https://vite.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase&logoColor=white)](https://supabase.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Demo](#) • [Documentation](#) • [Report Bug](#) • [Request Feature](#)
+[wanderluxe.io](https://wanderluxe.io) • [Explore Public Trips](https://wanderluxe.io/explore) • [Report Bug](https://github.com/reminiscent-io/wanderluxe/issues) • [Request Feature](https://github.com/reminiscent-io/wanderluxe/issues)
 
 </div>
 
@@ -19,36 +19,66 @@
 
 ## 🌍 About WanderLuxe
 
-Planning extraordinary travel experiences shouldn't feel like work. WanderLuxe reimagines trip planning as a collaborative, intelligent, and effortless experience—where AI-powered insights meet real-time collaboration, and every detail finds its perfect place.
+Planning extraordinary travel shouldn't feel like work. WanderLuxe is built for the **group organizer** — the person collecting flight confirmations in their inbox, juggling everyone's preferences, and keeping a shared trip from devolving into a thread of *"wait, where are we staying again?"*
 
-Born from the intersection of wanderlust and technology, WanderLuxe combines the sophistication of luxury travel planning with the power of modern web technologies. Whether you're orchestrating a multi-city European adventure or a relaxing coastal retreat, WanderLuxe keeps every booking, recommendation, and moment beautifully organized.
+WanderLuxe collapses that coordination tax into a single, beautiful, shared picture. Every booking, reservation, and activity finds its place on a timeline the whole group can see and contribute to in real time. AI does the grunt work — paste a confirmation and get a timeline event; ask the assistant for a restaurant and watch it appear on the right day. The core planner is free; a Pro subscription unlocks unlimited AI.
 
 ## ✨ What Makes WanderLuxe Special
 
 ### 🗺️ **Intelligent Trip Orchestration**
-Design your journey with precision and ease. Our interactive timeline lets you visualize your entire trip at a glance, with drag-and-drop simplicity and automatic day generation as your plans evolve. Every destination, powered by Google Places, becomes a canvas for your adventure.
+Design your journey with precision and ease, in the view that fits the moment:
+- **Timeline view** — day-by-day itinerary with drag-and-drop activity ordering, automatic day generation as dates change, and per-day weather badges
+- **Calendar view** — a FullCalendar time grid (3-day default, dense 7am–10pm layout) where you can drag and resize events to reschedule, click to edit, and hover for glanceable peek cards
+- **Google Places everywhere** — destinations, hotels, restaurants, and activity locations are all backed by Places autocomplete with photos, ratings, and contact details
 
 ### 🏨 **All-in-One Booking Management**
 Say goodbye to scattered confirmations and spreadsheet chaos:
-- **🏨 Accommodations** — Track every hotel, Airbnb, or resort with check-in/check-out precision
-- **✈️ Transportation** — Organize flights, trains, transfers, and car rentals in one place
-- **🎭 Activities** — Schedule experiences with time blocks and cost tracking
-- **🍽️ Dining** — Never miss a reservation with integrated restaurant management
+- **🏨 Accommodations** — Track every hotel or resort with check-in/check-out precision and automatic night-to-day mapping
+- **✈️ Transportation** — Flights, trains, car services, shuttles, ferries, and rental cars. Type a flight number and WanderLuxe auto-fills the airline, airports, and scheduled times via live AeroDataBox lookup
+- **🎭 Activities** — Schedule experiences with time blocks, locations, and cost tracking
+- **🍽️ Dining** — Reservations with party size, confirmation numbers, and restaurant details
+- **👥 Traveler assignment** — Tag exactly who's on each booking, so partial-group plans stay clear
+
+### 🌐 **Timezone-Aware Itineraries**
+Built for trips that cross borders. Every item can carry its own IANA timezone — auto-resolved from its location via the Google Time Zone API — with per-leg departure/arrival zones on transportation, zone badges on timeline rows and calendar chips, and zone labels in PDF exports and calendar feeds. Times stay as wall-clock values; nothing gets silently converted.
 
 ### 🤖 **Your AI Assistant**
-Powered by Google Gemini 2.5 Flash, the AI assistant chats with you about your trip, recommends places (with live web search for bookable restaurant links), and turns confirmation screenshots and PDFs into structured itinerary items — slashing the time it takes to enter new bookings.
+Powered by Google Gemini 2.5 Flash and grounded in your trip's context:
+- **Chat with tools** — live Google Places lookup (`find_place`) and web search (`search_web` via Serper) for current, bookable recommendations with verified links
+- **Rich place cards** — photos, ratings, and prices with one-tap **Add to trip** (and **Book on Expedia** for hotels)
+- **Chat-to-itinerary** — the assistant can create accommodations, transportation, activities, and reservations directly on your timeline
+- **Document extraction** — upload a confirmation screenshot or PDF and Gemini vision turns it into structured itinerary items (up to 10 per document), ready to review and import
+- **Streaming UX** — buffered SSE responses in a docked desktop panel (collapsible to a floating button) or a full-screen mobile drawer
+- **Try before signing up** — anonymous visitors get a 5-message trial on public trips; free accounts get 10 messages + 5 document imports per day; **Pro ($3.99/mo via Stripe) is unlimited**
+
+### 🛎️ **Book Without Leaving**
+The trip's **Book** tab embeds an Expedia Group affiliate search widget for stays and flights, AI hotel cards deep-link to Expedia searches, and a human travel advisor (Fora Travel) is one click away for white-glove planning.
+
+### 📅 **Calendar Sync**
+Put the itinerary where the group already lives: each trip can serve a **token-gated iCal feed** you can subscribe to from Google Calendar, Apple Calendar, or Outlook — or download as a one-off `.ics`. Feed links can be rotated or disabled anytime, and event times carry destination-zone labels.
+
+### ☀️ **Weather at a Glance**
+Per-day forecast badges on the timeline with a detail modal, powered by OpenWeatherMap (current conditions + 5-day forecast, server-side cached so it's fast and cheap).
 
 ### 🔌 **Bring Your Trips to Claude (MCP)**
-WanderLuxe ships a built-in **Model Context Protocol** server, so you can connect your trips to Claude and other MCP clients. Ask Claude about your upcoming itinerary, budgets, and bookings — securely, using OAuth-authenticated access to your own data.
+WanderLuxe ships a built-in **Model Context Protocol** server, so Claude and other MCP clients can work with your trips using OAuth-authenticated access to your own data. It's a full read/**write** surface — 21 tools covering trip listing, budgets, and create/update/delete for trips, activities, dining, accommodations, transportation, and expenses — timezone-aware, with confirmation guards before destructive date changes.
 
 ### 👥 **Real-Time Collaboration**
-Travel planning is better together. Share trips with travel companions, assign permissions (view or edit), and watch updates sync live across all devices. No more "Did you see my email?" moments—everyone stays in the loop, in real-time.
+Travel planning is better together:
+- **Share by email** with view or edit permissions, delivered with notification emails
+- **Invite links** with per-link permissions and optional expiry — plus rich link previews when pasted into chats
+- **Live sync** over WebSockets: when one person adds an activity, everyone sees it instantly
+- **Presence** — avatars show who's viewing the trip right now
+- **Trip reminders** — every traveler automatically gets an email 3 days before departure
 
 ### 📄 **Professional PDF Exports**
-Transform your itinerary into a beautifully formatted, print-ready PDF with one click. Perfect for offline access, sharing with travel companions, or keeping as a memento of journeys past.
+Transform your itinerary into a beautifully formatted, print-ready PDF with one click — with toggles for pictures and prices, Letter/A4 paper sizes, timezone-labeled times, and identical output from mobile or desktop.
 
 ### 💰 **Smart Budget Tracking**
-Keep your finances as organized as your itinerary. Track expenses across accommodations, transportation, activities, and dining with multi-currency support and automatic exchange rate updates.
+Track expenses across accommodations, transportation, activities, dining, and everything else — with paid/unpaid status, multi-currency support, and exchange rates refreshed automatically.
+
+### 🧭 **Explore**
+A public, SEO-friendly showcase gallery of real trips — currently traveling, on the horizon, and past adventures — each with a shareable prerendered itinerary page.
 
 ## 🏗️ Built With Excellence
 
@@ -63,6 +93,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 - ⚡ **Vite 8** — Lightning-fast builds and HMR
 - 🎨 **Tailwind CSS** — Warm editorial palette with DM Serif Display & DM Sans typography
 - 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
+- 🗓️ **FullCalendar** + **dnd-kit** — Calendar editing & drag-and-drop
 - 🔄 **TanStack Query** — Intelligent server state management
 
 </td>
@@ -70,26 +101,26 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 
 ### Backend & Infrastructure
 - 🗄️ **Supabase** — PostgreSQL database + Auth + Realtime
-- 🚂 **Express** — Node server (API routes + MCP server)
+- 🚂 **Express** — Node server (API routes, MCP server, iCal feed)
 - 🔒 **Row Level Security** — Database-level access control
-- ⚡ **Edge Functions** — Serverless Deno runtime
+- ⚡ **Edge Functions** — 13 serverless Deno functions
 - 🔌 **WebSocket Subscriptions** — Live collaboration magic
 - 💳 **Stripe** — Pro subscription billing
-- 📧 **SendGrid** — Transactional emails
+- 📧 **SendGrid + Mailgun** — Share notifications & trip reminder emails
 
 </td>
 </tr>
 </table>
 
 ### 🌐 External APIs & Integrations
-**Google Places** • **Google Gemini 2.5 Flash** • **Stripe** • **SendGrid** • **AeroDataBox** (flight status) • **Serper** (web search) • **Unsplash** • **Exchange Rates** • **Model Context Protocol**
+**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **SendGrid** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
 
 ---
 
 ## 💎 Technical Highlights
 
 ### Real-Time Magic ✨
-Live collaboration powered by Supabase's WebSocket subscriptions. When one user adds an activity, everyone sees it instantly—no polling, no delays.
+Live collaboration powered by Supabase's WebSocket subscriptions. When one user adds an activity, everyone sees it instantly—no polling, no delays. A trip-wide subscription keeps the calendar view fresh, and viewing presence is broadcast live.
 
 ### Type Safety First 🛡️
 End-to-end TypeScript with auto-generated types from the database schema. If it compiles, it (probably) works.
@@ -102,11 +133,17 @@ React Query's optimistic updates make the UI feel instant. Mutations update the 
 - **UI State**: Local React hooks keep components lean and focused
 - **Global Auth**: React Context with automatic token refresh
 
+### Timezone Engine 🌐
+Nullable per-item IANA timezone columns with lazy self-healing resolution: locations resolve to zones through a cached `timezone-proxy` Edge Function (Google Time Zone API → permanent `timezone_cache`), items inherit the trip default unless overridden, and pure label helpers render consistent zone badges across timeline, calendar, PDF, and iCal.
+
 ### PDF Generation 📄
 Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
 
 ### Model Context Protocol 🔌
-A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1. Tools include `list_trips`, `get_trip`, and `get_trip_budget`.
+A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 21 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses.
+
+### SEO & Prerendering 🔍
+The build pipeline generates a sitemap covering every public trip, prerenders marketing and showcase pages with Puppeteer, emits JSON-LD structured data (Organization, TouristTrip, breadcrumbs), and 301-redirects legacy UUID URLs to canonical slugs.
 
 ### Database Security 🔐
 Row Level Security (RLS) policies enforce access control at the PostgreSQL level. Users physically cannot query data they don't own—even with direct database access.
@@ -118,13 +155,13 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 ### Prerequisites
 - **Node.js 18+** — Modern JavaScript runtime (Node 24 recommended)
 - **Supabase Account** — For database and authentication
-- **API Keys** — Google Places, Google Gemini, SendGrid (see below)
+- **API Keys** — Google Places, Google Gemini, and friends (see below)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/wanderluxe.git
+git clone https://github.com/reminiscent-io/wanderluxe.git
 cd wanderluxe
 
 # Install dependencies
@@ -144,7 +181,7 @@ Visit **http://localhost:8080** and start planning your next adventure! 🌴
 
 ### ⚙️ Configuration
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root for the app and Express server:
 
 ```env
 # Supabase (Required)
@@ -156,34 +193,48 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # Server-only; bypasses RLS �
 VITE_GOOGLE_MAPS_API_KEY=your-google-api-key
 
 # Gemini (Required for AI assistant + travel-doc OCR)
-# Model is hardcoded to gemini-2.5-flash in the Edge Functions.
+# Model is hardcoded to gemini-2.5-flash; no env override.
 GEMINI_API_KEY=your-gemini-api-key
-
-# SendGrid (Required for email notifications)
-SENDGRID_API_KEY=SG.your-sendgrid-api-key
 
 # Stripe (Required for Pro subscriptions)
 STRIPE_SECRET_KEY=sk_your-stripe-secret-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 
 # Optional
-SERPER_API_KEY=your-serper-key                    # Web search for restaurant booking links
-AERODATABOX_API_KEY=your-aerodatabox-key          # Flight-number status lookup
 VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key # Trip imagery (placeholders used if missing)
 VITE_ADMIN_EMAIL=you@example.com                  # Grants admin dashboard access
+VITE_PARSE_TRAVEL_DOC_URL=your-fn-url             # Travel-doc parsing endpoint override
 MCP_PUBLIC_BASE_URL=https://wanderluxe.io         # Public base URL for the MCP server
+```
+
+Edge Functions read their secrets from Supabase (set via dashboard or `supabase secrets set`):
+
+```env
+GEMINI_API_KEY=...            # ai-chat + parse-travel-doc
+GOOGLE_PLACES_API_KEY=...     # google-places-proxy, timezone-proxy
+OPENWEATHERMAP_API_KEY=...    # weather-proxy (5-day forecasts)
+AERODATABOX_API_KEY=...       # flight-status-proxy (flight-number lookup; free tier: 600 calls/mo)
+SERPER_API_KEY=...            # ai-chat web search (bookable restaurant links)
+SENDGRID_API_KEY=...          # share notification emails
+MAILGUN_API_KEY=...           # trip reminder emails
+MAILGUN_DOMAIN=...
+EXCHANGE_RATE_API=...         # update-exchange-rates (multi-currency budgets)
+CRON_SECRET=...               # auth for scheduled functions (reminders, exchange rates)
 ```
 
 <details>
 <summary><b>🔑 How to get API keys</b></summary>
 
 - **Supabase**: Sign up at [supabase.com](https://supabase.com) and create a new project
-- **Google Places**: Enable Places API in [Google Cloud Console](https://console.cloud.google.com)
+- **Google Places / Time Zone**: Enable the APIs in [Google Cloud Console](https://console.cloud.google.com)
 - **Google Gemini**: Get your API key from [Google AI Studio](https://aistudio.google.com/apikey)
-- **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
+- **OpenWeatherMap**: Free tier at [openweathermap.org/api](https://openweathermap.org/api)
 - **Stripe**: Get your keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+- **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
+- **Mailgun**: Create an account at [mailgun.com](https://www.mailgun.com)
 - **Serper**: Sign up at [serper.dev](https://serper.dev)
 - **AeroDataBox**: Subscribe via [RapidAPI](https://rapidapi.com/aedbx-aedbx/api/aerodatabox) (free tier: 600 calls/mo)
+- **ExchangeRate-API**: Free key at [exchangerate-api.com](https://www.exchangerate-api.com)
 - **Unsplash**: Register as a developer at [unsplash.com/developers](https://unsplash.com/developers)
 
 </details>
@@ -194,33 +245,37 @@ MCP_PUBLIC_BASE_URL=https://wanderluxe.io         # Public base URL for the MCP 
 wanderluxe/
 ├── 📱 src/
 │   ├── components/
-│   │   ├── trip/              # 15 trip feature modules
+│   │   ├── trip/              # 16 trip feature modules
 │   │   │   ├── accommodation/ # Hotel & lodging management
-│   │   │   ├── ai-assistant/  # AI chat + document extraction
+│   │   │   ├── ai-assistant/  # AI chat + document extraction + paywall
 │   │   │   ├── budget/        # Expense tracking & currencies
+│   │   │   ├── calendar/      # FullCalendar view + iCal sync sheet
 │   │   │   ├── timeline/      # Visual itinerary display
-│   │   │   ├── transportation/# Flights, trains, car rentals
-│   │   │   └── ...           # Activities, dining, travelers, etc.
-│   │   ├── admin/            # Admin dashboard
+│   │   │   ├── transportation/# Flights (AeroDataBox lookup), trains, cars
+│   │   │   ├── weather/       # Forecast badges & detail modal
+│   │   │   └── ...           # Activities, dining, travelers, hero, stats
+│   │   ├── admin/            # Admin dashboard (metrics + AI insights)
 │   │   ├── layout/           # AppLayout, Sidebar, Navigation
 │   │   └── ui/               # 50+ Shadcn/ui components
-│   ├── pages/                # Route components (MyTrips, TripDetails, etc.)
-│   ├── hooks/                # Custom hooks (useSidebarState, useTripQuery, etc.)
-│   ├── services/             # Business logic (pdf/ export pipeline, travelers, etc.)
+│   ├── pages/                # Routes (MyTrips, TripDetails, Explore, Profile, InviteRedeem, etc.)
+│   ├── hooks/                # Custom hooks (useTripQuery, useAIAssistant, useWeather, etc.)
+│   ├── services/             # Business logic (pdf/ export pipeline, flightStatus, sharing, etc.)
 │   ├── contexts/             # React Context (AuthContext, ConsentContext)
 │   ├── integrations/supabase/# Supabase client & auto-generated types
 │   └── types/                # TypeScript definitions
 ├── ⚙️ server/
-│   ├── index.ts             # Express server
-│   └── routes/              # API endpoints (Stripe, AI chat, MCP, notifications, etc.)
+│   ├── index.ts             # Express server (CSP, canonical redirects, static serving)
+│   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), account (GDPR),
+│                            # admin-insights, invite-preview
 ├── 🗄️ supabase/
-│   ├── functions/           # Edge Functions (Deno runtime, 12 functions)
-│   │   ├── ai-chat/         # AI assistant (Gemini + function calling)
+│   ├── functions/           # 13 Edge Functions (Deno runtime)
+│   │   ├── ai-chat/         # Gemini chat + find_place/search_web tools
 │   │   ├── parse-travel-doc/# AI-powered document parsing
-│   │   ├── google-places-proxy/
-│   │   ├── flight-status-proxy/
-│   │   ├── send-share-notification/
-│   │   └── ...             # weather, email, exchange rates, etc.
+│   │   ├── google-places-proxy/  # Autocomplete, details, photo proxy
+│   │   ├── timezone-proxy/  # Place → IANA timezone (cached)
+│   │   ├── flight-status-proxy/  # AeroDataBox flight lookup
+│   │   ├── weather-proxy/   # OpenWeatherMap forecasts
+│   │   └── ...             # emails, reminders, exchange rates, Unsplash
 │   ├── migrations/          # SQL schema migrations
 │   └── config.toml         # Supabase configuration
 ├── 🧪 evals/                # On-demand eval harness (chat, parsing, MCP)
@@ -267,9 +322,11 @@ WanderLuxe is built with security at its core:
 - 🔐 **Row Level Security (RLS)** — PostgreSQL policies enforce access control at the database level
 - 🔑 **Supabase Auth** — Secure authentication with Google OAuth and auto-refresh tokens
 - 🛡️ **Input Validation** — Zod schemas validate all user input on frontend and backend
-- 🚫 **CORS Protection** — Strict API access controls prevent unauthorized requests
+- 🚫 **CORS & CSP Protection** — Strict API access controls and a content security policy on the Express server
 - 🔒 **Session Management** — Automatic session refresh with tab visibility detection
-- 👥 **Permission System** — Granular view/edit permissions for shared trips
+- 👥 **Permission System** — Granular view/edit permissions for shared trips; revocable, expiring invite links
+- 🍪 **Consent-Gated Analytics** — PostHog and Google Analytics only run after cookie consent
+- 📦 **Your Data, Portable** — One-click GDPR-style JSON export and permanent account deletion from the Profile page
 
 *Your travel data stays yours—accessible only to you and those you explicitly invite.*
 
@@ -306,16 +363,16 @@ npm run evals            # Full eval harness (chat + parsing + MCP)
 
 ### 🖥️ Desktop Experience
 - **Fixed Sidebar** — Persistent navigation with expandable trip sections
-- **Secondary Panels** — Deep-dive into accommodations, activities, dining
-- **Timeline View** — Visual day-by-day itinerary at a glance
-- **Multi-Panel Layout** — Work on multiple trip aspects simultaneously
+- **Timeline ⇄ Calendar Toggle** — Switch between editorial timeline and a drag-to-reschedule time grid
+- **Assistant Dock** — AI panel docked beside the timeline, collapsible to a floating button, overlaying the full-width calendar
+- **Hover Peek Cards** — Glance at event essentials without opening a dialog
 
 </td>
 <td width="50%">
 
 ### 📱 Mobile Experience
-- **Touch-Optimized** — Large tap targets, swipe gestures
-- **Bottom Sheets** — Native-feeling mobile interactions
+- **Touch-Optimized** — Large tap targets, bottom-sheet dialogs, full-screen AI drawer
+- **Installable PWA** — Home-screen app with "Create Trip" / "My Trips" shortcuts and update toasts
 - **Adaptive Layout** — Content reflows beautifully on all screens
 - **Offline-Ready PDFs** — Take your itinerary anywhere
 
@@ -325,7 +382,7 @@ npm run evals            # Full eval harness (chat + parsing + MCP)
 
 ## 🚀 Deployment
 
-WanderLuxe runs as a full-stack Express app (serving the built Vite frontend, API routes, and the MCP server) and is deployed via **Replit Autoscale** targeting **Google Cloud Run**.
+WanderLuxe runs as a full-stack Express app (serving the built Vite frontend, API routes, the iCal feed, and the MCP server) and is deployed via **Replit Autoscale** targeting **Google Cloud Run**.
 
 ### Deployment Steps
 ```bash
@@ -368,14 +425,14 @@ We welcome contributions from developers who share our passion for elegant trave
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+Copyright © 2026 WanderLuxe. All rights reserved.
 
-You're free to use, modify, and distribute this software with attribution.
+This is proprietary software; the source is available for reference and contribution under the terms set by the maintainers.
 
 ## 💬 Support & Community
 
-- 🐛 **Bug Reports** — [Open an issue](https://github.com/your-username/wanderluxe/issues)
-- 💡 **Feature Requests** — [Start a discussion](https://github.com/your-username/wanderluxe/discussions)
+- 🐛 **Bug Reports** — [Open an issue](https://github.com/reminiscent-io/wanderluxe/issues)
+- 💡 **Feature Requests** — [Start a discussion](https://github.com/reminiscent-io/wanderluxe/discussions)
 - 📧 **Contact** — Reach out to the maintainers
 - 🌟 **Star** this repo if WanderLuxe helps you plan better trips!
 
