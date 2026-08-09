@@ -57,16 +57,14 @@ const TripDetails = () => {
   // show — RLS hides private trips from anonymous readers, so both the trip
   // query and the permission check come back empty. Send them to sign in and
   // bring them straight back to this URL rather than dead-ending on an error.
-  // `profileLoaded` guards against redirecting before auth has resolved; it
-  // flips true for anonymous visitors too, so it means "we know for sure".
+  // `profileLoaded` flips true for anonymous visitors too, so it means "auth
+  // has settled", not "logged in" — without it a signed-in user whose session
+  // is still hydrating would be bounced to /auth.
+  const isAnonymous = profileLoaded && !session;
+  const accessChecked = !tripLoading && !permissionsLoading;
+  const blockedFromTrip = accessChecked && !canView;
   // Explore routes are public browsing and keep their normal not-found page.
-  const mustSignIn =
-    !onExploreRoute &&
-    profileLoaded &&
-    !session &&
-    !tripLoading &&
-    !permissionsLoading &&
-    !canView;
+  const mustSignIn = !onExploreRoute && isAnonymous && blockedFromTrip;
 
   useEffect(() => {
     if (!mustSignIn) return;

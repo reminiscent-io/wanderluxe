@@ -63,6 +63,9 @@ vi.mock('@/components/SEO', () => ({ default: (): null => null, SITE_URL: 'https
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const TRIP_ID = 'a4268df2-d4a5-44f6-b23b-87cf6e96aee2';
+const TRIP_PATH = `/trip/${TRIP_ID}/timeline`;
+const AUTH_ROUTE = '/auth';
+const REPLACE = { replace: true };
 
 const A_TRIP = {
   trip_id: TRIP_ID,
@@ -109,23 +112,23 @@ describe('TripDetails — signed-out access to a shared trip', () => {
   });
 
   it('sends a signed-out visitor to /auth instead of a dead-end error', async () => {
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/auth', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
     });
   });
 
   it('remembers the exact trip URL so sign-in returns the visitor to it', async () => {
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await waitFor(() => {
-      expect(sessionStorage.getItem('pendingRedirect')).toBe(`/trip/${TRIP_ID}/timeline`);
+      expect(sessionStorage.getItem('pendingRedirect')).toBe(TRIP_PATH);
     });
   });
 
   it('never flashes the "could not be found" error on the way to /auth', async () => {
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
     expect(screen.queryByText(/could not be found/i)).not.toBeInTheDocument();
@@ -135,26 +138,26 @@ describe('TripDetails — signed-out access to a shared trip', () => {
   it('waits for auth to resolve before redirecting, so a signed-in user is not bounced', async () => {
     // profileLoaded false = AuthContext has not settled yet.
     mockAuth = { session: null, profileLoaded: false };
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await new Promise((r) => setTimeout(r, 50));
-    expect(mockNavigate).not.toHaveBeenCalledWith('/auth', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
   });
 
   it('leaves public trips alone for anonymous visitors', async () => {
     mockPermissions = { ...mockPermissions, canView: true };
     mockTripQuery = { ...mockTripQuery, trip: { ...A_TRIP, is_public: true } };
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await new Promise((r) => setTimeout(r, 50));
-    expect(mockNavigate).not.toHaveBeenCalledWith('/auth', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
   });
 
   it('does not send explore visitors to sign-in', async () => {
     renderAt('/explore/vienna-in-spring/timeline');
 
     await new Promise((r) => setTimeout(r, 50));
-    expect(mockNavigate).not.toHaveBeenCalledWith('/auth', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
   });
 });
 
@@ -172,7 +175,7 @@ describe('TripDetails — signed-in visitor without access', () => {
   });
 
   it('shows "Access Restricted" rather than "could not be found"', async () => {
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await waitFor(() => {
       expect(screen.getByText(/access restricted/i)).toBeInTheDocument();
@@ -181,9 +184,9 @@ describe('TripDetails — signed-in visitor without access', () => {
   });
 
   it('does not redirect a signed-in user to /auth', async () => {
-    renderAt(`/trip/${TRIP_ID}/timeline`);
+    renderAt(TRIP_PATH);
 
     await waitFor(() => expect(screen.getByText(/access restricted/i)).toBeInTheDocument());
-    expect(mockNavigate).not.toHaveBeenCalledWith('/auth', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
   });
 });
