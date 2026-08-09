@@ -803,7 +803,11 @@ router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Re
 // does not duplicate auth/usage/thread logic.
 const EDGE_CHAT_BASE = `${SUPABASE_URL}/functions/v1/ai-chat`;
 
-async function pipeSSEStream(upstream: Response, res: Response): Promise<void> {
+// `Response` is Express's response type in this module, so the upstream fetch
+// response needs the global one to expose `body`.
+type FetchResponse = globalThis.Response;
+
+async function pipeSSEStream(upstream: FetchResponse, res: Response): Promise<void> {
   if (!upstream.body) {
     res.end();
     return;

@@ -527,10 +527,19 @@ router.post('/api/stripe/cancel-subscription', async (req: Request, res: Respons
 
     console.log(`User ${user.id} requested subscription cancellation - will end at period end`);
 
+    // `current_period_end` was removed from the Subscription object in newer
+    // Stripe API versions and now lives on each subscription item. Setting
+    // `cancel_at_period_end` populates `cancel_at` with that same timestamp,
+    // so prefer it and fall back to the item's period end.
+    const currentPeriodEnd =
+      subscription.cancel_at ??
+      subscription.items.data[0]?.current_period_end ??
+      null;
+
     return res.json({
       success: true,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
-      currentPeriodEnd: subscription.current_period_end,
+      currentPeriodEnd,
     });
   } catch (error: unknown) {
     console.error('Error cancelling subscription:', error);

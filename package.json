@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "preview": "vite preview --port 8080 --host 0.0.0.0",
     "start": "NODE_ENV=production node dist/server/index.js",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

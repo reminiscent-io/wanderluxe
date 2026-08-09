@@ -63,10 +63,11 @@ const insertAccommodationDays = async (
     dayData.map(day => [day.date.split("T")[0], day.day_id])
   );
 
-  // Build entries for each generated date if a matching day_id exists
+  // Build entries for each generated date if a matching day_id exists.
+  // generateDateArray already returns local "yyyy-MM-dd" strings, so they are
+  // used as-is — converting through Date here would reintroduce timezone drift.
   const accommodationDaysData = dateArray
-    .map(date => {
-      const formattedDate = date.toISOString().split("T")[0];
+    .map(formattedDate => {
       const dayId = dayMap.get(formattedDate);
       if (!dayId) {
         console.warn(`No matching day_id found for date: ${formattedDate}`);
