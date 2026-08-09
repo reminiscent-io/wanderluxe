@@ -27,7 +27,7 @@ const TripDetails = () => {
   const { tripId: paramsTripId, slug } = useParams<{ tripId?: string; slug?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, profileLoaded } = useAuth();
 
   const { tripId: tripIdFromSlug, isLoading: slugLookupLoading } = useTripIdBySlug(slug);
   const tripId = paramsTripId ?? tripIdFromSlug ?? undefined;
@@ -52,6 +52,27 @@ const TripDetails = () => {
 
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
+
+  // A signed-out visitor following a share link lands here with nothing to
+  // show — RLS hides private trips from anonymous readers, so both the trip
+  // query and the permission check come back empty. Send them to sign in and
+  // bring them straight back to this URL rather than dead-ending on an error.
+  // `profileLoaded` guards against redirecting before auth has resolved; it
+  // flips true for anonymous visitors too, so it means "we know for sure".
+  // Explore routes are public browsing and keep their normal not-found page.
+  const mustSignIn =
+    !onExploreRoute &&
+    profileLoaded &&
+    !session &&
+    !tripLoading &&
+    !permissionsLoading &&
+    !canView;
+
+  useEffect(() => {
+    if (!mustSignIn) return;
+    sessionStorage.setItem('pendingRedirect', location.pathname);
+    navigate('/auth', { replace: true });
+  }, [mustSignIn, location.pathname, navigate]);
 
   useEffect(() => {
     const tripSlug = (trip as { slug?: string | null })?.slug;
@@ -124,11 +145,14 @@ const TripDetails = () => {
   }
   if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
   if (permissionsLoading) return <TripDetailsSkeleton />;
+  // The effect above is navigating to /auth — hold the skeleton rather than
+  // flashing an error on the way out.
+  if (mustSignIn) return <TripDetailsSkeleton />;
   if (tripError) return <TripDetailsError />;
 
-  const displayData = trip || previousTrip;
-  if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
-
+  // Checked before the trip data: a viewer without access gets no readable row
+  // back either, so testing `displayData` first would mask this with a
+  // misleading "could not be found".
   if (!canView) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center p-4">
@@ -160,6 +184,9 @@ const TripDetails = () => {
       </div>
     );
   }
+
+  const displayData = trip || previousTrip;
+  if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
 
   const handleTabChange = (tab: string) => {
     if (onExploreRoute && slug) {
