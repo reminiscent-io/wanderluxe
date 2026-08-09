@@ -7,6 +7,7 @@ import QuickAddSheet from "@/components/layout/QuickAddSheet";
 import { useTripQuery, useTripIdBySlug } from '@/hooks/useTripQuery';
 import { buildOgImageUrl } from '@/utils/tripUrl';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
+import { useTripAccessGate } from '@/components/trip/details/useTripAccessGate';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TimelineView from "../components/trip/TimelineView";
@@ -27,7 +28,7 @@ const TripDetails = () => {
   const { tripId: paramsTripId, slug } = useParams<{ tripId?: string; slug?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { session, profileLoaded } = useAuth();
+  const { session } = useAuth();
 
   const { tripId: tripIdFromSlug, isLoading: slugLookupLoading } = useTripIdBySlug(slug);
   const tripId = paramsTripId ?? tripIdFromSlug ?? undefined;
@@ -53,24 +54,14 @@ const TripDetails = () => {
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
 
-  // A signed-out visitor following a share link lands here with nothing to
-  // show — RLS hides private trips from anonymous readers, so both the trip
-  // query and the permission check come back empty. Send them to sign in and
-  // bring them straight back to this URL rather than dead-ending on an error.
-  // `profileLoaded` flips true for anonymous visitors too, so it means "auth
-  // has settled", not "logged in" — without it a signed-in user whose session
-  // is still hydrating would be bounced to /auth.
-  const isAnonymous = profileLoaded && !session;
-  const accessChecked = !tripLoading && !permissionsLoading;
-  const blockedFromTrip = accessChecked && !canView;
-  // Explore routes are public browsing and keep their normal not-found page.
-  const mustSignIn = !onExploreRoute && isAnonymous && blockedFromTrip;
-
-  useEffect(() => {
-    if (!mustSignIn) return;
-    sessionStorage.setItem('pendingRedirect', location.pathname);
-    navigate('/auth', { replace: true });
-  }, [mustSignIn, location.pathname, navigate]);
+  // Signed-out visitors following a share link are sent to sign in and
+  // returned here afterwards; true while that redirect is pending.
+  const mustSignIn = useTripAccessGate({
+    onExploreRoute,
+    tripLoading,
+    permissionsLoading,
+    canView,
+  });
 
   useEffect(() => {
     const tripSlug = (trip as { slug?: string | null })?.slug;
