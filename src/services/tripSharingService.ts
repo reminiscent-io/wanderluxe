@@ -102,8 +102,33 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       }
     }
 
-    // Send email notification (best-effort; the share row is already saved)
-    await sendShareNotification(email, user.email || 'A WanderLuxe user', tripDestination, tripId);
+    // Resolve a friendly display name for the sharer so the email reads
+    // "Kevin Lowe shared…" rather than a bare address.
+    const { data: sharerProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    const sharedByName =
+      sharerProfile?.full_name?.trim() ||
+      (user.user_metadata?.full_name as string | undefined)?.trim() ||
+      (user.user_metadata?.name as string | undefined)?.trim() ||
+      '';
+
+    // Send email notification (best-effort; the share row is already saved).
+    // `destination` holds the trip's title, `primary_destination` the place.
+    await sendShareNotification({
+      toEmail: email,
+      fromEmail: user.email || 'A WanderLuxe user',
+      tripName: tripData.destination || tripDestination,
+      tripDestination: tripData.primary_destination || tripDestination,
+      tripId,
+      sharedByName,
+      arrivalDate: tripData.arrival_date ?? undefined,
+      departureDate: tripData.departure_date ?? undefined,
+      coverImageUrl: tripData.cover_image_url ?? undefined,
+      permissionLevel,
+    });
 
     // Callers handle their own toast messages
     return true;
@@ -113,15 +138,28 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
   }
 };
 
+export interface ShareNotificationParams {
+  toEmail: string;
+  fromEmail: string;
+  /** The trip's title (`trips.destination`). */
+  tripName: string;
+  /** The place the trip is to (`trips.primary_destination`), when known. */
+  tripDestination: string;
+  tripId: string;
+  /** Sharer's display name; falls back to their email in the email itself. */
+  sharedByName?: string;
+  arrivalDate?: string;
+  departureDate?: string;
+  coverImageUrl?: string;
+  permissionLevel?: PermissionLevel;
+}
+
 /**
  * Send an email notification to a user that a trip has been shared with them
  * Using Supabase Edge Function for email delivery
  */
 export const sendShareNotification = async (
-  toEmail: string,
-  fromEmail: string,
-  tripDestination: string,
-  tripId: string
+  params: ShareNotificationParams
 ): Promise<boolean> => {
   try {
     // Get the Supabase URL and anon key from environment
@@ -140,12 +178,7 @@ export const sendShareNotification = async (
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseAnonKey}` // Add authorization header
       },
-      body: JSON.stringify({
-        toEmail,
-        fromEmail,
-        tripDestination,
-        tripId
-      })
+      body: JSON.stringify(params)
     });
 
     let result;
