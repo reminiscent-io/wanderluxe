@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { reservationFormSchema, type ReservationFormValues } from './reservationFormSchema';
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -35,13 +35,6 @@ import {
 } from "@/utils/googleMapsLoader";
 
 /* ------------------------------ helpers ------------------------------ */
-const toNullableNumber = (val: unknown) => {
-  if (val === '' || val === null || typeof val === 'undefined') return undefined;
-  if (typeof val === 'number' && !Number.isNaN(val)) return val;
-  const num = Number(val);
-  return Number.isNaN(num) ? undefined : num;
-};
-
 /** Prefer our proxy photo URL; fall back to direct Google endpoint only if a public key exists. */
 const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   const viaProxy = getPhotoUrl?.(p, maxWidth);
@@ -71,27 +64,7 @@ const resolvePhotoUrl = (p: PlacePhotoMeta, maxWidth = 360): string | null => {
   return null;
 };
 
-// ────────────────────────────────────────────────────────────────────────────────
-// Schema
-// ────────────────────────────────────────────────────────────────────────────────
-const formSchema = z.object({
-  restaurant_name: z.string().min(1, "Restaurant name is required"),
-  reservation_date: z.string().min(1, "Reservation date is required"),
-  reservation_time: z.string().min(1, "Reservation time is required"),
-  address: z.string().optional().nullable(),
-  phone_number: z.string().optional().nullable(),
-  website: z.string().optional().nullable(),
-  number_of_people: z.preprocess(toNullableNumber, z.number().int().positive().optional().nullable()),
-  notes: z.string().optional(),
-  cost: z.preprocess(toNullableNumber, z.number().optional()),
-  currency: z.string().optional().nullable(),
-  place_id: z.string().optional().nullable(),
-  rating: z.preprocess(toNullableNumber, z.number().optional()),
-  travelers: z.array(z.string()).optional(),
-  timezone: z.string().optional().nullable(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = ReservationFormValues;
 
 interface RestaurantReservationFormProps {
   onSubmit: (data: FormValues & { trip_id: string }) => Promise<void>;
@@ -156,15 +129,18 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(reservationFormSchema),
     defaultValues: {
       restaurant_name: '',
-      reservation_time: '',
       number_of_people: undefined,
-      notes: '',
       cost: undefined,
       currency: undefined,
       ...defaultValues,
+      // A saved reservation stores NULL for anything the user left blank. These
+      // back controlled inputs, so normalize before react-hook-form sees them —
+      // a null here fails validation and blocks Save with no visible reason.
+      reservation_time: defaultValues?.reservation_time ?? '',
+      notes: defaultValues?.notes ?? '',
       timezone: defaultValues?.timezone ?? null,
       reservation_date: getPreselectedDate(), // Smart date preselection
     },
@@ -605,8 +581,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} className="bg-white" rows={1} />
+                <Textarea {...field} value={field.value ?? ''} className="bg-white" rows={1} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
