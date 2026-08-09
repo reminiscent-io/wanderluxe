@@ -7,6 +7,7 @@ import QuickAddSheet from "@/components/layout/QuickAddSheet";
 import { useTripQuery, useTripIdBySlug } from '@/hooks/useTripQuery';
 import { buildOgImageUrl } from '@/utils/tripUrl';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
+import { useTripAccessGate } from '@/components/trip/details/useTripAccessGate';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
 import TimelineView from "../components/trip/TimelineView";
@@ -52,6 +53,15 @@ const TripDetails = () => {
 
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
+
+  // Signed-out visitors following a share link are sent to sign in and
+  // returned here afterwards; true while that redirect is pending.
+  const mustSignIn = useTripAccessGate({
+    onExploreRoute,
+    tripLoading,
+    permissionsLoading,
+    canView,
+  });
 
   useEffect(() => {
     const tripSlug = (trip as { slug?: string | null })?.slug;
@@ -124,11 +134,14 @@ const TripDetails = () => {
   }
   if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
   if (permissionsLoading) return <TripDetailsSkeleton />;
+  // The effect above is navigating to /auth — hold the skeleton rather than
+  // flashing an error on the way out.
+  if (mustSignIn) return <TripDetailsSkeleton />;
   if (tripError) return <TripDetailsError />;
 
-  const displayData = trip || previousTrip;
-  if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
-
+  // Checked before the trip data: a viewer without access gets no readable row
+  // back either, so testing `displayData` first would mask this with a
+  // misleading "could not be found".
   if (!canView) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sand-50 via-sand-50 to-earth-50 flex items-center justify-center p-4">
@@ -160,6 +173,9 @@ const TripDetails = () => {
       </div>
     );
   }
+
+  const displayData = trip || previousTrip;
+  if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
 
   const handleTabChange = (tab: string) => {
     if (onExploreRoute && slug) {
