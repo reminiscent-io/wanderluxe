@@ -146,8 +146,24 @@ export interface UsageCheckResponse {
   daily_limit: number;
 }
 
+/**
+ * Error codes the assistant can surface. These are the union of what the
+ * Express proxy (`server/routes/ai-chat.ts`) and the `ai-chat` Edge Function
+ * actually emit — keep this in sync with both when adding a code.
+ */
+export type StreamingErrorCode =
+  | 'DAILY_LIMIT_REACHED'
+  | 'RATE_LIMITED'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'NOT_PUBLIC'
+  | 'CONFIG_ERROR'
+  | 'INTERNAL_ERROR'
+  | 'ERROR';
+
 export interface StreamingErrorResponse {
-  code: 'DAILY_LIMIT_REACHED' | 'UNAUTHORIZED' | 'TRIP_ACCESS_DENIED' | 'INTERNAL_ERROR';
+  code: StreamingErrorCode;
   message: string;
   limit?: number;
   used?: number;

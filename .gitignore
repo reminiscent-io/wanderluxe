@@ -45,3 +45,6 @@ bun.lockb
 
 # Eval run outputs (timestamped JSON + working JSONL)
 evals/results/
+
+# TypeScript incremental build info (written by `tsc -b`)
+*.tsbuildinfo
