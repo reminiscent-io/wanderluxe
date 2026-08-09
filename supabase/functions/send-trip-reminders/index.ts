@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 // WanderLuxe — Trip Reminder Email (Supabase Edge Function)
 // Fires hourly via pg_cron; only emails when it is 20:00 in America/New_York.
-// Sends a single reminder per trip 3 days before start_date to every registered
-// traveler in trip_shares.
+// Sends a single reminder per trip 3 days before arrival_date to every
+// registered traveler in trip_shares.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const DEFAULT_VIEW_URL = 'https://wanderluxe.io';
@@ -58,8 +58,8 @@ type TripRow = {
   trip_id: string;
   destination: string;
   primary_destination: string | null;
-  start_date: string;
-  end_date: string;
+  arrival_date: string;
+  departure_date: string;
 };
 
 type Accommodation = {
@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // today in ET, then +3 days as the trip target start_date.
+    // today in ET, then +3 days as the trip target arrival_date.
     const etDateParts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/New_York',
       year: 'numeric',
@@ -331,8 +331,8 @@ Deno.serve(async (req) => {
 
     const { data: trips, error: tripsErr } = await supabase
       .from('trips')
-      .select('trip_id, destination, primary_destination, start_date, end_date')
-      .eq('start_date', targetDate)
+      .select('trip_id, destination, primary_destination, arrival_date, departure_date')
+      .eq('arrival_date', targetDate)
       .eq('hidden', false);
 
     if (tripsErr) throw tripsErr;
@@ -428,7 +428,7 @@ Deno.serve(async (req) => {
         });
 
         const tripLabel = trip.primary_destination || trip.destination;
-        const tripDates = `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`;
+        const tripDates = `${formatDate(trip.arrival_date)} – ${formatDate(trip.departure_date)}`;
         const viewUrl = `${DEFAULT_VIEW_URL}/trip/${trip.trip_id}`;
         const subject = `Your trip to ${tripLabel} starts in 3 days`;
 
