@@ -1,5 +1,5 @@
 
-import { Tables } from './tables';
+import { Tables } from './database';
 
 // Export specific table types that are commonly used
 export type Transportation = Tables<"transportation">

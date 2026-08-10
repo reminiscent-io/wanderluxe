@@ -1,7 +1,12 @@
-export type { Json, Database } from './database';
-export type { Tables, TablesInsert, TablesUpdate } from './tables';
-export type { Enums } from './enums';
-export type { CompositeTypes } from './composite';
+export type {
+  Json,
+  Database,
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+  Enums,
+  CompositeTypes,
+} from './database';
 export type {
   Trip,
   TripDay,
