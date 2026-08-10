@@ -44,9 +44,9 @@ describe('buildTripCalendarICS', () => {
 describe('buildTripCalendarICS edge cases', () => {
   it('keeps departure/arrival times for a multi-day (overnight) transport leg', () => {
     const ics = buildTripCalendarICS({
-      trip: { destination: 'Test' },
+      trip: { destination: 'Test', timezone: null },
       activities: [], reservations: [], accommodations: [],
-      transportation: [{ id: 'tn', type: 'train', start_date: '2026-07-01', start_time: '22:00:00', end_date: '2026-07-02', end_time: '08:00:00', departure_location: 'Paris', arrival_location: 'Nice', provider: null, details: null }],
+      transportation: [{ id: 'tn', type: 'train', start_date: '2026-07-01', start_time: '22:00:00', end_date: '2026-07-02', end_time: '08:00:00', departure_location: 'Paris', arrival_location: 'Nice', provider: null, details: null, departure_timezone: null, arrival_timezone: null }],
     });
     expect(ics).toContain('DTSTART:20260701T220000');
     expect(ics).toContain('DTEND:20260702T080000');
@@ -55,9 +55,9 @@ describe('buildTripCalendarICS edge cases', () => {
 
   it('omits DTEND for a timed event with no end time', () => {
     const ics = buildTripCalendarICS({
-      trip: { destination: 'Test' },
+      trip: { destination: 'Test', timezone: null },
       activities: [],
-      reservations: [{ id: 'ro', restaurant_name: 'Dinner', date: '2026-07-01', reservation_time: '20:00:00', address: null, notes: null }],
+      reservations: [{ id: 'ro', restaurant_name: 'Dinner', date: '2026-07-01', reservation_time: '20:00:00', address: null, notes: null, timezone: null }],
       accommodations: [], transportation: [],
     });
     expect(ics).toContain('DTSTART:20260701T200000');

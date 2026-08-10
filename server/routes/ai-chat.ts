@@ -1,10 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
 const isValidUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+// Express 5 types every route param as `string | string[]` to cover repeated
+// names. A single `:tripId` segment is always a string, so pin it for the
+// handlers that read it.
+type TripParams = { tripId: string };
 
 // Environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
@@ -170,7 +175,7 @@ async function getUserIdFromToken(authHeader: string): Promise<string | null> {
 }
 
 // Check if user can access trip
-async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: string, tripId: string, userEmail?: string): Promise<boolean> {
+async function canAccessTrip(supabase: SupabaseClient, userId: string, tripId: string, userEmail?: string): Promise<boolean> {
   // Check if user owns the trip
   const { data: ownedTrip } = await supabase
     .from('trips')
@@ -217,7 +222,7 @@ async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: 
 }
 
 // Get trip context for AI
-async function getTripContext(supabase: ReturnType<typeof createClient>, tripId: string): Promise<TripContext | null> {
+async function getTripContext(supabase: SupabaseClient, tripId: string): Promise<TripContext | null> {
   // Get trip basic info
   const { data: trip, error: tripError } = await supabase
     .from('trips')
@@ -605,7 +610,7 @@ router.post('/api/ai-imports/usage', async (req: Request, res: Response) => {
 });
 
 // Get chat history
-router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
+router.get('/api/trips/:tripId/assistant/messages', async (req: Request<TripParams>, res: Response) => {
   try {
     const { tripId } = req.params;
     if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
@@ -677,7 +682,7 @@ router.get('/api/trips/:tripId/assistant/messages', async (req: Request, res: Re
 });
 
 // Clear chat history
-router.delete('/api/trips/:tripId/assistant/messages', async (req: Request, res: Response) => {
+router.delete('/api/trips/:tripId/assistant/messages', async (req: Request<TripParams>, res: Response) => {
   try {
     const { tripId } = req.params;
     if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
@@ -725,7 +730,7 @@ const anonChatLimiter = rateLimit({
 });
 
 // Anonymous chat endpoint - no auth, public trips only, no DB persistence
-router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request, res: Response) => {
+router.post('/api/trips/:tripId/assistant/anon', anonChatLimiter, async (req: Request<TripParams>, res: Response) => {
   try {
     const { tripId } = req.params;
     if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
@@ -827,7 +832,7 @@ async function pipeSSEStream(upstream: FetchResponse, res: Response): Promise<vo
   }
 }
 
-router.post('/api/trips/:tripId/assistant', async (req: Request, res: Response) => {
+router.post('/api/trips/:tripId/assistant', async (req: Request<TripParams>, res: Response) => {
   try {
     const { tripId } = req.params;
     if (!isValidUUID(tripId)) return res.status(400).json({ error: 'Invalid trip ID' });
