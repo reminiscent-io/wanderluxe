@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import AuthCacheSync from "@/components/AuthCacheSync";
 import { ConsentProvider } from "@/contexts/ConsentContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
@@ -67,6 +68,7 @@ const App = () => {
         <PostHogConsentSync />
         <GoogleAnalyticsConsentSync />
         <AuthProvider>
+          <AuthCacheSync />
           <TooltipProvider>
             <Toaster />
             <Sonner />

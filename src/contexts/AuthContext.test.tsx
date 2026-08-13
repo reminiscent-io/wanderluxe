@@ -328,6 +328,112 @@ describe('AuthContext', () => {
     });
   });
 
+  describe('auth settling', () => {
+    // `profileLoaded` is the app's "auth has resolved" signal — the trip pages
+    // wait on it before deciding whether a visitor may see a trip. A logged-out
+    // visitor is a resolved answer, so it has to settle for them too.
+    const SettledConsumer = () => {
+      const { profileLoaded } = useAuth();
+      return <span data-testid="settled">{profileLoaded ? 'settled' : 'pending'}</span>;
+    };
+
+    it('stays settled when INITIAL_SESSION arrives with no session', async () => {
+      let authChangeCallback: (event: string, session: unknown) => void;
+      mockOnAuthStateChange.mockImplementation((callback) => {
+        authChangeCallback = callback;
+        return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+      });
+
+      render(
+        <AuthProvider>
+          <SettledConsumer />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settled')).toHaveTextContent('settled');
+      });
+
+      // The SDK emits INITIAL_SESSION for every anonymous visitor, after
+      // getSession() has already reported the same null session. Reopening the
+      // question here strands the sign-in gate: nothing loads a profile that
+      // does not exist, so it would never settle again.
+      await act(async () => {
+        authChangeCallback!('INITIAL_SESSION', null);
+      });
+
+      expect(screen.getByTestId('settled')).toHaveTextContent('settled');
+    });
+
+    it('stays settled after the user signs out', async () => {
+      let authChangeCallback: (event: string, session: unknown) => void;
+      mockOnAuthStateChange.mockImplementation((callback) => {
+        authChangeCallback = callback;
+        return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+      });
+
+      mockGetSession.mockResolvedValue({
+        data: { session: { user: { id: 'user-123' }, access_token: 'token' } },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <SettledConsumer />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settled')).toHaveTextContent('settled');
+      });
+
+      await act(async () => {
+        authChangeCallback!('SIGNED_OUT', null);
+      });
+
+      expect(screen.getByTestId('settled')).toHaveTextContent('settled');
+    });
+
+    it('clears the previous profile on sign-out', async () => {
+      let authChangeCallback: (event: string, session: unknown) => void;
+      mockOnAuthStateChange.mockImplementation((callback) => {
+        authChangeCallback = callback;
+        return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+      });
+
+      mockGetSession.mockResolvedValue({
+        data: { session: { user: { id: 'user-123' }, access_token: 'token' } },
+        error: null,
+      });
+
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { id: 'user-123', subscription_tier: 'premium' },
+          error: null,
+        }),
+        update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+      });
+
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tier')).toHaveTextContent('premium');
+      });
+
+      await act(async () => {
+        authChangeCallback!('SIGNED_OUT', null);
+      });
+
+      expect(screen.getByTestId('tier')).toHaveTextContent('free');
+    });
+  });
+
   describe('visibility change', () => {
     it('should call getSession when tab becomes visible', async () => {
       const mockSession = {

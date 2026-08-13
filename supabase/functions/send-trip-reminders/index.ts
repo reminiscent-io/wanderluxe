@@ -56,6 +56,7 @@ function formatTime(t: string | null): string {
 
 type TripRow = {
   trip_id: string;
+  user_id: string;
   destination: string;
   primary_destination: string | null;
   arrival_date: string;
@@ -84,6 +85,7 @@ type TravelerShare = {
   first_name: string;
   last_name: string | null;
   shared_with_user_id: string;
+  share_status: 'pending' | 'accepted';
 };
 
 function renderHtml(params: {
@@ -331,13 +333,19 @@ Deno.serve(async (req) => {
 
     const { data: trips, error: tripsErr } = await supabase
       .from('trips')
-      .select('trip_id, destination, primary_destination, arrival_date, departure_date')
+      .select('trip_id, user_id, destination, primary_destination, arrival_date, departure_date')
       .eq('arrival_date', targetDate)
       .eq('hidden', false);
 
     if (tripsErr) throw tripsErr;
 
-    const results: Array<{ trip_id: string; sent: number; skipped?: string; error?: string }> = [];
+    const results: Array<{
+      trip_id: string;
+      sent: number;
+      skipped?: string;
+      skipped_pending?: number;
+      error?: string;
+    }> = [];
 
     for (const trip of (trips ?? []) as TripRow[]) {
       try {
@@ -376,7 +384,7 @@ Deno.serve(async (req) => {
             .order('start_time', { ascending: true, nullsFirst: false }),
           supabase
             .from('trip_shares')
-            .select('id, first_name, last_name, shared_with_user_id')
+            .select('id, first_name, last_name, shared_with_user_id, share_status')
             .eq('trip_id', trip.trip_id)
             .not('shared_with_user_id', 'is', null),
         ]);
@@ -434,9 +442,21 @@ Deno.serve(async (req) => {
 
         // Resolve emails for registered travelers via auth admin API.
         let sent = 0;
+        let skippedPending = 0;
         const errors: string[] = [];
         for (const t of travelers) {
           if (!t.shared_with_user_id) continue;
+          // RLS only opens a trip to its owner or to an accepted share, so
+          // mailing this link to someone with a pending invite guarantees them
+          // "Access Restricted". They still appear on the stay lines above —
+          // they are travelling, they just have not taken the invite yet.
+          // The owner is checked against trips.user_id, not their own share
+          // row: that row is written without a status and so reads 'pending'.
+          const isTripOwner = t.shared_with_user_id === trip.user_id;
+          if (!isTripOwner && t.share_status !== 'accepted') {
+            skippedPending++;
+            continue;
+          }
           const { data: userRes, error: userErr } = await supabase.auth.admin.getUserById(t.shared_with_user_id);
           if (userErr || !userRes?.user?.email || !isEmail(userRes.user.email)) {
             errors.push(`no_email:${t.shared_with_user_id}`);
@@ -469,6 +489,7 @@ Deno.serve(async (req) => {
         results.push({
           trip_id: trip.trip_id,
           sent,
+          ...(skippedPending ? { skipped_pending: skippedPending } : {}),
           ...(errors.length ? { error: errors.join('; ') } : {}),
         });
       } catch (e: unknown) {
