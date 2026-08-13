@@ -31,21 +31,21 @@ describe('BookingView', () => {
   });
 
   const clickContact = () => {
-    fireEvent.click(screen.getByRole('button', { name: /contact kevin on fora travel/i }));
+    fireEvent.click(screen.getByRole('button', { name: /find an advisor on fora/i }));
   };
 
-  it('opens the Fora Travel profile when logged out', () => {
+  it('opens the Fora Travel advisor search when logged out', () => {
     render(<BookingView tripId="trip-1" />);
     clickContact();
-    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisors', '_blank');
     expect(toast).toHaveBeenCalled();
   });
 
-  it('opens the Fora Travel profile when gtag is unavailable', () => {
+  it('opens the Fora Travel advisor search when gtag is unavailable', () => {
     auth.user = { id: 'user-1' };
     render(<BookingView tripId="trip-1" />);
     clickContact();
-    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisors', '_blank');
   });
 
   it('fires the advisor_contact analytics event when logged in', () => {
@@ -55,7 +55,7 @@ describe('BookingView', () => {
     render(<BookingView tripId="trip-1" />);
     clickContact();
     expect(gtag).toHaveBeenCalledWith('event', 'advisor_contact', expect.objectContaining({ event_label: 'trip-1' }));
-    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('https://www.foratravel.com/advisors', '_blank');
   });
 
   it('keeps both booking cards shrinkable inside the grid (min-w-0)', () => {

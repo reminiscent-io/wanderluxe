@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
-import { ExternalLink, MapPin, Star } from 'lucide-react';
+import { ExternalLink, Star } from 'lucide-react';
 import {
   EXPEDIA_FALLBACK_URL,
   mountExpediaWidget,
@@ -79,11 +79,11 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
       });
     }
 
-    window.open('https://www.foratravel.com/advisor/kevin-lowe', '_blank');
+    window.open('https://www.foratravel.com/advisors', '_blank');
 
     toast({
       title: "Redirecting to Fora Travel",
-      description: "Opening Kevin's profile page for booking assistance",
+      description: "Opening Fora's advisor search for booking assistance",
     });
   };
 
@@ -94,7 +94,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
           Book your trip
         </h2>
         <p className="max-w-[58ch] text-sm text-muted-foreground">
-          Search Expedia for stays and flights, or work with Kevin for a curated, white-glove plan.
+          Search Expedia for stays and flights, or work with a Fora Advisor for a curated, white-glove plan.
         </p>
       </header>
 
@@ -154,37 +154,33 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
         </div>
 
         <div className="flex items-start gap-4">
-          <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full border border-border bg-secondary">
+          <div className="flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full border border-border bg-white">
             <img
-              src="https://res.cloudinary.com/foratravelweb/image/upload/c_fill,g_auto,h_640,w_640/f_webp/q_90/a1ade640-a52b-4571-9d4d-b17ff07d882a"
-              alt="Kevin Lowe — Fora Travel Advisor"
-              className="h-full w-full object-cover img-warm"
+              src="/logos/fora.png"
+              alt="Fora Travel"
+              className="h-8 w-8 sm:h-10 sm:w-10"
               loading="lazy"
             />
           </div>
 
           <div className="min-w-0 flex-1 pt-0.5">
             <h4 className="text-base font-semibold leading-tight text-foreground">
-              Kevin Lowe
+              Fora Advisor
             </h4>
             <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-medium text-muted-foreground">
-              <span>Fora Travel Advisor</span>
+              <span>The modern travel agency</span>
               <span aria-hidden className="text-border">·</span>
               <span className="inline-flex items-center gap-1">
                 <Star className="h-3 w-3 fill-current text-primary" aria-hidden />
-                Certified
+                Certified advisors
               </span>
-            </p>
-            <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" aria-hidden />
-              Based in New York
             </p>
           </div>
         </div>
 
         <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-foreground/85">
-          NYC-based traveler passionate about high-end US and Western Europe adventures, expertly
-          balancing luxury experiences with smart value optimization.
+          Fora is a modern take on the travel agency — real advisors who plan and book high-end
+          trips, expertly balancing luxury experiences with smart value optimization.
         </p>
 
         {/* Expertise: mobile scroll-snap rail, wraps at sm and up */}
@@ -193,7 +189,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
           style={{ scrollSnapType: 'x proximity' }}
         >
           <ul className="flex gap-1.5 px-5 pb-1 sm:flex-wrap sm:px-0 sm:pb-0">
-            {['Luxury Travel', 'Honeymoons', 'NYC', 'Aspen', 'Paris', 'Euro Skiing'].map((expertise) => (
+            {['Luxury Travel', 'Honeymoons', 'City Escapes', 'Ski Trips', 'Beach & Islands', 'Family Travel'].map((expertise) => (
               <li
                 key={expertise}
                 className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
@@ -212,10 +208,10 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
             className="h-11 sm:h-10 w-full sm:w-auto"
           >
             <ExternalLink className="h-4 w-4" />
-            Contact Kevin on Fora Travel
+            Find an advisor on Fora
           </Button>
           <p className="text-xs text-muted-foreground">
-            Responds in 1–2 business days
+            Match with an advisor who fits your trip
           </p>
         </div>
       </Card>
@@ -225,7 +221,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
       <Card className="p-5 sm:p-6">
         <div className="mb-5 sm:mb-6">
           <h3 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
-            Why book through Kevin
+            Why book through a Fora Advisor
           </h3>
         </div>
 
