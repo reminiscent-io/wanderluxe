@@ -300,7 +300,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 17. **Timezone System**
 - Times are floating wall-clock values (`HH:MM`) — **never convert them between zones**. Each trip has a default IANA `timezone`; items carry nullable overrides (`day_activities.timezone`, `reservations.timezone`, `accommodations.timezone`, `transportation.departure_timezone`/`arrival_timezone`); NULL = inherit trip default
-- Resolution: `timezone-proxy` Edge Function (place_id → geometry → Google Time Zone API → IANA id), cached permanently in `timezone_cache`; client side `useResolveTimezone()` + `useTripTimezone()` (lazy self-healing)
+- Resolution: `timezone-proxy` Edge Function (place_id → geometry → Google Time Zone API → IANA id, with an offline boundary-lookup fallback via `tz-lookup` when the Time Zone API is refused/unavailable), cached permanently in `timezone_cache`; client side `useResolveTimezone()` + `useTripTimezone()` (lazy self-healing)
 - UI: searchable IANA `TimezoneSelect` combobox; forms auto-fill the zone from the chosen place; label helpers in `src/utils/timezoneLabel.ts` (`effectiveTz`, `tzAbbrev`) drive badges on timeline rows, calendar chips, PDF times, and iCal summaries
 
 #### 18. **MCP Server**
