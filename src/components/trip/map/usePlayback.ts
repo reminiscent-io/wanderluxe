@@ -41,6 +41,18 @@ export function usePlayback({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runIdRef = useRef(0);
 
+  /*
+   * State is mirrored in a ref so callbacks can read the latest value without
+   * running side effects inside a setState updater. React requires updaters to
+   * be pure and double-invokes them under StrictMode, which would otherwise
+   * start the tour twice.
+   */
+  const stateRef = useRef(state);
+  const commit = useCallback((next: PlaybackState) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
+
   const stepRef = useRef(onStep);
   const completeRef = useRef(onComplete);
   useEffect(() => {
@@ -65,13 +77,15 @@ export function usePlayback({
 
   const pause = useCallback(() => {
     halt();
-    setState((s) => (s.status === 'playing' ? { ...s, status: 'paused' } : s));
-  }, [halt]);
+    if (stateRef.current.status === 'playing') {
+      commit({ ...stateRef.current, status: 'paused' });
+    }
+  }, [halt, commit]);
 
   const stop = useCallback(() => {
     halt();
-    setState({ status: 'idle', index: 0 });
-  }, [halt]);
+    commit({ status: 'idle', index: 0 });
+  }, [halt, commit]);
 
   const runFrom = useCallback(
     (start: number) => {
@@ -82,13 +96,13 @@ export function usePlayback({
 
       const advance = async (index: number) => {
         if (runId !== runIdRef.current) return;
-        setState({ status: 'playing', index });
+        commit({ status: 'playing', index });
 
         await stepRef.current(index);
         if (runId !== runIdRef.current) return;
 
         if (index >= count - 1) {
-          setState({ status: 'idle', index: 0 });
+          commit({ status: 'idle', index: 0 });
           completeRef.current?.();
           return;
         }
@@ -100,16 +114,14 @@ export function usePlayback({
 
       void advance(start);
     },
-    [count, halt, reducedMotion, speed],
+    [count, halt, reducedMotion, speed, commit],
   );
 
   const play = useCallback(() => {
-    setState((s) => {
-      const start = s.status === 'paused' ? s.index : 0;
-      runFrom(start);
-      return { status: 'playing', index: start };
-    });
-  }, [runFrom]);
+    const start = stateRef.current.status === 'paused' ? stateRef.current.index : 0;
+    commit({ status: 'playing', index: start });
+    runFrom(start);
+  }, [runFrom, commit]);
 
   const toggle = useCallback(() => {
     if (state.status === 'playing') pause();
@@ -120,20 +132,18 @@ export function usePlayback({
   const stepBy = useCallback(
     (delta: number) => {
       halt();
-      setState((s) => {
-        const next = Math.min(count - 1, Math.max(0, s.index + delta));
-        void stepRef.current(next);
-        return { status: 'paused', index: next };
-      });
+      const next = Math.min(count - 1, Math.max(0, stateRef.current.index + delta));
+      commit({ status: 'paused', index: next });
+      void stepRef.current(next);
     },
-    [count, halt],
+    [count, halt, commit],
   );
 
   // Changing day (or losing the stops) resets rather than replaying a stale index.
   useEffect(() => {
     halt();
-    setState({ status: 'idle', index: 0 });
-  }, [count, halt]);
+    commit({ status: 'idle', index: 0 });
+  }, [count, halt, commit]);
 
   return {
     status: state.status,

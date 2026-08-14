@@ -67,7 +67,10 @@ const RouteLayer: React.FC<RouteLayerProps> = ({
   annotateFirstLabel = true,
 }) => {
   const dayCount = Math.max(1, dates.length);
-  let labelled = 0;
+
+  // Derived up front rather than counted with a mutable tally during render:
+  // render must be idempotent, and StrictMode double-invokes it.
+  const firstLabelledId = segments.find((s) => labelledSegmentIds?.has(s.id))?.id ?? null;
 
   return (
     <>
@@ -118,7 +121,7 @@ const RouteLayer: React.FC<RouteLayerProps> = ({
                   }}
                 >
                   {formatDistance(segment.distanceKm, units)}
-                  {annotateFirstLabel && labelled++ === 0 ? ' bird’s-eye' : ''}
+                  {annotateFirstLabel && segment.id === firstLabelledId ? ' bird’s-eye' : ''}
                 </span>
               </AdvancedMarker>
             )}
