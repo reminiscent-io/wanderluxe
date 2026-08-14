@@ -47,9 +47,11 @@ const TripDetails = () => {
 
   useEffect(() => {
     if (!onExploreRoute && paramsTripId && location.pathname === `/trip/${paramsTripId}`) {
-      navigate(`/trip/${paramsTripId}/timeline`, { replace: true });
+      // Carry the query string: it holds the itinerary view (?view=map), so
+      // dropping it would silently break the most shareable deep links.
+      navigate(`/trip/${paramsTripId}/timeline${location.search}`, { replace: true });
     }
-  }, [onExploreRoute, paramsTripId, location.pathname, navigate]);
+  }, [onExploreRoute, paramsTripId, location.pathname, location.search, navigate]);
 
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
@@ -69,9 +71,9 @@ const TripDetails = () => {
     const tripIsPublic = (trip as { is_public?: boolean | null })?.is_public;
     if (paramsTripId && tripIsPublic && tripSlug && location.pathname.startsWith(`/trip/${paramsTripId}`)) {
       const rest = location.pathname.slice(`/trip/${paramsTripId}`.length) || '';
-      navigate(`/explore/${tripSlug}${rest}`, { replace: true });
+      navigate(`/explore/${tripSlug}${rest}${location.search}`, { replace: true });
     }
-  }, [paramsTripId, trip, location.pathname, navigate]);
+  }, [paramsTripId, trip, location.pathname, location.search, navigate]);
 
   // Quick add sheet state
   const [quickAddOpen, setQuickAddOpen] = useState(false);

@@ -7,3 +7,10 @@ verify_jwt = true
 # would otherwise wave through.
 [functions.timezone-proxy]
 verify_jwt = false
+
+# Gateway JWT verification off because anonymous access is required, not merely
+# tolerated: public trips on /explore/:slug render the map for logged-out
+# visitors. The body does its own optional auth and rate-limits by IP when no
+# bearer token is present.
+[functions.place-coordinates-proxy]
+verify_jwt = false

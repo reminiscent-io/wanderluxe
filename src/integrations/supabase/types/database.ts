@@ -648,6 +648,48 @@ export type Database = {
           },
         ]
       }
+      place_coordinates: {
+        Row: {
+          cache_key: string
+          fetched_at: string
+          formatted_address: string | null
+          lat: number | null
+          lng: number | null
+          lookup_input: string
+          name: string | null
+          photo_reference: string | null
+          place_id: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          cache_key: string
+          fetched_at?: string
+          formatted_address?: string | null
+          lat?: number | null
+          lng?: number | null
+          lookup_input: string
+          name?: string | null
+          photo_reference?: string | null
+          place_id?: string | null
+          source: string
+          status?: string
+        }
+        Update: {
+          cache_key?: string
+          fetched_at?: string
+          formatted_address?: string | null
+          lat?: number | null
+          lng?: number | null
+          lookup_input?: string
+          name?: string | null
+          photo_reference?: string | null
+          place_id?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_imports_limit: number | null

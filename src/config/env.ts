@@ -38,6 +38,12 @@ const envSchema = z.object({
 
   // === OPTIONAL VARIABLES ===
 
+  // Google Cloud map style ID for the trip map view. AdvancedMarker requires a
+  // mapId, and supplying one makes inline `styles` inert — so the warm basemap
+  // is configured in the Cloud Console, not in code. Falls back to Google's
+  // demo style when unset so the map still renders.
+  VITE_GOOGLE_MAPS_MAP_ID: z.string().optional(),
+
   // Unsplash API for trip imagery (optional - will use placeholders if missing)
   VITE_UNSPLASH_ACCESS_KEY: z.string().optional(),
 
@@ -80,6 +86,7 @@ function validateEnv(): Env {
     VITE_SUPABASE_URL: getVar('VITE_SUPABASE_URL'),
     VITE_SUPABASE_ANON_KEY: getVar('VITE_SUPABASE_ANON_KEY'),
     VITE_GOOGLE_MAPS_API_KEY: getVar('VITE_GOOGLE_MAPS_API_KEY'),
+    VITE_GOOGLE_MAPS_MAP_ID: getVar('VITE_GOOGLE_MAPS_MAP_ID'),
     VITE_UNSPLASH_ACCESS_KEY: getVar('VITE_UNSPLASH_ACCESS_KEY'),
     VITE_PARSE_TRAVEL_DOC_URL: getVar('VITE_PARSE_TRAVEL_DOC_URL'),
     VITE_ADMIN_EMAIL: getVar('VITE_ADMIN_EMAIL'),
@@ -169,6 +176,7 @@ export const {
   VITE_SUPABASE_URL,
   VITE_SUPABASE_ANON_KEY,
   VITE_GOOGLE_MAPS_API_KEY,
+  VITE_GOOGLE_MAPS_MAP_ID,
   VITE_UNSPLASH_ACCESS_KEY,
   VITE_PARSE_TRAVEL_DOC_URL,
   VITE_ADMIN_EMAIL,
