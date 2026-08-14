@@ -88,7 +88,7 @@ function renderAt(path: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const tree = () => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
@@ -98,6 +98,10 @@ function renderAt(path: string) {
       </MemoryRouter>
     </QueryClientProvider>
   );
+  const utils = render(tree());
+  // Re-render the same tree so the component picks up changed mock state —
+  // a fresh element each time, or React bails out on identity.
+  return { ...utils, refresh: () => utils.rerender(tree()) };
 }
 
 describe('TripDetails — signed-out access to a shared trip', () => {
@@ -141,6 +145,34 @@ describe('TripDetails — signed-out access to a shared trip', () => {
     renderAt(TRIP_PATH);
 
     await new Promise((r) => setTimeout(r, 50));
+    expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
+  });
+
+  it('does not accuse a visitor of lacking access while auth is still resolving', async () => {
+    // Following a reminder email loads the page cold: the permission check can
+    // come back empty before the session is restored. Hold, do not refuse.
+    mockAuth = { session: null, profileLoaded: false };
+    renderAt(TRIP_PATH);
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/access restricted/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/could not be found/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the trip once a late-restored session grants access', async () => {
+    mockAuth = { session: null, profileLoaded: false };
+    const { refresh } = renderAt(TRIP_PATH);
+    expect(screen.queryByTestId('timeline')).not.toBeInTheDocument();
+
+    // Session comes back and the permission check re-runs with it.
+    mockAuth = { session: { user: { id: 'u1' } }, profileLoaded: true };
+    mockPermissions = { ...mockPermissions, canView: true, canEdit: true };
+    mockTripQuery = { ...mockTripQuery, trip: A_TRIP };
+    refresh();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('timeline')).toBeInTheDocument();
+    });
     expect(mockNavigate).not.toHaveBeenCalledWith(AUTH_ROUTE, REPLACE);
   });
 

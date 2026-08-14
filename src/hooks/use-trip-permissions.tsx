@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PermissionLevel } from '@/integrations/supabase/trip_shares_types';
+import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin } from './useIsAdmin';
 
 interface TripPermissions {
@@ -11,32 +12,54 @@ interface TripPermissions {
   isLoading: boolean;
 }
 
+const NO_ACCESS: Omit<TripPermissions, 'isLoading'> = {
+  canEdit: false,
+  canView: false,
+  isOwner: false,
+  permissionLevel: null,
+};
+
 /**
  * Hook to check user permissions for a specific trip
+ *
+ * The check re-runs whenever the signed-in user changes. Someone arriving from
+ * a reminder or share email lands on a cold page whose auth state is still
+ * being restored; answering once, early, would deny the owner their own trip
+ * and never correct itself.
+ *
  * @param tripId The ID of the trip to check permissions for
  * @returns Permission information and loading state
  */
 export function useTripPermissions(tripId: string | undefined): TripPermissions {
   const [permissions, setPermissions] = useState<TripPermissions>({
-    canEdit: false,
-    canView: false,
-    isOwner: false,
-    permissionLevel: null,
+    ...NO_ACCESS,
     isLoading: true,
   });
   const { isAdmin } = useIsAdmin();
+  // Identity comes from the auth context rather than a per-mount
+  // supabase.auth.getUser() round trip: that call can fail transiently while a
+  // token is being refreshed, which used to read as "no access" permanently.
+  const { user, profileLoaded } = useAuth();
+  const userId = user?.id;
+  const userEmail = user?.email;
 
   useEffect(() => {
     if (!tripId) {
-      setPermissions({
-        canEdit: false,
-        canView: false,
-        isOwner: false,
-        permissionLevel: null,
-        isLoading: false,
-      });
+      setPermissions({ ...NO_ACCESS, isLoading: false });
       return;
     }
+
+    // Auth has not settled yet, so we cannot tell a logged-out visitor from a
+    // signed-in one. Stay loading; this effect re-runs once it resolves.
+    if (!profileLoaded) {
+      setPermissions({ ...NO_ACCESS, isLoading: true });
+      return;
+    }
+
+    let cancelled = false;
+    const apply = (next: TripPermissions) => {
+      if (!cancelled) setPermissions(next);
+    };
 
     const checkPermissions = async () => {
       try {
@@ -49,21 +72,13 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         if (tripError) {
           console.error('Error checking trip data:', tripError);
-          setPermissions({
-            canEdit: false,
-            canView: false,
-            isOwner: false,
-            permissionLevel: null,
-            isLoading: false,
-          });
+          apply({ ...NO_ACCESS, isLoading: false });
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
-        
         // If trip is public and no user is logged in, allow view-only access
-        if (tripData.is_public && !user) {
-          setPermissions({
+        if (tripData.is_public && !userId) {
+          apply({
             canEdit: false,
             canView: true,
             isOwner: false,
@@ -73,21 +88,15 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
           return;
         }
 
-        if (!user) {
-          setPermissions({
-            canEdit: false,
-            canView: false,
-            isOwner: false,
-            permissionLevel: null,
-            isLoading: false,
-          });
+        if (!userId) {
+          apply({ ...NO_ACCESS, isLoading: false });
           return;
         }
 
-        const isOwner = tripData.user_id === user.id;
+        const isOwner = tripData.user_id === userId;
 
         if (isOwner) {
-          setPermissions({
+          apply({
             canEdit: true,
             canView: true,
             isOwner: true,
@@ -99,7 +108,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         // If trip is public and user is a database-verified admin, grant edit access
         if (tripData.is_public && isAdmin) {
-          setPermissions({
+          apply({
             canEdit: true,
             canView: true,
             isOwner: false,
@@ -111,7 +120,7 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
         // If trip is public (but user is not admin), allow view-only access
         if (tripData.is_public) {
-          setPermissions({
+          apply({
             canEdit: false,
             canView: true,
             isOwner: false,
@@ -126,35 +135,23 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
           .from('trip_shares')
           .select('permission_level, share_status')
           .eq('trip_id', tripId)
-          .eq('shared_with_email', user.email)
+          .eq('shared_with_email', userEmail)
           .single();
 
         if (shareError || !shareData) {
           // User has no access to this trip
-          setPermissions({
-            canEdit: false,
-            canView: false,
-            isOwner: false,
-            permissionLevel: null,
-            isLoading: false,
-          });
+          apply({ ...NO_ACCESS, isLoading: false });
           return;
         }
 
         // Require explicit acceptance for shared trips
         if (shareData.share_status === 'pending') {
-          setPermissions({
-            canEdit: false,
-            canView: false,
-            isOwner: false,
-            permissionLevel: null,
-            isLoading: false,
-          });
+          apply({ ...NO_ACCESS, isLoading: false });
           return;
         }
 
         const permissionLevel = shareData.permission_level as PermissionLevel;
-        setPermissions({
+        apply({
           canEdit: permissionLevel === 'edit',
           canView: true,
           isOwner: false,
@@ -164,18 +161,14 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
       } catch (error) {
         console.error('Error checking trip permissions:', error);
-        setPermissions({
-          canEdit: false,
-          canView: false,
-          isOwner: false,
-          permissionLevel: null,
-          isLoading: false,
-        });
+        apply({ ...NO_ACCESS, isLoading: false });
       }
     };
 
     checkPermissions();
-  }, [tripId, isAdmin]);
+    // A check started for the previous user must not land after this one.
+    return () => { cancelled = true; };
+  }, [tripId, isAdmin, profileLoaded, userId, userEmail]);
 
   return permissions;
 }

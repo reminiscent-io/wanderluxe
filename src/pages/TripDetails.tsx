@@ -54,9 +54,10 @@ const TripDetails = () => {
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
   useTripSubscription(tripId);
 
-  // Signed-out visitors following a share link are sent to sign in and
-  // returned here afterwards; true while that redirect is pending.
-  const mustSignIn = useTripAccessGate({
+  // Signed-out visitors following a share or reminder link are sent to sign in
+  // and returned here afterwards; true while that redirect is pending, or
+  // while auth is still resolving and access is not yet knowable.
+  const accessPending = useTripAccessGate({
     onExploreRoute,
     tripLoading,
     permissionsLoading,
@@ -134,9 +135,9 @@ const TripDetails = () => {
   }
   if (tripLoading && !previousTrip) return <TripDetailsSkeleton />;
   if (permissionsLoading) return <TripDetailsSkeleton />;
-  // The effect above is navigating to /auth — hold the skeleton rather than
-  // flashing an error on the way out.
-  if (mustSignIn) return <TripDetailsSkeleton />;
+  // Either the gate is navigating to /auth or auth has not resolved yet — hold
+  // the skeleton rather than flashing an error at someone with access.
+  if (accessPending) return <TripDetailsSkeleton />;
   if (tripError) return <TripDetailsError />;
 
   // Checked before the trip data: a viewer without access gets no readable row

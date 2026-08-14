@@ -23,8 +23,9 @@ interface TripAccessGateArgs {
  * The trip URL goes into the `pendingRedirect` slot that Auth.tsx already
  * honours for password sign-in, sign-up and Google OAuth.
  *
- * @returns true while the redirect is pending, so the caller can hold a
- * loading state instead of flashing an error on the way out.
+ * @returns true while the answer is still pending — either the redirect is in
+ * flight or auth has not resolved — so the caller can hold a loading state
+ * instead of flashing an error at someone who does have access.
  */
 export function useTripAccessGate({
   onExploreRoute,
@@ -43,6 +44,10 @@ export function useTripAccessGate({
   const accessChecked = !tripLoading && !permissionsLoading;
   const blockedFromTrip = accessChecked && !canView;
   const mustSignIn = !onExploreRoute && isAnonymous && blockedFromTrip;
+  // Nobody is refused while auth is still restoring: a cold page load from an
+  // email link routinely reaches this point before the session is back, and
+  // the visitor is usually the trip owner.
+  const authUnresolved = !onExploreRoute && !profileLoaded && blockedFromTrip;
 
   useEffect(() => {
     if (!mustSignIn) return;
@@ -50,5 +55,5 @@ export function useTripAccessGate({
     navigate('/auth', { replace: true });
   }, [mustSignIn, location.pathname, navigate]);
 
-  return mustSignIn;
+  return mustSignIn || authUnresolved;
 }

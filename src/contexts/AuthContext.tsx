@@ -173,7 +173,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (!session?.user) {
-        setProfileLoaded(false);
+        // Signed out is a settled state, not a pending one. The SDK fires
+        // INITIAL_SESSION with a null session for every anonymous visitor —
+        // after getSession() above already reported the same thing — and there
+        // is no profile to load, so nothing would ever flip this back. Marking
+        // it pending strands every gate that waits on `profileLoaded` to learn
+        // the visitor is logged out (see useTripAccessGate).
+        setSubscriptionTier('free');
+        setAvatarUrl(null);
+        setFullName(null);
+        setLastLoginAt(null);
+        setProfileLoaded(true);
         return;
       }
       // TOKEN_REFRESHED fires every time the SDK rotates the access token.
@@ -181,6 +191,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // on every token refresh, which would hit the DB every ~hour.
       if (event === 'TOKEN_REFRESHED') return;
       const isNewLogin = event === 'SIGNED_IN';
+      if (isNewLogin) {
+        // Hold the flag while the new user's profile loads so the avatar shows
+        // a skeleton rather than flashing initials. Bounded, unlike the
+        // signed-out case above: ensureProfile resolves it on every path.
+        setProfileLoaded(false);
+      }
       identifyUser(session.user.id, {
         email: session.user.email,
         provider: session.user.app_metadata?.provider,
