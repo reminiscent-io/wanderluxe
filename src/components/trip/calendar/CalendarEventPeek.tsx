@@ -1,22 +1,11 @@
 import React from 'react';
 import type { EventContentArg } from '@fullcalendar/core';
-import { Clock, MapPin, Star, Users, Ticket, CalendarRange, Banknote } from 'lucide-react';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import CalendarEventChip from './CalendarEventChip';
 import type { CalendarEntityType } from './eventMapping';
-import { buildPeekFacts, type FactIcon } from './peekFacts';
-
-const TYPE_LABELS: Record<CalendarEntityType, string> = {
-  activity: 'Activity',
-  dining: 'Dining',
-  accommodation: 'Stay',
-  transportation: 'Transport',
-};
-
-const FACT_ICONS: Record<FactIcon, React.ComponentType<{ className?: string }>> = {
-  clock: Clock, pin: MapPin, star: Star, users: Users, ticket: Ticket, dates: CalendarRange, cost: Banknote,
-};
+import { buildPeekFacts } from './peekFacts';
+import { FACT_ICONS, TYPE_LABELS } from './factIcons';
 
 function supportsHover(): boolean {
   return typeof window !== 'undefined'

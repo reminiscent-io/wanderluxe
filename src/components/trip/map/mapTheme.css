@@ -1,0 +1,53 @@
+/*
+ * De-Google the InfoWindow. These are Google's internal class names and have
+ * changed before, so keep the selectors shallow and the rules additive: if a
+ * future Maps release renames them, the popup degrades to Google's default
+ * chrome rather than breaking.
+ */
+.wl-map .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 0.75rem;
+  background: #fdfcf8;
+  border: 1px solid #ddd4c8;
+  box-shadow: 0 10px 30px -4px rgba(139, 119, 93, 0.22), 0 4px 12px -4px rgba(139, 119, 93, 0.12);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: hsl(var(--foreground));
+}
+
+/* The default wrapper adds its own scroll padding around our fixed-width body. */
+.wl-map .gm-style-iw-d {
+  overflow: visible !important;
+  max-height: none !important;
+  padding: 0 !important;
+}
+
+/* Tail below the bubble, re-tinted to match the cream fill and warm border. */
+.wl-map .gm-style-iw-tc::after {
+  background: #fdfcf8;
+  box-shadow: 0 2px 6px -2px rgba(139, 119, 93, 0.18);
+}
+
+/* We render our own close affordance inside the popup body. */
+.wl-map .gm-style-iw-chr,
+.wl-map button.gm-ui-hover-effect {
+  display: none !important;
+}
+
+.wl-map .gm-style img {
+  max-width: none;
+}
+
+/* Marker buttons are ours; suppress the focus ring Google's container adds and
+   use our own bronze ring instead. */
+.wl-map .gm-style [role='button']:focus-visible,
+.wl-map button:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-map button {
+    transition: none !important;
+  }
+}

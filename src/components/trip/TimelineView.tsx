@@ -11,10 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CalendarDays, ListTree, CalendarPlus, FileDown, MoreHorizontal } from 'lucide-react';
+// Aliased: a bare `Map` import shadows the global Map constructor used below.
+import { CalendarDays, ListTree, CalendarPlus, FileDown, MoreHorizontal, Map as MapIcon } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
-import { loadGoogleMapsAPI } from '@/utils/googleMapsLoader';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useSessionKeepAlive } from '@/hooks/useSessionKeepAlive';
 import { AIAssistantPanel } from './ai-assistant';
@@ -23,6 +24,11 @@ import { useWeather } from '@/hooks/useWeather';
 import ViewingStatusAvatars from './timeline/ViewingStatusAvatars';
 
 const TripCalendarView = lazy(() => import('./calendar/TripCalendarView'));
+const TripMapView = lazy(() => import('./map/TripMapView'));
+
+type ItineraryView = 'timeline' | 'calendar' | 'map';
+
+const VIEW_PARAM = 'view';
 
 interface TimelineViewProps {
   tripId: string;
@@ -61,7 +67,36 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
-  const [itineraryView, setItineraryView] = useState<'timeline' | 'calendar'>('timeline');
+  // View lives in the URL so all three are deep-linkable and survive a refresh.
+  // 'timeline' is the absent state, keeping existing bookmarks untouched.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawView = searchParams.get(VIEW_PARAM);
+  const itineraryView: ItineraryView =
+    rawView === 'calendar' || rawView === 'map' ? rawView : 'timeline';
+
+  const setItineraryView = useCallback(
+    (next: ItineraryView) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next === 'timeline') params.delete(VIEW_PARAM);
+          else params.set(VIEW_PARAM, next);
+          return params;
+        },
+        // Replace, so toggling views doesn't stack history between the reader
+        // and the Back button.
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  // Once opened, the map stays mounted and is hidden with CSS instead: Dynamic
+  // Maps bills per map instantiation, and this also preserves camera state.
+  const [mapMounted, setMapMounted] = useState(false);
+  useEffect(() => {
+    if (itineraryView === 'map') setMapMounted(true);
+  }, [itineraryView]);
   // Desktop assistant visibility. Defaults open on every load (deliberately unpersisted).
   const [assistantOpen, setAssistantOpen] = useState(true);
 
@@ -77,11 +112,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     arrival_date: initialTripDates?.arrival_date || null,
     departure_date: initialTripDates?.departure_date || null,
   });
-
-  //Load google maps api on the timeline page here
-  useEffect(() => {
-    loadGoogleMapsAPI();
-  }, []);
 
   useEffect(() => {
     const newArrival = initialTripDates?.arrival_date;
@@ -226,7 +256,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <ViewingStatusAvatars tripId={tripId} />
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <fieldset className="grid flex-1 min-w-0 grid-cols-2 rounded-md border border-border bg-card p-0.5 sm:inline-flex sm:flex-none">
+            <fieldset className="grid flex-1 min-w-0 grid-cols-3 rounded-md border border-border bg-card p-0.5 sm:inline-flex sm:flex-none">
               <legend className="sr-only">Itinerary view</legend>
               <button
                 type="button"
@@ -243,6 +273,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
                 className={`flex min-h-[44px] items-center justify-center gap-1.5 px-3 text-sm rounded-[0.4rem] transition-colors sm:min-h-0 sm:py-1 ${itineraryView === 'calendar' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <CalendarDays className="h-3.5 w-3.5" />Calendar
+              </button>
+              <button
+                type="button"
+                aria-pressed={itineraryView === 'map'}
+                onClick={() => setItineraryView('map')}
+                className={`flex min-h-[44px] items-center justify-center gap-1.5 px-3 text-sm rounded-[0.4rem] transition-colors sm:min-h-0 sm:py-1 ${itineraryView === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <MapIcon className="h-3.5 w-3.5" />Map
               </button>
             </fieldset>
             {/* Desktop: rare actions stay as labeled buttons. */}
@@ -289,6 +327,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         {canEdit && (
           <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
         )}
+        {mapMounted && (
+          <div className={itineraryView === 'map' ? undefined : 'hidden'} data-testid="map-view-host">
+            <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading map…</div>}>
+              <TripMapView
+                tripId={tripId}
+                tripDates={{ arrival_date: localTripDates.arrival_date, departure_date: localTripDates.departure_date }}
+                destination={tripDestination}
+                canEdit={canEdit}
+              />
+            </Suspense>
+          </div>
+        )}
         {itineraryView === 'calendar' ? (
           <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading calendar…</div>}>
             <TripCalendarView
@@ -298,7 +348,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               canEdit={canEdit}
             />
           </Suspense>
-        ) : (
+        ) : itineraryView === 'map' ? null : (
           <TimelineContent
             days={days}
             dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
@@ -315,7 +365,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       <AssistantDock
         open={assistantOpen}
-        mode={itineraryView === 'calendar' ? 'overlay' : 'docked'}
+        mode={itineraryView === 'timeline' ? 'docked' : 'overlay'}
         onOpen={() => setAssistantOpen(true)}
       >
         <AIAssistantPanel tripId={tripId} onCollapse={() => setAssistantOpen(false)} />

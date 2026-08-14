@@ -117,6 +117,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/@dnd-kit')) {
             return 'dnd';
           }
+          if (id.includes('node_modules/@vis.gl/react-google-maps')) {
+            return 'maps';
+          }
         },
       }
     },
