@@ -206,6 +206,14 @@
     height: 100vh;
     height: -webkit-fill-available;
     height: calc(var(--app-height, 1vh) * 100);
+
+    /*
+     * iOS inflates text in landscape unless auto-adjustment is pinned off. The
+     * app already sets its own responsive type scale, so the browser guessing on
+     * top of it only breaks the layout.
+     */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -213,6 +221,19 @@
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: calc(var(--app-height, 1vh) * 100);
+
+    /*
+     * Suppress the grey flash Safari and Chrome paint over every tapped element;
+     * components express press feedback through their own `active:` styles.
+     */
+    -webkit-tap-highlight-color: transparent;
+
+    /*
+     * Keep rubber-band scrolling inside whichever pane the user is actually in,
+     * so overscrolling a drawer or the chat log does not drag the page behind it.
+     * `contain` rather than `none` — pull-to-refresh stays available.
+     */
+    overscroll-behavior-y: contain;
   }
 
   :root {
