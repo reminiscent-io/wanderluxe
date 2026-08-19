@@ -11,12 +11,16 @@ const NavigationLinks = () => {
       navigate("/explore");
     } else if (path === "My Trips") {
       navigate("/my-trips");
+    } else if (path === "Guide") {
+      navigate("/guide");
     } else if (path === "Admin") {
       navigate("/admin");
     }
   };
 
-  const navItems = isAdmin ? ["Explore", "My Trips", "Admin"] : ["Explore", "My Trips"];
+  const navItems = isAdmin
+    ? ["Explore", "My Trips", "Guide", "Admin"]
+    : ["Explore", "My Trips", "Guide"];
 
   return (
     <motion.div className="hidden space-x-8 md:flex">

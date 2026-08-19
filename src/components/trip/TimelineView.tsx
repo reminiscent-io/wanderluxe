@@ -5,14 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 // Aliased: a bare `Map` import shadows the global Map constructor used below.
-import { CalendarDays, ListTree, CalendarPlus, FileDown, MoreHorizontal, Map as MapIcon } from 'lucide-react';
+import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
@@ -22,6 +16,9 @@ import { AIAssistantPanel } from './ai-assistant';
 import AssistantDock from './ai-assistant/AssistantDock';
 import { useWeather } from '@/hooks/useWeather';
 import ViewingStatusAvatars from './timeline/ViewingStatusAvatars';
+import DiscoverHint from '@/components/discovery/DiscoverHint';
+import { useFirstRun } from '@/hooks/useFirstRun';
+import { useTravelers } from '@/hooks/useTravelers';
 
 const TripCalendarView = lazy(() => import('./calendar/TripCalendarView'));
 const TripMapView = lazy(() => import('./map/TripMapView'));
@@ -90,6 +87,28 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     },
     [setSearchParams],
   );
+
+  // Deep links from the guide ("Show me") land with the feature already open.
+  // The param is consumed and stripped so a refresh or a back-nav doesn't
+  // reopen a dialog the user has already closed.
+  useEffect(() => {
+    const sync = searchParams.get('sync');
+    const exportParam = searchParams.get('export');
+    if (!sync && !exportParam) return;
+
+    if (sync === '1') setIsSyncSheetOpen(true);
+    if (exportParam === 'pdf') setIsPdfExportOpen(true);
+
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete('sync');
+        params.delete('export');
+        return params;
+      },
+      { replace: true }
+    );
+  }, [searchParams, setSearchParams]);
 
   // Once opened, the map stays mounted and is hidden with CSS instead: Dynamic
   // Maps bills per map instantiation, and this also preserves camera state.
@@ -230,9 +249,34 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
       created_at: event.created_at || new Date().toISOString(),
     })) || [];
 
+  // ---- Discovery hints -------------------------------------------------
+  // Three capabilities that exist but never announce themselves. Each fires
+  // once, at the first moment it becomes relevant. Only ever one at a time —
+  // stacked hints read as clutter and get dismissed as a batch.
+  const { travelers } = useTravelers(tripId);
 
+  const itemCount =
+    (days?.reduce((sum, day) => sum + (day.activities?.length ?? 0), 0) ?? 0) +
+    processedHotelStays.length +
+    (transportationData?.length ?? 0);
 
+  const hasTransportation = (transportationData?.length ?? 0) > 0;
+  const isSharedTrip = (travelers?.length ?? 0) > 1;
 
+  // Pick the first hint that is both relevant and still unseen, so dismissing
+  // one lets the next take its place rather than silencing the whole chain.
+  const onTimeline = itineraryView === 'timeline';
+  const mapHint = useFirstRun('map-view', onTimeline && itemCount >= 3);
+  const calendarHint = useFirstRun('calendar-sync', onTimeline && canEdit && hasTransportation);
+  const collabHint = useFirstRun('live-collab', onTimeline && isSharedTrip);
+
+  const activeHint = mapHint.isUnseen
+    ? 'map-view'
+    : calendarHint.isUnseen
+      ? 'calendar-sync'
+      : collabHint.isUnseen
+        ? 'live-collab'
+        : null;
 
   return (
     <div className="relative lg:flex lg:gap-6">
@@ -301,28 +345,55 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               open={isPdfExportOpen}
               onOpenChange={setIsPdfExportOpen}
             />
-            {/* Mobile: rare actions fold into an overflow menu with full labels. */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-11 w-11 sm:hidden" aria-label="More actions">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canEdit && (
-                  <DropdownMenuItem onSelect={() => setIsSyncSheetOpen(true)}>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    Add to calendar
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onSelect={() => setIsPdfExportOpen(true)}>
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Export PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          </div>
+
+          {/* Mobile: the same two actions as labelled buttons rather than an
+              unlabelled overflow icon — nobody taps a menu they can't read. */}
+          <div className="flex w-full gap-2 sm:hidden">
+            {canEdit && (
+              <Button
+                variant="outline"
+                className="h-11 flex-1"
+                onClick={() => setIsSyncSheetOpen(true)}
+              >
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Add to calendar
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="h-11 flex-1"
+              onClick={() => setIsPdfExportOpen(true)}
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
           </div>
         </header>
+
+        {activeHint === 'map-view' && (
+          <DiscoverHint
+            hint="map-view"
+            actionLabel="Show me"
+            onAction={() => setItineraryView('map')}
+          >
+            Your days are filling up — see them laid out on a map, in the order you'll walk them.
+          </DiscoverHint>
+        )}
+        {activeHint === 'calendar-sync' && (
+          <DiscoverHint
+            hint="calendar-sync"
+            actionLabel="Set it up"
+            onAction={() => setIsSyncSheetOpen(true)}
+          >
+            You can subscribe to this itinerary in your phone's calendar — it updates itself as the trip changes.
+          </DiscoverHint>
+        )}
+        {activeHint === 'live-collab' && (
+          <DiscoverHint hint="live-collab">
+            Everyone on this trip sees your changes as you make them. The faces above show who's looking right now.
+          </DiscoverHint>
+        )}
 
         {canEdit && (
           <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />

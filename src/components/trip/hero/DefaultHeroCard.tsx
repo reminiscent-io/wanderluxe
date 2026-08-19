@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Compass, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface DefaultHeroCardProps {
@@ -45,15 +46,26 @@ export function DefaultHeroCard({
           Plan a trip and we'll help shape the days, the bookings, and the budget.
         </p>
 
-        <Button
-          size="lg"
-          onClick={onCreateTrip}
-          variant="sunset"
-          className="font-semibold"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Plan a trip
-        </Button>
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
+          <Button
+            size="lg"
+            onClick={onCreateTrip}
+            variant="sunset"
+            className="font-semibold"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Plan a trip
+          </Button>
+
+          {/* Starting from a finished itinerary shows what the app can do far
+              faster than starting from an empty one. */}
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/explore">
+              <Compass className="h-5 w-5 mr-2" aria-hidden="true" />
+              Start from an example
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import BudgetView from "../components/trip/BudgetView";
 import BookingView from "../components/trip/BookingView";
 import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
 import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
+import CopyTripButton from "@/components/trip/CopyTripButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { Card } from "@/components/ui/card";
@@ -330,7 +331,32 @@ const TripDetails = () => {
                 </ol>
               </nav>
 
-              {!canEdit && (
+              {/* Showcase trips are the app's best demo — make them a starting
+                  point rather than only a display case. */}
+              {isPublicTrip && !canEdit && (
+                <div className="mb-6 rounded-card border border-sunset-200 bg-sunset-50 p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="font-display text-xl text-foreground leading-snug">
+                        Like this itinerary? Start from it.
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Take a copy — every day, hotel and reservation — set your own dates,
+                        and change whatever you like.
+                      </p>
+                    </div>
+                    <CopyTripButton
+                      tripId={tripId}
+                      destination={displayData.destination}
+                      arrivalDate={displayData.arrival_date ?? null}
+                      departureDate={displayData.departure_date ?? null}
+                      className="shrink-0"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!isPublicTrip && !canEdit && (
                 <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">

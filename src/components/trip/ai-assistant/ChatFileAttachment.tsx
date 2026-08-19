@@ -227,6 +227,7 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
             disabled && 'opacity-50 cursor-not-allowed'
           )}
           title="Attach image or PDF (booking confirmation, screenshot, etc.)"
+          aria-label="Attach a booking confirmation image or PDF"
         >
           <Plus className="w-5 h-5" />
         </Button>

@@ -20,6 +20,15 @@ vi.mock('./timeline/TimelineContent', () => ({
   default: () => <div data-testid="timeline-content" />,
 }));
 vi.mock('./timeline/ViewingStatusAvatars', () => ({ default: () => null }));
+vi.mock('@/hooks/useTravelers', () => ({
+  useTravelers: () => ({ travelers: [], isLoading: false }),
+}));
+// Hints default to already-seen here so the dock/view assertions below aren't
+// perturbed by an extra banner. Hint behaviour is covered by DiscoverHint.test.tsx.
+vi.mock('@/hooks/useFirstRun', () => ({
+  useFirstRun: () => ({ isUnseen: false, dismiss: vi.fn() }),
+  default: () => ({ isUnseen: false, dismiss: vi.fn() }),
+}));
 vi.mock('./ExportPdfButton', () => ({ default: () => null }));
 vi.mock('./calendar/CalendarSyncSheet', () => ({ default: () => null }));
 vi.mock('./calendar/TripCalendarView', () => ({

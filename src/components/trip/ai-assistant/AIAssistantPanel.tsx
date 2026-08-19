@@ -10,6 +10,7 @@ import { addPlaceCardItem, undoPlaceCardItem } from '@/services/placeCardAddServ
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
 import PromptChips from './PromptChips';
+import DiscoverHint from '@/components/discovery/DiscoverHint';
 import UsageMeter from './UsageMeter';
 import PaywallModal from './PaywallModal';
 import ItemStepperDialog from './ItemStepperDialog';
@@ -348,6 +349,12 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
               usage={usage}
               onUpgradeClick={() => setShowPaywall(true)}
             />
+
+            {/* First-run: the attach control is the least obvious thing in the app */}
+            <DiscoverHint hint="doc-import" className="mx-4 mb-2">
+              Have a booking confirmation? Attach the PDF or a photo with{' '}
+              <span className="font-medium">+</span> and I'll read the details straight into your trip.
+            </DiscoverHint>
 
             {/* Input */}
             <ChatInput
