@@ -4,7 +4,8 @@ import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2
+  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2,
+  BookOpen
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -262,6 +263,19 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       </ScrollArea>
 
       <div className="p-4 border-t border-sand-200 space-y-3">
+        {/* Permanent reference. Reachable from every trip, on both breakpoints,
+            because "how do I do X again?" arrives while you're mid-trip. */}
+        <NavLink to="/guide" onClick={() => setIsOpen(false)}>
+          <Button
+            className="w-full justify-start text-sand-600 hover:text-earth-600 hover:bg-sand-50"
+            variant="ghost"
+            size="sm"
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            How it works
+          </Button>
+        </NavLink>
+
         {/* Mobile-only Admin Portal - Shows only on mobile for admins */}
         {isAdmin && (
           <div className="md:hidden">

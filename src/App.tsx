@@ -37,6 +37,7 @@ const Budget = lazy(() => import("./pages/Budget"));
 const Settings = lazy(() => import("./pages/Settings"));
 const LLMTraining = lazy(() => import("./pages/LLMTraining"));
 const Explore = lazy(() => import("./pages/Explore"));
+const Guide = lazy(() => import("./pages/Guide"));
 const Admin = lazy(() => import("./pages/Admin"));
 const InviteRedeem = lazy(() => import("./pages/InviteRedeem"));
 const OauthConsent = lazy(() => import("./pages/OauthConsent"));
@@ -84,6 +85,7 @@ const App = () => {
                   <Route path="/auth/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/update-password" element={<UpdatePassword />} />
                   <Route path="/explore" element={<Explore />} />
+                  <Route path="/guide" element={<Guide />} />
                   <Route path="/explore/:slug/*" element={<TripDetails />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />

@@ -6,7 +6,7 @@ import NavigationLinks from "./navigation/NavigationLinks";
 import NavigationAuth from "./navigation/NavigationAuth";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Compass, FolderOpen } from "lucide-react";
+import { Menu, Compass, FolderOpen, BookOpen } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 interface NavigationProps {
@@ -63,6 +63,13 @@ const Navigation = ({ mobileMenuTrigger }: NavigationProps) => {
                   >
                     <FolderOpen className="h-5 w-5" />
                     <span className="font-medium">My Trips</span>
+                  </button>
+                  <button
+                    onClick={() => handleMobileNavigation('/guide')}
+                    className="flex items-center gap-3 px-4 py-3 text-left text-sand-700 hover:bg-sand-50 rounded-lg transition-colors"
+                  >
+                    <BookOpen className="h-5 w-5" />
+                    <span className="font-medium">How it works</span>
                   </button>
                 </div>
               </SheetContent>
