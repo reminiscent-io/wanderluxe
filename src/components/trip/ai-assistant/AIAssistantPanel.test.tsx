@@ -43,6 +43,9 @@ vi.mock('./UsageMeter', () => ({ default: () => null }));
 vi.mock('./PaywallModal', () => ({ default: () => null }));
 vi.mock('./ItemStepperDialog', () => ({ default: () => null }));
 vi.mock('./PromptChips', () => ({ default: () => null }));
+// Stubbed like the other children: the real one reaches the Supabase client,
+// which validates env at import time. Covered by DiscoverHint.test.tsx.
+vi.mock('@/components/discovery/DiscoverHint', () => ({ default: () => null }));
 
 const renderPanel = (props: { onCollapse?: () => void } = {}) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
