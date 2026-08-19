@@ -308,7 +308,8 @@ const TripDetails = () => {
             }}
           >
 
-            <div className="max-w-none mx-auto px-4 pt-6 pb-24 md:pb-8">
+            {/* Bottom padding clears the fixed mobile nav (4rem) plus the iOS home indicator. */}
+            <div className="max-w-none mx-auto px-4 pt-6 pb-[calc(6rem_+_env(safe-area-inset-bottom,0px))] md:pb-8">
               <nav aria-label="Breadcrumb" className="mb-4 text-sm">
                 <ol className="flex items-center gap-1.5 text-earth-500">
                   <li>

@@ -15,12 +15,15 @@ import {
   DndContext,
   closestCenter,
   DragEndEvent,
-  PointerSensor,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
@@ -110,10 +113,23 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
 
   const queryClient = useQueryClient();
 
-  // DnD sensors
+  // DnD sensors.
+  //
+  // A single PointerSensor cannot serve both input types: the distance
+  // constraint that feels right for a mouse hijacks the first 8px of every
+  // touch drag, so on a phone the gesture either reorders when the user meant
+  // to scroll or does nothing at all. Splitting mouse from touch lets each get
+  // the constraint it needs — drag-after-8px for a mouse, long-press for touch,
+  // which leaves vertical swipes free to scroll the itinerary.
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 

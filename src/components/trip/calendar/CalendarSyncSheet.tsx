@@ -59,7 +59,7 @@ const CalendarSyncSheet: React.FC<CalendarSyncSheetProps> = ({ tripId, open, onO
             <div>
               <label htmlFor={`calendar-sub-${tripId}`} className="text-xs font-medium text-muted-foreground">Subscribe link</label>
               <div className="mt-1 flex gap-2">
-                <input id={`calendar-sub-${tripId}`} readOnly value={subscribeUrl ?? ''} className="flex-1 rounded-md border border-input bg-muted px-2 py-1.5 text-xs" onFocus={(e) => e.currentTarget.select()} />
+                <input id={`calendar-sub-${tripId}`} readOnly value={subscribeUrl ?? ''} className="flex-1 min-w-0 rounded-md border border-input bg-muted px-2 py-1.5 text-base md:text-xs" onFocus={(e) => e.currentTarget.select()} />
                 <Button variant="outline" size="icon" aria-label="Copy link" onClick={copy}><Copy className="h-4 w-4" /></Button>
               </div>
             </div>
