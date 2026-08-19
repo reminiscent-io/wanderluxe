@@ -49,7 +49,7 @@ interface Section {
 const SECTIONS: Section[] = [
   {
     heading: 'Building the itinerary',
-    intro: 'Everything on a trip hangs off its days. Add things to a day and the rest follows.',
+    intro: 'Everything on a trip hangs off its days. Add something to a day and it turns up in the map, the calendar and the printed itinerary too.',
     items: [
       {
         icon: ListTree,
@@ -61,7 +61,7 @@ const SECTIONS: Section[] = [
       {
         icon: ScanLine,
         title: 'Let it read your confirmations',
-        body: "Attach a booking confirmation — a PDF or a photo of one — and the assistant pulls out the dates, times, addresses and confirmation numbers, then adds them to the right day. It handles most flight, hotel and restaurant confirmations.",
+        body: "Attach a booking confirmation (a PDF, or a photo of one) and the assistant pulls out the dates, times, addresses and confirmation numbers, then adds them to the right day. It handles most flight, hotel and restaurant confirmations.",
         to: (p) => (p ? `${p}/chat` : null),
         actionLabel: 'Try it',
       },
@@ -76,7 +76,7 @@ const SECTIONS: Section[] = [
   },
   {
     heading: 'Seeing it your way',
-    intro: 'The same trip, shown three different ways. Switch between them at the top of the itinerary.',
+    intro: 'The same trip as a timeline, a map or a calendar. Switch between them at the top of the itinerary.',
     items: [
       {
         icon: MapIcon,
@@ -95,7 +95,7 @@ const SECTIONS: Section[] = [
       {
         icon: Cloud,
         title: 'Weather and local times',
-        body: 'Each day shows the forecast for where you are. Anything in a different time zone — a flight landing in another country — carries a small label so the time on screen is never ambiguous.',
+        body: 'Each day shows the forecast for where you are. Anything in a different time zone (a flight landing in another country, say) carries a small label so the time on screen is never ambiguous.',
       },
     ],
   },
@@ -106,7 +106,7 @@ const SECTIONS: Section[] = [
       {
         icon: Users,
         title: 'Share the trip',
-        body: "Invite people by email or send them a link. You choose whether they can just look or also make changes. Edits appear on everyone's screen as they happen — no refreshing, no version confusion.",
+        body: "Invite people by email or send them a link. You choose whether they can just look or also make changes. Edits appear on everyone's screen as they happen, so nobody has to refresh or ask which version is current.",
         to: (p) => (p ? `${p}/timeline` : null),
         actionLabel: 'Open a trip',
       },
@@ -133,7 +133,7 @@ const SECTIONS: Section[] = [
       {
         icon: CalendarPlus,
         title: 'Put it in your phone calendar',
-        body: 'Subscribe once and the whole itinerary appears in Apple Calendar, Google Calendar or Outlook — and keeps itself up to date as the trip changes. You can turn the link off again at any time.',
+        body: 'Subscribe once and the whole itinerary appears in Apple Calendar, Google Calendar or Outlook, and keeps itself up to date as the trip changes. You can turn the link off again at any time.',
         to: (p) => (p ? `${p}/timeline?sync=1` : null),
         actionLabel: 'Set it up',
       },
@@ -147,18 +147,18 @@ const SECTIONS: Section[] = [
       {
         icon: Compass,
         title: 'Install it like an app',
-        body: 'WanderLuxe can be added to your home screen and opens like any other app, with your trips available even on a patchy connection.',
+        body: 'Add WanderLuxe to your home screen and it opens like any other app, with your trips still there on a patchy connection.',
       },
     ],
   },
   {
     heading: 'For the curious',
-    intro: 'One thing WanderLuxe does that most travel apps do not.',
+    intro: 'Optional, and more technical than the rest of this.',
     items: [
       {
         icon: Plug,
         title: 'Plan your trip from Claude or ChatGPT',
-        body: "WanderLuxe runs a connector that lets an AI assistant work on your trips directly — ask Claude to add a dinner reservation on Thursday and it appears here. Add https://wanderluxe.io/mcp as a custom connector in your assistant's settings and sign in with your WanderLuxe account. It can read and change only your own trips.",
+        body: "WanderLuxe runs a connector that lets an AI assistant work on your trips directly. Ask Claude to add a dinner reservation on Thursday and it appears here. Add https://wanderluxe.io/mcp as a custom connector in your assistant's settings and sign in with your WanderLuxe account. It can read and change only your own trips.",
       },
     ],
   },
@@ -194,7 +194,7 @@ const Guide: React.FC = () => {
     <>
       <SEO
         title="How WanderLuxe works"
-        description="A plain-language guide to everything WanderLuxe can do — planning day by day, maps and calendars, sharing with travel companions, calendar sync, PDF export, and the AI connector."
+        description="A plain-language guide to everything WanderLuxe can do: planning day by day, maps and calendars, sharing with travel companions, calendar sync, PDF export, and the AI connector."
         canonicalPath="/guide"
       />
 
@@ -211,7 +211,7 @@ const Guide: React.FC = () => {
               </h1>
               <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
                 Most of this is one tap away once you know it's there. Nothing here
-                is required — plan a trip however you like and come back when you
+                is required. Plan a trip however you like and come back when you
                 want more.
               </p>
               {!session && (
