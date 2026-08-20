@@ -6,6 +6,7 @@ import HotelPhotoThumb from './HotelPhotoThumb';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
 import {
   TimelineItem,
+  formatTime12,
   formatTimeCompact,
   getEventCategory,
   getTimelineIcon,
@@ -20,6 +21,9 @@ type Props = {
   isLast: boolean;
   tripId: string;
   isPast?: boolean;
+  /** First / last rail-bearing row in its run, so the line stops at the node. */
+  railStart?: boolean;
+  railEnd?: boolean;
   onActivityClick?: (a: DayActivity) => void;
   onHotelClick?: (h: HotelStay) => void;
   onTransportationClick?: (t: Transportation) => void;
@@ -79,7 +83,7 @@ const getFooterLink = (item: TimelineItem): { href: string; label: string } | nu
 };
 
 const TimelineRow: React.FC<Props> = ({
-  item, tripId, isPast,
+  item, tripId, isPast, railStart, railEnd,
   onActivityClick, onHotelClick, onTransportationClick, onReservationClick
 }) => {
   const handleItemClick = () => {
@@ -91,10 +95,11 @@ const TimelineRow: React.FC<Props> = ({
 
   const footerLink = getFooterLink(item);
   const metaParts = buildMetaParts(item);
+  const endValue = item.endTime || (item.data?.__arrive_time_on_this_day as string | undefined);
   const startLabel = formatTimeCompact(item.time);
-  const endLabel = formatTimeCompact(
-    item.endTime || (item.data?.__arrive_time_on_this_day as string | undefined),
-  );
+  const endLabel = formatTimeCompact(endValue);
+  // A single-row day needs a node, not a line to nowhere.
+  const showRail = !(railStart && railEnd);
   const category = getEventCategory(item);
   const Icon = getTimelineIcon(item) as React.ComponentType<{ className?: string; strokeWidth?: number }>;
   const placeId =
@@ -112,7 +117,6 @@ const TimelineRow: React.FC<Props> = ({
         CATEGORY_ROW_CLASS[category],
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
         'touch-manipulation',
-        isPast && 'opacity-50',
       )}
       role="button"
       tabIndex={0}
@@ -120,48 +124,71 @@ const TimelineRow: React.FC<Props> = ({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
     >
       {/* Gutter: start stacked over finish, right-aligned, tabular so digits stack.
-          Weight carries the pair: bold start, quiet finish. */}
+          Weight carries the pair: bold start, quiet finish. An event with no
+          finish time simply has no second line — a placeholder there reads as
+          a broken value rather than as an open end.
+          The compact labels ("6:23p") are spoken badly, so each one carries an
+          unabbreviated screen-reader twin. */}
       <div className="py-3 text-right">
         {startLabel && (
           <>
-            <div className="text-ui-base font-medium tabular-nums text-earth-600 leading-5">
-              <span className="sr-only">Starts </span>
-              {startLabel}
+            <div className="text-ui-base font-medium tabular-nums text-earth-600">
+              <span className="sr-only">
+                Starts {formatTime12(item.time)}{item.tzSuffix ? ` ${item.tzSuffix}` : ''}
+              </span>
+              <span aria-hidden>{startLabel}</span>
             </div>
             {item.tzSuffix && (
-              <div className="text-ui-xs tabular-nums text-earth-500 leading-4">{item.tzSuffix}</div>
+              <div aria-hidden className="text-ui-xs tabular-nums text-earth-500">{item.tzSuffix}</div>
             )}
-            {endLabel ? (
-              <div className="text-ui-base tabular-nums text-earth-500 leading-5">
-                <span className="sr-only">Ends </span>
-                {endLabel}
-              </div>
-            ) : (
-              <div className="text-ui-base text-earth-400 leading-5">
-                <span className="sr-only">End time </span>tbd
-              </div>
-            )}
-            {endLabel && item.endTzSuffix && (
-              <div className="text-ui-xs tabular-nums text-earth-500 leading-4">{item.endTzSuffix}</div>
+            {endLabel && (
+              <>
+                <div className="text-ui-base tabular-nums text-earth-500">
+                  <span className="sr-only">
+                    Ends {formatTime12(endValue)}{item.endTzSuffix ? ` ${item.endTzSuffix}` : ''}
+                  </span>
+                  <span aria-hidden>{endLabel}</span>
+                </div>
+                {item.endTzSuffix && (
+                  <div aria-hidden className="text-ui-xs tabular-nums text-earth-500">{item.endTzSuffix}</div>
+                )}
+              </>
             )}
           </>
         )}
       </div>
 
-      {/* Rail: continuous hairline with a filled node */}
+      {/* Rail: hairline with a filled node. The line stops at the first and
+          last node of a run so the day doesn't appear to continue past its
+          own ends. */}
       <div aria-hidden className="relative flex justify-center">
-        <div className="absolute inset-y-0 w-px bg-border" />
-        <div className="relative mt-[1.125rem] h-2 w-2 shrink-0 rounded-full bg-earth-400 ring-4 ring-background" />
+        {showRail && (
+          <div
+            className={cn(
+              'absolute w-px bg-border',
+              railStart ? 'top-[1.375rem]' : 'top-0',
+              railEnd ? 'h-[1.375rem]' : 'bottom-0',
+            )}
+          />
+        )}
+        <div
+          className={cn(
+            'relative mt-[1.125rem] h-2 w-2 shrink-0 rounded-full ring-4 ring-background',
+            isPast ? 'bg-earth-300' : 'bg-earth-400',
+          )}
+        />
       </div>
 
       {/* Content */}
       <div className="flex min-w-0 items-start gap-3 py-3 pr-1">
-        <div className={cn('mt-0.5 shrink-0', CATEGORY_ICON_CLASS[category])}>
+        {/* A past event recedes by dropping an ink level, not by fading the
+            whole row: at 50% opacity the meta line fell to 2.1:1. */}
+        <div className={cn('mt-0.5 shrink-0', isPast ? 'text-earth-400' : CATEGORY_ICON_CLASS[category])}>
           <Icon className="h-5 w-5" strokeWidth={1.5} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-ui-md font-medium text-foreground line-clamp-1">
+          <div className={cn('text-ui-md font-medium line-clamp-1', isPast ? 'text-earth-500' : 'text-foreground')}>
             {item.title}
           </div>
 

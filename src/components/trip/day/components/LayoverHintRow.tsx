@@ -22,12 +22,12 @@ const LayoverHintRow: React.FC<Props> = ({ text, hintType = 'layover' }) => {
         <div
           className={cn(
             'absolute inset-y-0 w-px border-l border-dashed',
-            isOverlap ? 'border-destructive/50' : 'border-border',
+            isOverlap ? 'border-destructive-ink/40' : 'border-border',
           )}
         />
       </div>
       <div className="py-2">
-        <span className={cn('text-ui-sm tabular-nums', isOverlap ? 'text-destructive' : 'text-earth-500')}>
+        <span className={cn('text-ui-sm tabular-nums', isOverlap ? 'text-destructive-ink' : 'text-earth-500')}>
           {text}
         </span>
       </div>

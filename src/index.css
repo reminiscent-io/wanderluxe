@@ -291,6 +291,10 @@
     /* Destructive: warm red */
     --destructive: 4 80% 58%;
     --destructive-foreground: 40 33% 97%;
+    /* Destructive as *text* on cream. The 58% lightness above is tuned for
+       filled buttons and clears only 3.7:1 as ink, so small red copy needs
+       its own darker step. */
+    --destructive-ink: 6 54% 43%;
 
     /* Borders: warm */
     --border: 30 18% 87%;
@@ -328,6 +332,7 @@
     --accent-foreground: 36 25% 90%;
     --destructive: 4 80% 45%;
     --destructive-foreground: 36 25% 90%;
+    --destructive-ink: 6 65% 68%;
     --border: 25 10% 22%;
     --input: 25 10% 22%;
     --ring: 28 50% 55%;

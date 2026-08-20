@@ -12,6 +12,9 @@ type Props = {
   title: string;
   timeRange: string;
   tripId: string;
+  /** First / last rail-bearing row in its run, so the line stops at the node. */
+  railStart?: boolean;
+  railEnd?: boolean;
   onActivityClick?: (a: DayActivity) => void;
   onHotelClick?: (h: HotelStay) => void;
   onTransportationClick?: (t: Transportation) => void;
@@ -24,6 +27,8 @@ const GroupedEventCard: React.FC<Props> = ({
   title,
   timeRange,
   tripId,
+  railStart,
+  railEnd,
   onActivityClick,
   onHotelClick,
   onTransportationClick,
@@ -75,9 +80,19 @@ const GroupedEventCard: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Rail: hollow node, because this one contains other nodes. */}
+        {/* Rail: hollow node, because this one contains other nodes. When the
+            group is collapsed it is also the run's last node, so the line has
+            to stop here rather than run past the folded-up children. */}
         <div aria-hidden className="relative flex justify-center">
-          <div className="absolute inset-y-0 w-px bg-border" />
+          {!(railStart && railEnd && !isExpanded) && (
+            <div
+              className={cn(
+                'absolute w-px bg-border',
+                railStart ? 'top-[1.375rem]' : 'top-0',
+                railEnd && !isExpanded ? 'h-[1.375rem]' : 'bottom-0',
+              )}
+            />
+          )}
           <div className="relative mt-[1.0625rem] h-2.5 w-2.5 shrink-0 rounded-full border-2 border-earth-400 bg-background ring-4 ring-background" />
         </div>
 
@@ -122,13 +137,18 @@ const GroupedEventCard: React.FC<Props> = ({
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            {items.map((item) => (
+            {items.map((item, childIdx) => (
               <div key={item.id} className="tl-row">
                 <div className="py-2 text-right text-ui-sm tabular-nums leading-5 text-earth-500">
                   {formatTimeCompact(item.time)}
                 </div>
                 <div aria-hidden className="relative flex justify-center">
-                  <div className="absolute inset-y-0 w-px bg-border" />
+                  <div
+                    className={cn(
+                      'absolute top-0 w-px bg-border',
+                      railEnd && childIdx === items.length - 1 ? 'h-[1.125rem]' : 'bottom-0',
+                    )}
+                  />
                   <div className="relative mt-[0.9375rem] h-1.5 w-1.5 shrink-0 rounded-full bg-earth-300 ring-4 ring-background" />
                 </div>
                 <div

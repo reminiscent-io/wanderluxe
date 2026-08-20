@@ -9,6 +9,7 @@ import DayWeatherBadge from '@/components/trip/timeline/DayWeatherBadge';
 type Props = {
   dayTitle: string;
   formattedDate: string;
+  bodyId: string;
   index: number;
   isTodayFlag: boolean;
   isCheckInDay: boolean;
@@ -28,6 +29,7 @@ const chipClass =
 const DayHeader: React.FC<Props> = ({
   dayTitle,
   formattedDate,
+  bodyId,
   index,
   isTodayFlag,
   isCheckInDay,
@@ -56,6 +58,7 @@ const DayHeader: React.FC<Props> = ({
       type="button"
       onClick={onToggle}
       aria-expanded={isExpanded}
+      aria-controls={bodyId}
       className={cn(
         // Sticky so the day you're reading stays named while you scroll it.
         'sticky top-0 z-20 flex h-daybar w-full items-center gap-3 bg-card px-3 text-left sm:px-4',
@@ -94,10 +97,13 @@ const DayHeader: React.FC<Props> = ({
         {isTodayFlag && (
           <Badge className={cn(chipClass, 'bg-primary text-primary-foreground hover:bg-primary')}>Today</Badge>
         )}
-        {isCheckInDay && (
+        {/* Only while the day is folded up. Once it is open, "Check-in" the chip
+            and "Check-in: Arty's House" the row say the same thing two inches
+            apart, and the chip is the one that isn't useful. */}
+        {!isExpanded && isCheckInDay && (
           <Badge className={cn(chipClass, 'hidden border-transparent bg-primary/15 text-primary hover:bg-primary/15 sm:inline-flex')}>Check-in</Badge>
         )}
-        {isCheckOutDay && (
+        {!isExpanded && isCheckOutDay && (
           <Badge className={cn(chipClass, 'hidden border-transparent bg-muted text-earth-500 hover:bg-muted sm:inline-flex')}>Check-out</Badge>
         )}
       </span>

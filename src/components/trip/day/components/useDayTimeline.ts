@@ -32,6 +32,7 @@ type UseDayTimelineInput = {
 
 type UseDayTimelineOutput = {
   normalizedDay: string;
+  weekdayLabel: string;
   formattedDate: string;
   isTodayFlag: boolean;
   filteredHotelStays: HotelStay[];
@@ -286,10 +287,20 @@ function buildLayoverHint(
   };
 }
 
+/**
+ * A hotel check-in or check-out is a window you pass through, not an
+ * appointment you attend, so it cannot conflict with anything. Flagging a
+ * 7pm drinks reservation as overlapping an 8pm check-in is a false alarm —
+ * and a false alarm in red teaches people to ignore the real ones.
+ */
+const isLodgingMoment = (item: TimelineItem) => item.type === 'hotel';
+
 function buildGapHint(
   groupIdx: number,
   currEnd: Date,
   nextStart: Date,
+  lastItem: TimelineItem,
+  nextFirst: TimelineItem,
 ): TimelineRenderRow | null {
   const gapMs = nextStart.getTime() - currEnd.getTime();
   const gapMins = Math.round(gapMs / 60000);
@@ -303,7 +314,7 @@ function buildGapHint(
     };
   }
 
-  if (gapMins < -5) {
+  if (gapMins < -5 && !isLodgingMoment(lastItem) && !isLodgingMoment(nextFirst)) {
     return {
       kind: 'hint',
       id: `overlap-${groupIdx}`,
@@ -337,7 +348,7 @@ function buildGapOrLayoverHint(
   const layover = buildLayoverHint(lastItem, nextFirst, currEnd, nextStart);
   if (layover) return layover;
 
-  return buildGapHint(groupIdx, currEnd, nextStart);
+  return buildGapHint(groupIdx, currEnd, nextStart, lastItem, nextFirst);
 }
 
 function insertNowIndicator(result: TimelineRenderRow[]): void {
@@ -370,8 +381,14 @@ export function useDayTimeline({
 }: UseDayTimelineInput): UseDayTimelineOutput {
 
   const normalizedDay = useMemo(() => getNormalizedDay(dateISO), [dateISO]);
-  const formattedDate = useMemo(() => format(parseISO(dateISO), 'EEEE, MMM do yyyy'), [dateISO]);
-  const isTodayFlag = isToday(parseISO(dateISO));
+
+  // Format from the normalized YYYY-MM-DD, not the raw column value. A stored
+  // "2025-10-24T00:00:00+00:00" parses to an instant, and west of UTC that
+  // instant lands on the 23rd — the day card would name the wrong day.
+  const dayStart = useMemo(() => (normalizedDay ? parseISO(normalizedDay) : null), [normalizedDay]);
+  const weekdayLabel = useMemo(() => (dayStart ? format(dayStart, 'EEEE') : ''), [dayStart]);
+  const formattedDate = useMemo(() => (dayStart ? format(dayStart, 'MMMM d, yyyy') : ''), [dayStart]);
+  const isTodayFlag = dayStart ? isToday(dayStart) : false;
 
   // Filter hotel stays for this day
   const filteredHotelStays = useMemo(() => {
@@ -519,6 +536,7 @@ export function useDayTimeline({
 
   return {
     normalizedDay,
+    weekdayLabel,
     formattedDate,
     isTodayFlag,
     filteredHotelStays,
