@@ -276,7 +276,6 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
             <Button
               onClick={handleEditClick}
               className="flex-1"
-              title="Open full form to edit and add"
             >
               <Check className="w-4 h-4 mr-1" />
               Edit & {isLastItem ? 'Finish' : 'Next'}

@@ -55,7 +55,7 @@ const TRANSPORT_TYPE_LABELS: Record<string, string> = {
   flight: 'Flight',
   train: 'Train',
   ferry: 'Ferry',
-  rental_car: 'Car Rental',
+  rental_car: 'Rental Car',
   car_service: 'Car Service',
   shuttle: 'Shuttle'
 };
@@ -105,7 +105,7 @@ function getReservationSummary(fields: Record<string, unknown>): ItemSummary {
   const time = fields.time as string;
   const partySize = fields.party_size as number;
   const dateStr = date ? formatShortDate(date) : '';
-  const partySizeStr = partySize ? `${partySize} guests` : '';
+  const partySizeStr = partySize ? `${partySize} ${partySize === 1 ? 'guest' : 'guests'}` : '';
 
   return { title: name, subtitle: [dateStr, time, partySizeStr].filter(Boolean).join(' • ') };
 }
@@ -195,11 +195,6 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
             </p>
           )}
 
-          {/* Click to edit hint (when in stepper / edit flow) */}
-          {isClickable && (
-            <p className="mt-1 text-xs text-earth-500">Tap to edit details</p>
-          )}
-
           {/* Warnings */}
           {hasWarnings && !isProcessed && (
             <div className="mt-1.5 flex items-center gap-1 text-xs text-amber-600">
@@ -207,27 +202,11 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
               <span>
                 {item.missingRequired.length > 0
                   ? `Missing: ${item.missingRequired.join(', ')}`
-                  : 'Low confidence - please verify'}
+                  : 'Low confidence, verify'}
               </span>
             </div>
           )}
         </div>
-
-        {/* Confidence indicator */}
-        {!compact && !isProcessed && (
-          <div className="flex-shrink-0">
-            <div
-              className={cn(
-                'text-xs tabular-nums px-1.5 py-0.5 rounded',
-                item.confidence >= 0.9 ? 'bg-green-100 text-green-700' :
-                item.confidence >= 0.7 ? 'bg-sand-100 text-sand-700' :
-                'bg-amber-100 text-amber-700'
-              )}
-            >
-              {Math.round(item.confidence * 100)}%
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

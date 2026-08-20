@@ -265,13 +265,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
                 What can I help you plan?
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Recommendations, scheduling, packing tips, or paste a confirmation to add it to your trip.
+                Paste a booking confirmation to add it to your trip.
               </p>
             </div>
           </div>
           {emptyStateSlot}
           <p className="text-xs text-muted-foreground/80 max-w-[280px] text-center leading-relaxed">
-            Trip details are shared with Google Gemini to personalize recommendations. Messages are never used to train AI models.
+            Trip details go to Google Gemini for recommendations. Messages are never used to train AI models.
           </p>
         </div>
       </div>
@@ -306,7 +306,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           {isLoadingMore ? (
             <div className="flex items-center gap-2 text-sand-400 text-xs">
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Loading older messages...</span>
+              <span>Loading older chats…</span>
             </div>
           ) : (
             <div className="flex items-center gap-1 text-sand-400 text-xs">

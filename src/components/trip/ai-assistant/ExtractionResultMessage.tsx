@@ -43,7 +43,7 @@ function EmptyState(): React.ReactElement {
         </div>
         <div>
           <p className="text-sm text-foreground">
-            I couldn't find any bookable items in this document.
+            I didn't find any travel details in your document.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Try a clearer image, or a confirmation with visible booking details.
@@ -121,8 +121,8 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
 
   const summaryParts = buildSummaryParts(itemCounts);
   const headerText = allProcessed
-    ? `Added ${pluralize(createdItems.length, 'item')} to your trip`
-    : `Found ${pluralize(items.length, 'item')} in your document`;
+    ? `Added ${pluralize(createdItems.length, 'item')}`
+    : `Found ${pluralize(items.length, 'item')}`;
 
   return (
     <div className="rounded-2xl bg-sand-50 border border-border rounded-tl-sm overflow-hidden max-w-full">
@@ -182,15 +182,6 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
         </div>
       )}
 
-      {/* Success state */}
-      {allProcessed && (
-        <div className="px-4 py-3 border-t border-border bg-green-50">
-          <div className="flex items-center gap-2 text-sm text-green-700">
-            <Check className="w-4 h-4" />
-            <span>All items have been processed</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

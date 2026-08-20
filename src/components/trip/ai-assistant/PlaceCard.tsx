@@ -153,7 +153,6 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
               variant="default"
               asChild
               className="h-8 flex-1 min-w-[96px] text-xs"
-              title="Book on Expedia"
             >
               <a
                 href={expediaUrl}

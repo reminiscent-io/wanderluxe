@@ -29,7 +29,7 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
 
   const validateFile = useCallback((file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return 'Only JPG, PNG, or PDF files are allowed.';
+      return 'Attach a JPG, PNG, or PDF.';
     }
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       return `File size must be under ${MAX_FILE_MB}MB.`;
@@ -94,7 +94,7 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
         });
       } catch (e) {
         console.error('PDF conversion failed:', e);
-        toast.error('Failed to preview PDF. Please try again.');
+        toast.error('Could not preview that PDF.');
       } finally {
         setIsConverting(false);
       }
@@ -132,30 +132,6 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
     e.preventDefault();
     e.stopPropagation();
   }, []);
-
-  const handlePaste = useCallback(async () => {
-    try {
-      if (!navigator.clipboard || !('read' in navigator.clipboard)) {
-        toast.info('Paste not supported. Use the attach button instead.');
-        return;
-      }
-      const items = await navigator.clipboard.read();
-      for (const item of items) {
-        for (const type of item.types) {
-          if (type.startsWith('image/') || type === 'application/pdf') {
-            const blob = await item.getType(type);
-            const ext = type.split('/')[1] || 'png';
-            const pasted = new File([blob], `pasted.${ext}`, { type });
-            processFile(pasted);
-            return;
-          }
-        }
-      }
-      toast.info('No image or PDF found in clipboard.');
-    } catch (e: unknown) {
-      console.error('Clipboard read failed:', e);
-    }
-  }, [processFile]);
 
   // Listen for paste events
   useEffect(() => {

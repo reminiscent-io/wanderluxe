@@ -108,7 +108,7 @@ const UsageMeter: React.FC<UsageMeterProps> = ({ usage, onUpgradeClick }) => {
             isExhausted ? 'text-red-600 hover:text-red-700' : 'text-amber-600 hover:text-amber-700'
           )}
         >
-          {isExhausted ? 'Upgrade' : 'Go unlimited'}
+          Upgrade
         </button>
       )}
     </div>

@@ -45,7 +45,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
       if (!token) {
-        toast.error("Please sign in to upgrade");
+        toast.error("Sign in to upgrade");
         return;
       }
 
@@ -85,7 +85,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
       console.error('Checkout error:', e);
       // Handle network errors specifically
       if (e instanceof TypeError && (e.message.includes('Load failed') || e.message.includes('Failed to fetch'))) {
-        toast.error("Connection error - please check your internet and try again");
+        toast.error("Connection failed. Check your network and try again.");
       } else {
         toast.error(e instanceof Error ? e.message : "Failed to start checkout");
       }
@@ -110,7 +110,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
             </div>
             <DialogTitle className="font-display text-xl leading-tight tracking-tight">Sign up free to keep chatting</DialogTitle>
             <DialogDescription className="text-sand-600">
-              You've used your {usage?.limit || 5} trial messages. Create a free account to continue.
+              You've used your {usage?.limit || 5} trial messages.
             </DialogDescription>
           </DialogHeader>
 
@@ -128,7 +128,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
                 </li>
                 <li className="flex items-center gap-2 text-sm text-earth-600">
                   <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span>Plan and manage your own trips</span>
+                  <span>Plan your own trips</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm text-earth-600">
                   <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -169,8 +169,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
           </div>
           <DialogTitle className="font-display text-xl leading-tight tracking-tight">You've reached today's limit</DialogTitle>
           <DialogDescription className="text-sand-600">
-            Free accounts include 10 Trip Assistant messages per day.
-            Upgrade to Pro for unlimited access across all your trips.
+            Free accounts include 10 messages per day.
           </DialogDescription>
         </DialogHeader>
 

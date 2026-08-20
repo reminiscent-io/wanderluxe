@@ -25,6 +25,19 @@ export default {
         sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
+      fontSize: {
+        // Dense product-UI ramp for timeline rows, headers and metadata.
+        // Steps sit close together on purpose: roles that are adjacent in the
+        // layout (title vs. meta = 15/13) clear a 1.15 ratio and are further
+        // separated by weight and ink level, while same-size roles (time,
+        // price) never share a column. See DESIGN.md section 3.
+        'ui-xs':   ['0.75rem',   { lineHeight: '1rem' }],      // 12 - overlines, badges
+        'ui-sm':   ['0.8125rem', { lineHeight: '1.125rem' }],  // 13 - metadata, descriptions
+        'ui-base': ['0.875rem',  { lineHeight: '1.25rem' }],   // 14 - times, prices, labels
+        'ui-md':   ['0.9375rem', { lineHeight: '1.375rem' }],  // 15 - row titles
+        'ui-lg':   ['1.0625rem', { lineHeight: '1.5rem' }],    // 17 - subsection titles
+        'ui-day':  ['1.375rem',  { lineHeight: '1.75rem', letterSpacing: '-0.015em' }], // 22 - day title (serif)
+      },
       typography: {
         earth: {
           css: {
@@ -51,6 +64,15 @@ export default {
             },
           },
         },
+      },
+      spacing: {
+        // Timeline row rhythm: 72px two-line row, 56px sticky day bar,
+        // 36px pinned accommodation strip, 80px time gutter.
+        'row': '4.5rem',
+        'daybar': '4.5rem',
+        'strip': '2.25rem',
+        'gutter': '5rem',
+        'gutter-sm': '4rem',
       },
       borderRadius: {
         'card': '0.75rem',
@@ -127,6 +149,16 @@ export default {
           400: '#FB923C',
           500: '#F97316',
           600: '#EA580C',
+        },
+        // Timeline category hues. All sit at OKLCH L .47 / chroma <= .075 so
+        // they read as ink rather than as brand colour, and each clears 6.5:1
+        // on cream paper. Applied to the type icon at full strength and to the
+        // row as a 4-10% wash, which composites over cream and stays warm.
+        category: {
+          ocean: '#366172',
+          clay: '#7E4D36',
+          sage: '#476348',
+          slate: '#535B6C',
         },
         navy: {
           800: '#1E293B',

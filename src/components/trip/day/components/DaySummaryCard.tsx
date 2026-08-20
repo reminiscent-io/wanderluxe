@@ -103,13 +103,13 @@ const DaySummaryCard: React.FC<Props> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Wallet className="h-5 w-5 text-earth-600" />
-          <h3 className="font-semibold text-earth-800 text-sm">Daily Breakdown</h3>
+          <h3 className="text-ui-base font-semibold text-foreground">Daily Breakdown</h3>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-earth-900">
+          <div className="text-ui-lg font-semibold tabular-nums text-foreground">
             {formatCurrencyWithSymbol(total, displayCurrency)}
           </div>
-          <div className="text-xs text-earth-500">
+          <div className="text-ui-sm text-earth-500">
             {hasMixedCurrencies && hasRates && convertedFrom.length > 0
               ? `Includes conversions from ${[...new Set(convertedFrom)].join(', ')}`
               : 'Total spend'}
@@ -122,9 +122,9 @@ const DaySummaryCard: React.FC<Props> = ({
           <div key={cat.category} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <cat.Icon className="h-3.5 w-3.5 text-earth-500" strokeWidth={1.5} />
-              <span className="text-xs text-earth-700">{cat.category}</span>
+              <span className="text-ui-sm text-earth-500">{cat.category}</span>
             </div>
-            <span className="text-xs font-medium text-foreground tabular-nums">
+            <span className="text-ui-sm font-medium tabular-nums text-foreground">
               {formatCurrencyWithSymbol(cat.amount, cat.currency)}
             </span>
           </div>
@@ -132,7 +132,7 @@ const DaySummaryCard: React.FC<Props> = ({
       </div>
 
       {total > 0 && (
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border text-xs text-earth-600">
+        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border text-ui-sm text-earth-500">
           <TrendingUp className="h-3 w-3" />
           <span>Track your spending in the Budget tab</span>
         </div>

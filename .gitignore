@@ -48,3 +48,6 @@ evals/results/
 
 # TypeScript incremental build info (written by `tsc -b`)
 *.tsbuildinfo
+
+# impeccable design-hook caches
+.impeccable/

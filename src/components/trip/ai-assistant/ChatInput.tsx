@@ -163,7 +163,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-2 px-1 hidden sm:block">
-        {attachment ? 'Press Enter to extract items from this document' : 'Press Enter to send, Shift+Enter for a new line'}
+        {attachment ? 'Press Enter to extract items' : 'Shift+Enter for a new line'}
       </p>
     </div>
   );

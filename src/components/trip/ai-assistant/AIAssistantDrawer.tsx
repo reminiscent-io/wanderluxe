@@ -47,9 +47,6 @@ class AIAssistantErrorBoundary extends Component<{ children: ReactNode; onReset:
           <AlertCircle className="w-10 h-10 text-red-400" />
           <div className="space-y-1">
             <h3 className="font-display text-lg leading-tight tracking-tight text-foreground">Something went wrong</h3>
-            <p className="text-sm leading-snug text-muted-foreground">
-              The assistant ran into an unexpected error.
-            </p>
           </div>
           <Button onClick={this.handleReset} variant="outline" size="sm" className="mt-1">
             Try again
@@ -95,8 +92,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       thread_id: '',
       role: 'assistant',
       content: items.length === 1
-        ? "I've prepared this item for you to add to your trip:"
-        : `I've prepared ${items.length} items for you to add to your trip:`,
+        ? "I've prepared this item:"
+        : `I've prepared ${items.length} items:`,
       metadata: {},
       created_at: new Date().toISOString(),
       extractedItems: items,
@@ -225,7 +222,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           id: `user-extract-${Date.now()}`,
           thread_id: '',
           role: 'user',
-          content: message || 'Please extract items from this document',
+          content: message || 'Extract items from this document',
           metadata: {},
           created_at: new Date().toISOString(),
           attachmentPreviewUrl: attachment.previewUrl,
@@ -244,7 +241,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             role: 'assistant',
             content: items.length > 0
               ? `I found ${items.length} item${items.length !== 1 ? 's' : ''} in your document.`
-              : "I couldn't find any bookable items in this document.",
+              : "I didn't find any travel details in your document.",
             metadata: {},
             created_at: new Date().toISOString(),
             extractedItems: items,
@@ -370,7 +367,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   isSending={isStreaming || isExtracting}
                   placeholder={
                     isDisabled && usage?.used === usage?.limit
-                      ? "Daily limit reached. Upgrade for unlimited."
+                      ? "Daily limit reached. Upgrade for unlimited messages."
                       : "Ask about your trip..."
                   }
                 />
