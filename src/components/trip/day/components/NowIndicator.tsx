@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
-const NowIndicator: React.FC = () => {
+type Props = {
+  /** First / last rail-bearing row in its run, so the line stops at the node. */
+  railStart?: boolean;
+  railEnd?: boolean;
+};
+
+const NowIndicator: React.FC<Props> = ({ railStart, railEnd }) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -27,11 +34,19 @@ const NowIndicator: React.FC = () => {
 
   return (
     <div className="tl-row">
-      <div className="py-1 text-right text-ui-xs font-semibold tabular-nums leading-5 text-destructive">
+      <div className="py-1 text-right text-ui-xs font-semibold tabular-nums text-destructive-ink">
         {timeStr}
       </div>
       <div aria-hidden className="relative flex justify-center">
-        <div className="absolute inset-y-0 w-px bg-border" />
+        {!(railStart && railEnd) && (
+          <div
+            className={cn(
+              'absolute w-px bg-border',
+              railStart ? 'top-3' : 'top-0',
+              railEnd ? 'h-3' : 'bottom-0',
+            )}
+          />
+        )}
         <div className="relative mt-2 h-2 w-2 shrink-0 rounded-full bg-destructive ring-4 ring-background" />
       </div>
       <div className="flex items-center py-1">

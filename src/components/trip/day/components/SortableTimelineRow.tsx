@@ -14,6 +14,8 @@ type Props = {
   isLast: boolean;
   tripId: string;
   isPast?: boolean;
+  railStart?: boolean;
+  railEnd?: boolean;
   onActivityClick?: (a: DayActivity) => void;
   onHotelClick?: (h: HotelStay) => void;
   onTransportationClick?: (t: Transportation) => void;

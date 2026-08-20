@@ -100,6 +100,10 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          // Red as ink. `destructive` itself is a fill colour and only reaches
+          // 3.7:1 on cream paper, so any red *text* smaller than a heading
+          // uses this darker step to clear AA.
+          ink: "hsl(var(--destructive-ink))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",

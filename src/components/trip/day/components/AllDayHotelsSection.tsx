@@ -24,7 +24,7 @@ const AllDayHotelsSection: React.FC<Props> = ({ stays, onHotelClick }) => {
           type="button"
           title={stay.hotel_address || undefined}
           onClick={() => onHotelClick?.(stay)}
-          className="flex h-strip w-full items-center gap-2.5 bg-secondary/50 px-3 text-left transition-colors hover:bg-secondary sm:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          className="flex h-11 w-full items-center gap-2.5 bg-secondary/50 px-3 text-left transition-colors hover:bg-secondary sm:h-strip sm:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <Bed className="h-3.5 w-3.5 shrink-0 text-earth-500" strokeWidth={1.5} />
           <span className="min-w-0 flex-1 truncate text-ui-sm text-earth-600">{stay.hotel}</span>

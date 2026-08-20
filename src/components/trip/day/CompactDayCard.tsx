@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,6 +107,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const isPastDay = dayDate < today;
 
   const [isExpanded, setIsExpanded] = useState(!isPastDay);
+  const bodyId = useId();
 
   // Track which periods are expanded (all expanded by default)
   const [expandedPeriods, setExpandedPeriods] = useState<Set<string>>(new Set());
@@ -177,6 +178,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   // build view-model
   const {
     normalizedDay,
+    weekdayLabel,
     formattedDate,
     isTodayFlag,
     allDayHotels,
@@ -196,7 +198,12 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     tripTimezone,
   });
 
-  const dayTitle = title || new Date(date).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long' });
+  // The weekday is the headline unless the day has been named. Repeating it in
+  // the line underneath ("Friday" over "Friday, Oct 24th 2025") spent the card's
+  // two most prominent lines saying one thing, so the date line carries the
+  // weekday only when the headline has given it up.
+  const dayTitle = title || weekdayLabel;
+  const dateLine = title ? `${weekdayLabel}, ${formattedDate}` : formattedDate;
 
   const addActivityForThisDay = () => {
     onActivityAdd?.({ dayId: id, date: getNormalizedDay(date) });
@@ -208,65 +215,73 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   const PERIOD_SECTION_THRESHOLD = 5;
   const showPeriodSections = totalEvents >= PERIOD_SECTION_THRESHOLD;
 
-  // Toggle period expansion
   // One dispatcher for both layouts: below the section threshold rows render
   // flat, above it they render inside time-of-day sections.
+  //
+  // railStart / railEnd let the first and last rows draw the hairline from
+  // their own node instead of from the edge of the row, so the day's timeline
+  // begins and ends where the day does. Hint rows have no node and are never
+  // handed the flags — their dashes simply meet the neighbouring solid line.
   const renderRow = (row: TimelineRenderRow, i: number, rowCount: number) => {
+    const railStart = i === 0;
+    const railEnd = i === rowCount - 1;
 
-        // Check if event has passed (for today only)
-        const isItemPast = isTodayFlag && row.kind === 'item' && (() => {
-          const endTime = row.item.endTime || row.item.time;
-          if (!endTime) return false;
-          const eventEnd = combineDateAndTime(normalizedDay, endTime);
-          return eventEnd ? eventEnd < new Date() : false;
-        })();
+    // Check if event has passed (for today only)
+    const isItemPast = isTodayFlag && row.kind === 'item' && (() => {
+      const endTime = row.item.endTime || row.item.time;
+      if (!endTime) return false;
+      const eventEnd = combineDateAndTime(normalizedDay, endTime);
+      return eventEnd ? eventEnd < new Date() : false;
+    })();
 
-        return row.kind === 'item' ? (
-          canEdit ? (
-            <SortableTimelineRow
-              key={row.item.id}
-              item={row.item}
-              idx={i}
-              isLast={i >= rowCount - 1}
-              tripId={tripId}
-              isPast={isItemPast || false}
-              onActivityClick={onActivityClick}
-              onHotelClick={onHotelClick}
-              onTransportationClick={onTransportationClick}
-              onReservationClick={onReservationClick}
-            />
-          ) : (
-            <TimelineRow
-              key={row.item.id}
-              item={row.item}
-              idx={i}
-              isLast={i >= rowCount - 1}
-              tripId={tripId}
-              isPast={isItemPast || false}
-              onActivityClick={onActivityClick}
-              onHotelClick={onHotelClick}
-              onTransportationClick={onTransportationClick}
-              onReservationClick={onReservationClick}
-            />
-          )
-        ) : row.kind === 'grouped' ? (
-          <GroupedEventCard
-            key={row.id}
-            items={row.items}
-            groupType={row.groupType}
-            title={row.title}
-            timeRange={row.timeRange}
-            tripId={tripId}
-            onActivityClick={onActivityClick}
-            onHotelClick={onHotelClick}
-            onTransportationClick={onTransportationClick}
-            onReservationClick={onReservationClick}
-          />
-        ) : row.kind === 'now' ? (
-          <NowIndicator key="now-indicator" />
-        ) : row.kind === 'hint' ? (
-          <LayoverHintRow key={row.id} text={row.text} hintType={row.hintType} />
-        ) : null;
+    if (row.kind === 'item') {
+      const RowComponent = canEdit ? SortableTimelineRow : TimelineRow;
+      return (
+        <RowComponent
+          key={row.item.id}
+          item={row.item}
+          idx={i}
+          isLast={railEnd}
+          railStart={railStart}
+          railEnd={railEnd}
+          tripId={tripId}
+          isPast={isItemPast || false}
+          onActivityClick={onActivityClick}
+          onHotelClick={onHotelClick}
+          onTransportationClick={onTransportationClick}
+          onReservationClick={onReservationClick}
+        />
+      );
+    }
+
+    if (row.kind === 'grouped') {
+      return (
+        <GroupedEventCard
+          key={row.id}
+          items={row.items}
+          groupType={row.groupType}
+          title={row.title}
+          timeRange={row.timeRange}
+          tripId={tripId}
+          railStart={railStart}
+          railEnd={railEnd}
+          onActivityClick={onActivityClick}
+          onHotelClick={onHotelClick}
+          onTransportationClick={onTransportationClick}
+          onReservationClick={onReservationClick}
+        />
+      );
+    }
+
+    if (row.kind === 'now') {
+      return <NowIndicator key="now-indicator" railStart={railStart} railEnd={railEnd} />;
+    }
+
+    if (row.kind === 'hint') {
+      return <LayoverHintRow key={row.id} text={row.text} hintType={row.hintType} />;
+    }
+
+    return null;
   };
 
   const togglePeriod = (period: string) => {
@@ -339,7 +354,9 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: index * 0.05 }}
+      // Capped: an unbounded stagger left day 20 of a long trip waiting a full
+      // second to appear, which reads as lag rather than as choreography.
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: Math.min(index, 6) * 0.05 }}
     >
       <Card
         id={`day-${index}`}
@@ -351,7 +368,8 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         {/* Header */}
         <DayHeader
           dayTitle={dayTitle}
-          formattedDate={formattedDate}
+          formattedDate={dateLine}
+          bodyId={bodyId}
           index={index}
           isTodayFlag={isTodayFlag}
           isCheckInDay={isCheckInDay}
@@ -369,6 +387,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
         <AnimatePresence>
           {isExpanded && (
             <motion.div
+              id={bodyId}
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -391,7 +410,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       <div className="py-2">
                         <div>
                           {showPeriodSections ? periodGroups.map((group, groupIdx) => {
-                            const isExpanded = isPeriodExpanded(group.period);
+                            const isPeriodOpen = isPeriodExpanded(group.period);
                             const eventCount = group.rows.filter(row => row.kind !== 'hint' && row.kind !== 'now').length;
 
                             return (
@@ -399,17 +418,17 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                 {/* Period Header */}
                                 <div className="px-3 sm:px-4">
                                   <TimePeriodHeader
-                                  label={group.label}
-                                  isFirst={groupIdx === 0}
-                                  isExpanded={isExpanded}
-                                  onToggle={() => togglePeriod(group.period)}
-                                  eventCount={eventCount}
+                                    label={group.label}
+                                    isFirst={groupIdx === 0}
+                                    isExpanded={isPeriodOpen}
+                                    onToggle={() => togglePeriod(group.period)}
+                                    eventCount={eventCount}
                                   />
                                 </div>
 
                                 {/* Period Events */}
                                 <AnimatePresence>
-                                  {isExpanded && (
+                                  {isPeriodOpen && (
                                     <motion.div
                                       initial={{ height: 0, opacity: 0 }}
                                       animate={{ height: 'auto', opacity: 1 }}
@@ -433,7 +452,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-xs h-8 px-3 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                                  className="text-ui-sm h-8 px-3 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                                 >
                                   <Plus className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.75} />
                                   Add to this day
@@ -481,19 +500,19 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                     </p>
                     {canEdit && (
                       <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
-                        <Button variant="outline" size="sm" onClick={addActivityForThisDay} className="font-normal">
+                        <Button variant="outline" size="sm" onClick={addActivityForThisDay} className="h-11 font-normal sm:h-9">
                           <Star className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
                           Activity
                         </Button>
-                        <Button variant="outline" size="sm" onClick={onHotelAdd} className="font-normal">
+                        <Button variant="outline" size="sm" onClick={onHotelAdd} className="h-11 font-normal sm:h-9">
                           <Hotel className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
                           Hotel
                         </Button>
-                        <Button variant="outline" size="sm" onClick={onTransportationAdd} className="font-normal">
+                        <Button variant="outline" size="sm" onClick={onTransportationAdd} className="h-11 font-normal sm:h-9">
                           <Plane className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
                           Travel
                         </Button>
-                        <Button variant="outline" size="sm" onClick={onReservationAdd} className="font-normal">
+                        <Button variant="outline" size="sm" onClick={onReservationAdd} className="h-11 font-normal sm:h-9">
                           <Utensils className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
                           Dining
                         </Button>
