@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { DailyForecast, WeatherData } from '@/hooks/useWeather';
 import DayWeatherBadge from '@/components/trip/timeline/DayWeatherBadge';
 
@@ -12,7 +13,6 @@ type Props = {
   isTodayFlag: boolean;
   isCheckInDay: boolean;
   isCheckOutDay: boolean;
-  summary: string;
   isExpanded: boolean;
   onToggle: () => void;
   weather?: DailyForecast;
@@ -22,6 +22,9 @@ type Props = {
   allForecasts?: DailyForecast[];
 };
 
+const chipClass =
+  'text-ui-xs px-2 py-0.5 font-medium uppercase tracking-[0.08em] shrink-0';
+
 const DayHeader: React.FC<Props> = ({
   dayTitle,
   formattedDate,
@@ -29,7 +32,6 @@ const DayHeader: React.FC<Props> = ({
   isTodayFlag,
   isCheckInDay,
   isCheckOutDay,
-  summary,
   isExpanded,
   onToggle,
   weather,
@@ -53,61 +55,62 @@ const DayHeader: React.FC<Props> = ({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full text-left p-4 sm:p-5 md:p-6 cursor-pointer hover:bg-secondary/40 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+      aria-expanded={isExpanded}
+      className={cn(
+        // Sticky so the day you're reading stays named while you scroll it.
+        'sticky top-0 z-20 flex h-daybar w-full items-center gap-3 bg-card px-3 text-left sm:px-4',
+        'cursor-pointer transition-colors duration-200 hover:bg-secondary/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        isExpanded ? 'rounded-t-card' : 'rounded-card',
+      )}
     >
-      <div className="flex items-start sm:items-center justify-between gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-4 flex-1 min-w-0">
-          <div className="flex flex-col min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-[0.18em] mb-1">
-              Day {index}
-            </div>
-            <span className="text-lg sm:text-xl md:text-2xl font-display font-normal text-foreground leading-tight truncate">
-              {dayTitle}
-              <span className="text-muted-foreground/80">, {formattedDate}</span>
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              {(weather || (isTodayFlag && currentWeather)) && (
-                <DayWeatherBadge
-                  forecast={weather}
-                  currentWeather={currentWeather}
-                  isToday={isTodayFlag}
-                  location={weatherLocation}
-                  allForecasts={allForecasts}
-                  date={dateISO?.split('T')[0]}
-                />
-              )}
-              {daysUntil && (
-                <Badge variant="outline" className="bg-card border-border text-muted-foreground text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide">
-                  In {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
-                </Badge>
-              )}
-              {isTodayFlag && (
-                <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-primary">Today</Badge>
-              )}
-              {isCheckInDay && (
-                <Badge className="bg-primary/15 text-primary border-transparent text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-primary/15">Check-in</Badge>
-              )}
-              {isCheckOutDay && (
-                <Badge className="bg-muted text-muted-foreground border-transparent text-[10px] sm:text-xs px-2 py-0.5 font-medium uppercase tracking-wide hover:bg-muted">Check-out</Badge>
-              )}
-              {summary && (
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{summary}</span>
-              )}
-            </div>
-        </div>
-
-        <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors group-hover:bg-accent flex-shrink-0">
-          <motion.span
-            className="inline-flex"
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.5} />
-          </motion.span>
+      {/* Name over date, both hard left. The name is the only serif on the timeline. */}
+      <span className="flex min-w-0 shrink flex-col">
+        <span className="truncate text-ui-day font-display font-normal leading-tight text-foreground">
+          {dayTitle}
         </span>
-      </div>
+        <span className="truncate text-ui-sm leading-tight text-earth-500">
+          {formattedDate}
+        </span>
+      </span>
+
+      {/* Status chips, pushed right */}
+      <span className="ml-auto flex items-center gap-1.5 overflow-hidden sm:gap-2">
+        {(weather || (isTodayFlag && currentWeather)) && (
+          <DayWeatherBadge
+            forecast={weather}
+            currentWeather={currentWeather}
+            isToday={isTodayFlag}
+            location={weatherLocation}
+            allForecasts={allForecasts}
+            date={dateISO?.split('T')[0]}
+          />
+        )}
+        {daysUntil && (
+          <Badge variant="outline" className={cn(chipClass, 'hidden bg-card border-border text-earth-500 sm:inline-flex')}>
+            In {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+          </Badge>
+        )}
+        {isTodayFlag && (
+          <Badge className={cn(chipClass, 'bg-primary text-primary-foreground hover:bg-primary')}>Today</Badge>
+        )}
+        {isCheckInDay && (
+          <Badge className={cn(chipClass, 'hidden border-transparent bg-primary/15 text-primary hover:bg-primary/15 sm:inline-flex')}>Check-in</Badge>
+        )}
+        {isCheckOutDay && (
+          <Badge className={cn(chipClass, 'hidden border-transparent bg-muted text-earth-500 hover:bg-muted sm:inline-flex')}>Check-out</Badge>
+        )}
+      </span>
+
+      <span aria-hidden className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-earth-500">
+        <motion.span
+          className="inline-flex"
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <ChevronDown className="h-5 w-5" strokeWidth={1.5} />
+        </motion.span>
+      </span>
     </button>
   );
 };

@@ -1,21 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const NowIndicator: React.FC = () => {
   const [now, setNow] = useState(new Date());
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Align to the next minute boundary
-    const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    // Align to the next minute boundary, then tick every 60s.
+    let interval: ReturnType<typeof setInterval>;
+    const start = new Date();
+    const msToNextMinute = (60 - start.getSeconds()) * 1000 - start.getMilliseconds();
     const timeout = setTimeout(() => {
       setNow(new Date());
-      // Then update every 60s
-      const interval = setInterval(() => setNow(new Date()), 60000);
-      return () => clearInterval(interval);
+      interval = setInterval(() => setNow(new Date()), 60000);
     }, msToNextMinute);
 
-    return () => clearTimeout(timeout);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, []);
 
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -24,18 +26,16 @@ const NowIndicator: React.FC = () => {
   });
 
   return (
-    <div ref={ref} className="relative py-1">
-      <div className="grid grid-cols-[24px_1fr] sm:grid-cols-[40px_1fr] gap-2 sm:gap-3 items-center">
-        <div className="flex justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-destructive z-10 sm:w-3 sm:h-3 sm:ring-2 sm:ring-destructive/25" />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-px bg-destructive/70" />
-          <span className="text-[10px] font-semibold text-destructive whitespace-nowrap uppercase tracking-[0.16em]">
-            Now · {timeStr}
-          </span>
-          <div className="flex-1 h-px bg-destructive/70" />
-        </div>
+    <div className="tl-row">
+      <div className="py-1 text-right text-ui-xs font-semibold tabular-nums leading-5 text-destructive">
+        {timeStr}
+      </div>
+      <div aria-hidden className="relative flex justify-center">
+        <div className="absolute inset-y-0 w-px bg-border" />
+        <div className="relative mt-2 h-2 w-2 shrink-0 rounded-full bg-destructive ring-4 ring-background" />
+      </div>
+      <div className="flex items-center py-1">
+        <div className="h-px flex-1 bg-destructive/70" />
       </div>
     </div>
   );

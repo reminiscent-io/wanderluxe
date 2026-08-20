@@ -7,6 +7,7 @@ import AccommodationDialog from '@/components/trip/accommodation/AccommodationDi
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
+import EventDetailDialog, { EventDetail } from '@/components/trip/day/components/EventDetailDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,6 +104,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   const [editingTransportation, setEditingTransportation] = useState<Transportation | null>(null);
   const [editingReservation, setEditingReservation] = useState<RestaurantReservation | null>(null);
 
+  // Clicking a row opens a read-only detail view; editing is a deliberate second step.
+  const [viewingEvent, setViewingEvent] = useState<{ detail: EventDetail; dayDate: string } | null>(null);
+
   const [newActivity, setNewActivity] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
   const [activityEdit, setActivityEdit] = useState<ActivityFormData>({ ...EMPTY_ACTIVITY });
 
@@ -142,6 +146,24 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
     invalidateTripQueries();
     queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
     setSelectedDayId(null);
+  };
+
+  const openEditorFor = (detail: EventDetail, dayDate: string): void => {
+    setViewingEvent(null);
+    if (detail.kind === 'activity') {
+      setEditingActivity(detail.data);
+      setActivityEdit(buildActivityFormData(detail.data, dayDate));
+      setActivityOpen(false);
+    } else if (detail.kind === 'hotel') {
+      setEditingHotel(detail.data);
+      setAccommodationOpen(true);
+    } else if (detail.kind === 'transportation') {
+      setEditingTransportation(detail.data);
+      setTransportationOpen(true);
+    } else {
+      setEditingReservation(detail.data);
+      setReservationOpen(true);
+    }
   };
 
   const handleActivityDialogClose = (): void => {
@@ -375,23 +397,18 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 setPreselectedDate(day.date.split('T')[0]);
                 setReservationOpen(true);
               }}
-              onActivityClick={(activity) => {
-                setEditingActivity(activity);
-                setActivityEdit(buildActivityFormData(activity, day.date));
-                setActivityOpen(false);
-              }}
-              onHotelClick={(hotel) => {
-                setEditingHotel(hotel);
-                setAccommodationOpen(true);
-              }}
-              onTransportationClick={(transportation) => {
-                setEditingTransportation(transportation);
-                setTransportationOpen(true);
-              }}
-              onReservationClick={(reservation) => {
-                setEditingReservation(reservation);
-                setReservationOpen(true);
-              }}
+              onActivityClick={(activity) =>
+                setViewingEvent({ detail: { kind: 'activity', data: activity }, dayDate: day.date })
+              }
+              onHotelClick={(hotel) =>
+                setViewingEvent({ detail: { kind: 'hotel', data: hotel }, dayDate: day.date })
+              }
+              onTransportationClick={(transportation) =>
+                setViewingEvent({ detail: { kind: 'transportation', data: transportation }, dayDate: day.date })
+              }
+              onReservationClick={(reservation) =>
+                setViewingEvent({ detail: { kind: 'dining', data: reservation }, dayDate: day.date })
+              }
               canEdit={canEdit}
               />
             </div>
@@ -400,6 +417,17 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       </div>
 
       {/* Dialogs */}
+      <EventDetailDialog
+        event={viewingEvent?.detail ?? null}
+        open={!!viewingEvent}
+        onOpenChange={(open) => { if (!open) setViewingEvent(null); }}
+        tripId={tripId}
+        canEdit={canEdit}
+        onEdit={(detail) => {
+          if (viewingEvent) openEditorFor(detail, viewingEvent.dayDate);
+        }}
+      />
+
       <AccommodationDialog
         tripId={tripId}
         open={accommodationOpen}

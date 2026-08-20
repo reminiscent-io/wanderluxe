@@ -30,12 +30,12 @@ const TimePeriodHeader: React.FC<Props> = ({ label, isFirst = false, isExpanded,
       </div>
 
       {/* Period Label */}
-      <h4 className="text-[11px] sm:text-xs font-medium text-foreground uppercase tracking-[0.16em] group-hover:text-primary transition-colors">
+      <h4 className="text-ui-xs font-medium text-earth-600 uppercase tracking-[0.1em] group-hover:text-primary transition-colors">
         {label}
       </h4>
 
       {/* Event Count */}
-      <span className="flex-shrink-0 text-[11px] text-muted-foreground tabular-nums">
+      <span className="flex-shrink-0 text-ui-xs tabular-nums text-earth-500">
         {eventCount}
       </span>
 

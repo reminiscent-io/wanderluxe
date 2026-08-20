@@ -370,7 +370,7 @@ export function useDayTimeline({
 }: UseDayTimelineInput): UseDayTimelineOutput {
 
   const normalizedDay = useMemo(() => getNormalizedDay(dateISO), [dateISO]);
-  const formattedDate = useMemo(() => format(parseISO(dateISO), 'MMM d'), [dateISO]);
+  const formattedDate = useMemo(() => format(parseISO(dateISO), 'EEEE, MMM do yyyy'), [dateISO]);
   const isTodayFlag = isToday(parseISO(dateISO));
 
   // Filter hotel stays for this day

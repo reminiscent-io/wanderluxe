@@ -36,7 +36,7 @@ import LayoverHintRow from './components/LayoverHintRow';
 import NowIndicator from './components/NowIndicator';
 import TimePeriodHeader from './components/TimePeriodHeader';
 import { useDayTimeline } from './components/useDayTimeline';
-import { combineDateAndTime } from './components/timeline-utils';
+import { combineDateAndTime, type TimelineRenderRow } from './components/timeline-utils';
 
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
 import DayActivityManager from './components/DayActivityManager'; // adjust if needed
@@ -182,7 +182,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     allDayHotels,
     rows,
     periodGroups,
-    summary,
     isCheckInDay,
     isCheckOutDay,
     isTravelDay,
@@ -204,8 +203,72 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   };
 
   const hasContent = rows.length > 0 || allDayHotels.length > 0;
+  // Time-of-day sections only earn their weight once a day is busy enough to
+  // need scanning. Below this, they are chrome around three rows.
+  const PERIOD_SECTION_THRESHOLD = 5;
+  const showPeriodSections = totalEvents >= PERIOD_SECTION_THRESHOLD;
 
   // Toggle period expansion
+  // One dispatcher for both layouts: below the section threshold rows render
+  // flat, above it they render inside time-of-day sections.
+  const renderRow = (row: TimelineRenderRow, i: number, rowCount: number) => {
+
+        // Check if event has passed (for today only)
+        const isItemPast = isTodayFlag && row.kind === 'item' && (() => {
+          const endTime = row.item.endTime || row.item.time;
+          if (!endTime) return false;
+          const eventEnd = combineDateAndTime(normalizedDay, endTime);
+          return eventEnd ? eventEnd < new Date() : false;
+        })();
+
+        return row.kind === 'item' ? (
+          canEdit ? (
+            <SortableTimelineRow
+              key={row.item.id}
+              item={row.item}
+              idx={i}
+              isLast={i >= rowCount - 1}
+              tripId={tripId}
+              isPast={isItemPast || false}
+              onActivityClick={onActivityClick}
+              onHotelClick={onHotelClick}
+              onTransportationClick={onTransportationClick}
+              onReservationClick={onReservationClick}
+            />
+          ) : (
+            <TimelineRow
+              key={row.item.id}
+              item={row.item}
+              idx={i}
+              isLast={i >= rowCount - 1}
+              tripId={tripId}
+              isPast={isItemPast || false}
+              onActivityClick={onActivityClick}
+              onHotelClick={onHotelClick}
+              onTransportationClick={onTransportationClick}
+              onReservationClick={onReservationClick}
+            />
+          )
+        ) : row.kind === 'grouped' ? (
+          <GroupedEventCard
+            key={row.id}
+            items={row.items}
+            groupType={row.groupType}
+            title={row.title}
+            timeRange={row.timeRange}
+            tripId={tripId}
+            onActivityClick={onActivityClick}
+            onHotelClick={onHotelClick}
+            onTransportationClick={onTransportationClick}
+            onReservationClick={onReservationClick}
+          />
+        ) : row.kind === 'now' ? (
+          <NowIndicator key="now-indicator" />
+        ) : row.kind === 'hint' ? (
+          <LayoverHintRow key={row.id} text={row.text} hintType={row.hintType} />
+        ) : null;
+  };
+
   const togglePeriod = (period: string) => {
     setExpandedPeriods(prev => {
       const next = new Set(prev);
@@ -281,7 +344,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
       <Card
         id={`day-${index}`}
         className={cn(
-          "relative overflow-hidden transition-shadow duration-200 bg-card shadow-warm-sm md:hover:shadow-warm border border-border rounded-card",
+          "relative transition-shadow duration-200 bg-card shadow-warm-sm md:hover:shadow-warm border border-border rounded-card",
           isTodayFlag && "border-primary/60 shadow-warm"
         )}
       >
@@ -293,7 +356,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
           isTodayFlag={isTodayFlag}
           isCheckInDay={isCheckInDay}
           isCheckOutDay={isCheckOutDay}
-          summary={summary}
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded(!isExpanded)}
           dateISO={date}
@@ -311,9 +373,11 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="border-t border-border overflow-hidden"
+              className="overflow-hidden rounded-b-card border-t border-border"
             >
-              <div className="bg-background px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
+              <div className="bg-background">
+                {/* Where you're staying: pinned context strip, not a row */}
+                <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
                 {hasContent ? (
                   <DndContext
                     sensors={sensors}
@@ -324,26 +388,24 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       items={sortableIds}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="space-y-2 sm:space-y-3">
-                        <AllDayHotelsSection stays={allDayHotels} onHotelClick={onHotelClick} tripId={tripId} />
-
-                        <div className="relative space-y-3">
-                          {/* Continuous timeline line - responsive positioning */}
-                          <div className="absolute left-[12px] sm:left-[20px] top-4 bottom-0 w-px bg-border -translate-x-1/2" />
-                          {periodGroups.map((group, groupIdx) => {
+                      <div className="py-2">
+                        <div>
+                          {showPeriodSections ? periodGroups.map((group, groupIdx) => {
                             const isExpanded = isPeriodExpanded(group.period);
                             const eventCount = group.rows.filter(row => row.kind !== 'hint' && row.kind !== 'now').length;
 
                             return (
                               <div key={group.period} className="relative z-10">
                                 {/* Period Header */}
-                                <TimePeriodHeader
+                                <div className="px-3 sm:px-4">
+                                  <TimePeriodHeader
                                   label={group.label}
                                   isFirst={groupIdx === 0}
                                   isExpanded={isExpanded}
                                   onToggle={() => togglePeriod(group.period)}
                                   eventCount={eventCount}
-                                />
+                                  />
+                                </div>
 
                                 {/* Period Events */}
                                 <AnimatePresence>
@@ -353,74 +415,19 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                                       animate={{ height: 'auto', opacity: 1 }}
                                       exit={{ height: 0, opacity: 0 }}
                                       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                                      className="overflow-hidden space-y-3"
+                                      className="overflow-hidden"
                                     >
-                                      {group.rows.map((row, i) => {
-                                        // Check if event has passed (for today only)
-                                        const isItemPast = isTodayFlag && row.kind === 'item' && (() => {
-                                          const endTime = row.item.endTime || row.item.time;
-                                          if (!endTime) return false;
-                                          const eventEnd = combineDateAndTime(normalizedDay, endTime);
-                                          return eventEnd ? eventEnd < new Date() : false;
-                                        })();
-
-                                        return row.kind === 'item' ? (
-                                          canEdit ? (
-                                            <SortableTimelineRow
-                                              key={row.item.id}
-                                              item={row.item}
-                                              idx={i}
-                                              isLast={i >= group.rows.length - 1}
-                                              tripId={tripId}
-                                              isPast={isItemPast || false}
-                                              onActivityClick={onActivityClick}
-                                              onHotelClick={onHotelClick}
-                                              onTransportationClick={onTransportationClick}
-                                              onReservationClick={onReservationClick}
-                                            />
-                                          ) : (
-                                            <TimelineRow
-                                              key={row.item.id}
-                                              item={row.item}
-                                              idx={i}
-                                              isLast={i >= group.rows.length - 1}
-                                              tripId={tripId}
-                                              isPast={isItemPast || false}
-                                              onActivityClick={onActivityClick}
-                                              onHotelClick={onHotelClick}
-                                              onTransportationClick={onTransportationClick}
-                                              onReservationClick={onReservationClick}
-                                            />
-                                          )
-                                        ) : row.kind === 'grouped' ? (
-                                          <GroupedEventCard
-                                            key={row.id}
-                                            items={row.items}
-                                            groupType={row.groupType}
-                                            title={row.title}
-                                            timeRange={row.timeRange}
-                                            tripId={tripId}
-                                            onActivityClick={onActivityClick}
-                                            onHotelClick={onHotelClick}
-                                            onTransportationClick={onTransportationClick}
-                                            onReservationClick={onReservationClick}
-                                          />
-                                        ) : row.kind === 'now' ? (
-                                          <NowIndicator key="now-indicator" />
-                                        ) : row.kind === 'hint' ? (
-                                          <LayoverHintRow key={row.id} text={row.text} hintType={row.hintType} />
-                                        ) : null;
-                                      })}
+                                      {group.rows.map((row, i) => renderRow(row, i, group.rows.length))}
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
                               </div>
                             );
-                          })}
+                          }) : rows.map((row, i) => renderRow(row, i, rows.length))}
                         </div>
 
                         {canEdit && (
-                          <div className="hidden md:flex pt-4 border-t border-border">
+                          <div className="mt-2 hidden border-t border-border px-3 pt-3 md:flex sm:px-4">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button

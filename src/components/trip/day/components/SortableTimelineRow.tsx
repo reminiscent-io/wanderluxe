@@ -68,7 +68,7 @@ const SortableTimelineRow: React.FC<Props> = (props) => {
         {...(isCoarsePointer ? {} : listeners)}
         aria-label={`Reorder ${props.item.title}`}
         className={cn(
-          "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 z-20 p-1 rounded cursor-grab active:cursor-grabbing",
+          "absolute left-0 top-1/2 -translate-y-1/2 z-20 p-0.5 rounded cursor-grab active:cursor-grabbing",
           "hidden sm:block sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 transition-opacity",
           "text-earth-400 hover:text-earth-600"
         )}

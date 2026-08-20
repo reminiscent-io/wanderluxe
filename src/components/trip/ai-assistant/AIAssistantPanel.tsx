@@ -78,8 +78,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
       thread_id: '',
       role: 'assistant',
       content: items.length === 1
-        ? "I've prepared this item for you to add to your trip:"
-        : `I've prepared ${items.length} items for you to add to your trip:`,
+        ? "I've prepared this item:"
+        : `I've prepared ${items.length} items:`,
       metadata: {},
       created_at: new Date().toISOString(),
       extractedItems: items,
@@ -136,7 +136,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
           id: `user-extract-${Date.now()}`,
           thread_id: '',
           role: 'user',
-          content: message || 'Please extract items from this document',
+          content: message || 'Extract items from this document',
           metadata: {},
           created_at: new Date().toISOString(),
           attachmentPreviewUrl: attachment.previewUrl,
@@ -156,7 +156,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
             role: 'assistant',
             content: items.length > 0
               ? `I found ${items.length} item${items.length !== 1 ? 's' : ''} in your document.`
-              : "I couldn't find any bookable items in this document.",
+              : "I didn't find any travel details in your document.",
             metadata: {},
             created_at: new Date().toISOString(),
             extractedItems: items,
@@ -293,7 +293,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
             </div>
             <div>
               <h3 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h3>
-              <p className="text-[13px] leading-snug text-muted-foreground mt-0.5">Chat, plan, and lift bookings into your trip</p>
+              <p className="text-[13px] leading-snug text-muted-foreground mt-0.5">Private to you, not shared with co-travelers</p>
             </div>
           </div>
 
@@ -352,8 +352,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
 
             {/* First-run: the attach control is the least obvious thing in the app */}
             <DiscoverHint hint="doc-import" className="mx-4 mb-2">
-              Have a booking confirmation? Attach the PDF or a photo with{' '}
-              <span className="font-medium">+</span> and I'll read the details straight into your trip.
+              Attach a booking confirmation with <span className="font-medium">+</span> and I'll
+              read it into your trip.
             </DiscoverHint>
 
             {/* Input */}
@@ -364,7 +364,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
               placeholder={
                 isDisabled && usage?.used === usage?.limit
                   ? (isAnonymous ? "Sign up free to keep chatting" : "Daily limit reached. Upgrade for unlimited messages.")
-                  : "Ask about your trip or attach a booking..."
+                  : "Ask about your trip..."
               }
             />
         </>

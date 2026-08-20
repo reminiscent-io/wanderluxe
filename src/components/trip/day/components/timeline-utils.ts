@@ -1,5 +1,6 @@
 import React from 'react';
-import { Plane, Train, Car, Bus, Ship, Hotel, Utensils, Star } from 'lucide-react';
+import { Plane, Train, Car, Bus, Ship, Bed, Utensils, Mountain, Anchor } from 'lucide-react';
+import { CURRENCY_SYMBOLS } from '@/utils/currencyConstants';
 
 /** ----------------------------- Types & shapes ---------------------------- */
 
@@ -50,6 +51,19 @@ export const formatTimeRange = (
   return useArrow ? `${start} → ${end}` : `${start} – ${end}`;
 };
 
+// Cost for a timeline row: no trailing ".00", cents kept when they carry
+// meaning. Budget surfaces keep formatCurrencyWithSymbol's fixed 2 decimals;
+// a row of prices reads faster without the dead zeros.
+export const formatCostCompact = (amount: number, currency = 'USD'): string => {
+  const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS] ?? currency;
+  const decimals = currency === 'JPY' || Number.isInteger(amount) ? 0 : 2;
+  const value = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(amount);
+  return symbol === currency ? `${value} ${currency}` : `${symbol}${value}`;
+};
+
 // time -> "h:mm AM/PM"
 export const formatTime12 = (time?: string) => {
   if (!time) return '';
@@ -58,6 +72,16 @@ export const formatTime12 = (time?: string) => {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const displayHour = hour % 12 || 12;
   return `${displayHour}:${minutes} ${ampm}`;
+};
+
+// time -> "9:30a" / "2:00p". The gutter shows a start time and nothing else,
+// so it wants the shortest form that still reads unambiguously.
+export const formatTimeCompact = (time?: string): string => {
+  if (!time) return '';
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  if (Number.isNaN(hour)) return '';
+  return `${hour % 12 || 12}:${minutes}${hour >= 12 ? 'p' : 'a'}`;
 };
 
 // time -> { time: "h:mm", meridiem: "AM/PM" } for stacked display
@@ -195,26 +219,68 @@ export const getTransportationIconComponent = (type: string): React.ComponentTyp
   return iconMap[type] || Bus;
 };
 
+export type EventCategory = 'ocean' | 'clay' | 'sage' | 'slate' | 'lodging';
+
+/*
+ * Water shows up in this product as ordinary activities and ferries, with no
+ * column to distinguish it, so it is inferred from the title. The list is
+ * deliberately narrow: a false positive only changes an icon and a 4% tint.
+ * If activities ever gain a real category column, read that instead.
+ */
+const WATER_WORDS = /\b(boat|sail|sailing|cruise|kayak|snorkel|dive|diving|yacht|catamaran|ferry|paddle|surf|surfing|canoe|raft|rafting|marina|swim|swimming)\b/i;
+
+export const getEventCategory = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): EventCategory => {
+  if (item.type === 'hotel') return 'lodging';
+  if (item.type === 'dining') return 'clay';
+  if (item.type === 'transportation') {
+    return item.data?.type === 'ferry' ? 'ocean' : 'slate';
+  }
+  return WATER_WORDS.test(item.title || '') ? 'ocean' : 'sage';
+};
+
+/** Icon colour per category. Shape already differentiates types, so colour
+ *  is reinforcement rather than the only signal. */
+export const CATEGORY_ICON_CLASS: Record<EventCategory, string> = {
+  ocean: 'text-category-ocean',
+  clay: 'text-category-clay',
+  sage: 'text-category-sage',
+  slate: 'text-category-slate',
+  lodging: 'text-earth-500',
+};
+
+/**
+ * Hover wash per category. There is deliberately no resting tint: at 4% over
+ * cream these hues are too faint to read as colour and only muddy the paper.
+ * Category is carried at full strength by the row icon instead.
+ */
+export const CATEGORY_ROW_CLASS: Record<EventCategory, string> = {
+  ocean: 'hover:bg-category-ocean/[0.08]',
+  clay: 'hover:bg-category-clay/[0.08]',
+  sage: 'hover:bg-category-sage/[0.08]',
+  slate: 'hover:bg-category-slate/[0.08]',
+  lodging: 'hover:bg-secondary/40',
+};
+
 // icon per event type
 export const getEventIconComponent = (eventType: TimelineType, transportType?: string): React.ComponentType<{ className?: string }> => {
   switch (eventType) {
     case 'transportation':
       return transportType ? getTransportationIconComponent(transportType) : Plane;
     case 'hotel':
-      return Hotel;
+      return Bed;
     case 'dining':
       return Utensils;
     case 'activity':
-      return Star;
+      return Mountain;
     default:
-      return Star;
+      return Mountain;
   }
 };
 
-// Unified warm neutral for all event types.
-// The icon shape (Hotel, Plane, Star, Utensils) already differentiates types visually.
-export const getEventColors = (_type: TimelineType) => {
-  return { node: 'bg-earth-400', line: 'bg-earth-200', icon: 'text-earth-600' };
+/** Water activities get an anchor regardless of entity type. */
+export const getTimelineIcon = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): React.ComponentType<{ className?: string }> => {
+  if (item.type === 'activity' && getEventCategory(item) === 'ocean') return Anchor;
+  return getEventIconComponent(item.type, item.data?.type as string | undefined);
 };
 
 // Group similar events that occur within a timeframe
@@ -246,10 +312,14 @@ export const groupSimilarEvents = (items: TimelineItem[], dateISO: string): Time
   return groups;
 };
 
-// Determine if two consecutive events should be grouped together
+// Determine if two consecutive events should be grouped together.
+//
+// Only transportation groups. A shared airport inside a few hours means one
+// journey with a connection, which is worth folding into a single row. For every
+// other type, closeness in time is coincidence rather than a relationship, so
+// activities, dining and hotels always render as rows of their own.
 const shouldGroupEvents = (prev: TimelineItem, curr: TimelineItem, dateISO: string): boolean => {
-  // Must be same type
-  if (prev.type !== curr.type) return false;
+  if (prev.type !== 'transportation' || curr.type !== 'transportation') return false;
 
   // Both must have times
   if (!prev.time || !curr.time) return false;
@@ -265,27 +335,17 @@ const shouldGroupEvents = (prev: TimelineItem, curr: TimelineItem, dateISO: stri
 
   if (timeDiffMinutes > TIME_WINDOW_MINUTES) return false;
 
-  // For transportation events, check if same type and similar location pattern
-  if (prev.type === 'transportation' && curr.type === 'transportation') {
-    const prevData = prev.data;
-    const currData = curr.data;
+  // Same transportation type (e.g., both flights)
+  if (prev.data?.type !== curr.data?.type) return false;
 
-    // Same transportation type (e.g., both flights)
-    if (prevData?.type !== currData?.type) return false;
+  // Group only when they share an endpoint: same arrival, or same departure.
+  const prevArrival = extractIata(prev.data?.arrival_location);
+  const currArrival = extractIata(curr.data?.arrival_location);
+  const prevDeparture = extractIata(prev.data?.departure_location);
+  const currDeparture = extractIata(curr.data?.departure_location);
 
-    // Check if arrivals at same location or departures from same location
-    const prevArrival = extractIata(prevData?.arrival_location);
-    const currArrival = extractIata(currData?.arrival_location);
-    const prevDeparture = extractIata(prevData?.departure_location);
-    const currDeparture = extractIata(currData?.departure_location);
-
-    // Group if arriving at same place or departing from same place
-    return (prevArrival && prevArrival === currArrival) ||
-           (prevDeparture && prevDeparture === currDeparture);
-  }
-
-  // For activities and dining, just group by type and time
-  return true;
+  return (!!prevArrival && prevArrival === currArrival) ||
+         (!!prevDeparture && prevDeparture === currDeparture);
 };
 
 const transportTypeLabel = (transportType: unknown): string => {
@@ -316,25 +376,12 @@ const generateTransportGroupTitle = (items: TimelineItem[]): string => {
   return `${items.length} ${typeLabel}`;
 };
 
-const summarizeNames = (items: TimelineItem[]): string => {
-  const names = items.map(i => i.title).filter(Boolean);
-  if (names.length <= 3) return names.join(', ');
-  return `${names.slice(0, 2).join(', ')}, +${names.length - 2} more`;
-};
-
-// Generate a group title for a set of grouped events
+// Generate a group title for a set of grouped events. Only transportation groups,
+// and every transport title leads with the count, so the title itself says how
+// many rows are folded up.
 export const generateGroupTitle = (items: TimelineItem[]): string => {
   if (items.length === 0) return '';
-
-  const type = items[0].type;
-
-  switch (type) {
-    case 'transportation': return generateTransportGroupTitle(items);
-    case 'activity': return summarizeNames(items);
-    case 'dining': return summarizeNames(items);
-    case 'hotel': return `${items.length} Hotel Events`;
-    default: return `${items.length} Events`;
-  }
+  return generateTransportGroupTitle(items);
 };
 
 // Generate time range for grouped events

@@ -11,33 +11,27 @@ interface PromptChipsProps {
 
 const DEFAULT_PROMPTS: PromptChip[] = [
   {
-    id: 'optimize',
-    label: 'Optimize schedule',
-    prompt: "Can you help me optimize today's schedule to minimize travel time between activities?",
-    icon: 'calendar'
-  },
-  {
     id: 'restaurants',
     label: 'Restaurant ideas',
-    prompt: 'What are some great restaurant recommendations near my hotel for dinner tonight?',
+    prompt: 'Where should I eat near my hotel tonight?',
     icon: 'utensils'
   },
   {
     id: 'packing',
     label: 'Packing tips',
-    prompt: "What should I pack for this trip based on the destination and activities I've planned?",
+    prompt: "What should I pack based on the activities I've planned?",
     icon: 'backpack'
   },
   {
     id: 'day-trip',
     label: 'Day trip ideas',
-    prompt: 'What are some interesting day trip options from my destination that I could add to my itinerary?',
+    prompt: 'Suggest day trips I could add to this itinerary.',
     icon: 'map'
   },
   {
     id: 'transport',
     label: 'Getting around',
-    prompt: "What's the best way to get around between my planned activities? Should I use public transit, taxi, or walking?",
+    prompt: "What's the best way to get around between my activities?",
     icon: 'car'
   }
 ];
