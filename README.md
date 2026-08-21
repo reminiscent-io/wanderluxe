@@ -26,9 +26,10 @@ WanderLuxe collapses that coordination tax into a single, beautiful, shared pict
 ## ✨ What Makes WanderLuxe Special
 
 ### 🗺️ **Intelligent Trip Orchestration**
-Design your journey with precision and ease, in the view that fits the moment:
-- **Timeline view** — day-by-day itinerary with drag-and-drop activity ordering, automatic day generation as dates change, and per-day weather badges
+Design your journey with precision and ease, in whichever of the three views fits the moment:
+- **Timeline view** — day-by-day itinerary grouped into morning/afternoon/evening, with drag-and-drop ordering, collapsible clusters for repeated events, a live "now" marker on today, quiet hints for layovers and schedule clashes, per-day weather badges, and automatic day generation as dates change. Clicking an event opens a read-only detail card first — editing is an explicit choice, not an accident
 - **Calendar view** — a FullCalendar time grid (3-day default, dense 7am–10pm layout) where you can drag and resize events to reschedule, click to edit, and hover for glanceable peek cards
+- **Map view** — every stop plotted in order, with a day scrubber, an animated fly-through of the route, bird's-eye distances between stops, and click-to-edit on any pin
 - **Google Places everywhere** — destinations, hotels, restaurants, and activity locations are all backed by Places autocomplete with photos, ratings, and contact details
 
 ### 🏨 **All-in-One Booking Management**
@@ -61,7 +62,7 @@ Put the itinerary where the group already lives: each trip can serve a **token-g
 Per-day forecast badges on the timeline with a detail modal, powered by OpenWeatherMap (current conditions + 5-day forecast, server-side cached so it's fast and cheap).
 
 ### 🔌 **Bring Your Trips to Claude (MCP)**
-WanderLuxe ships a built-in **Model Context Protocol** server, so Claude and other MCP clients can work with your trips using OAuth-authenticated access to your own data. It's a full read/**write** surface — 21 tools covering trip listing, budgets, and create/update/delete for trips, activities, dining, accommodations, transportation, and expenses — timezone-aware, with confirmation guards before destructive date changes.
+WanderLuxe ships a built-in **Model Context Protocol** server, so Claude and other MCP clients can work with your trips using OAuth-authenticated access to your own data. It's a full read/**write** surface — 20 tools covering trip listing, budgets, and create/update/delete for trips, activities, dining, accommodations, transportation, and expenses — timezone-aware, with confirmation guards before destructive date changes.
 
 ### 👥 **Real-Time Collaboration**
 Travel planning is better together:
@@ -78,7 +79,7 @@ Transform your itinerary into a beautifully formatted, print-ready PDF with one 
 Track expenses across accommodations, transportation, activities, dining, and everything else — with paid/unpaid status, multi-currency support, and exchange rates refreshed automatically.
 
 ### 🧭 **Explore**
-A public, SEO-friendly showcase gallery of real trips — currently traveling, on the horizon, and past adventures — each with a shareable prerendered itinerary page.
+A public, SEO-friendly showcase gallery of real trips — currently traveling, on the horizon, and past adventures — each with a shareable prerendered itinerary page. Found one you like? Copy the whole itinerary into your own account in one click and make it yours.
 
 ## 🏗️ Built With Excellence
 
@@ -94,6 +95,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 - 🎨 **Tailwind CSS** — Warm editorial palette with DM Serif Display & DM Sans typography
 - 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
 - 🗓️ **FullCalendar** + **dnd-kit** — Calendar editing & drag-and-drop
+- 🗺️ **Google Maps** (`@vis.gl/react-google-maps`) — Interactive trip map & route playback
 - 🔄 **TanStack Query** — Intelligent server state management
 
 </td>
@@ -103,7 +105,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 - 🗄️ **Supabase** — PostgreSQL database + Auth + Realtime
 - 🚂 **Express** — Node server (API routes, MCP server, iCal feed)
 - 🔒 **Row Level Security** — Database-level access control
-- ⚡ **Edge Functions** — 13 serverless Deno functions
+- ⚡ **Edge Functions** — 14 serverless Deno functions
 - 🔌 **WebSocket Subscriptions** — Live collaboration magic
 - 💳 **Stripe** — Pro subscription billing
 - 📧 **SendGrid + Mailgun** — Share notifications & trip reminder emails
@@ -136,11 +138,14 @@ React Query's optimistic updates make the UI feel instant. Mutations update the 
 ### Timezone Engine 🌐
 Nullable per-item IANA timezone columns with lazy self-healing resolution: locations resolve to zones through a cached `timezone-proxy` Edge Function (Google Time Zone API → permanent `timezone_cache`), items inherit the trip default unless overridden, and pure label helpers render consistent zone badges across timeline, calendar, PDF, and iCal.
 
+### Mapped Itineraries 🗺️
+The map view projects the same five data sources the calendar reads through a pure ordering engine, so a trip becomes a chronological list of stops with per-day slices and faded "ghost" neighbours — a day never appears to start from nowhere. Places resolve to coordinates through a batched, cached Edge Function whose keys are derived server-side only, so no client can point a well-known place at arbitrary coordinates. Route playback tweens the camera day by day and yields instantly to any user gesture or a `prefers-reduced-motion` preference.
+
 ### PDF Generation 📄
 Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
 
 ### Model Context Protocol 🔌
-A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 21 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses.
+A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 20 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses.
 
 ### SEO & Prerendering 🔍
 The build pipeline generates a sitemap covering every public trip, prerenders marketing and showcase pages with Puppeteer, emits JSON-LD structured data (Organization, TouristTrip, breadcrumbs), and 301-redirects legacy UUID URLs to canonical slugs.
@@ -189,7 +194,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # Server-only; bypasses RLS — never expose to the client
 
-# Google Places (Required for location search)
+# Google Places + Maps (Required for location search and the trip map view)
 VITE_GOOGLE_MAPS_API_KEY=your-google-api-key
 
 # Gemini (Required for AI assistant + travel-doc OCR)
@@ -205,13 +210,16 @@ VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key # Trip imagery (placeholders u
 VITE_ADMIN_EMAIL=you@example.com                  # Grants admin dashboard access
 VITE_PARSE_TRAVEL_DOC_URL=your-fn-url             # Travel-doc parsing endpoint override
 MCP_PUBLIC_BASE_URL=https://wanderluxe.io         # Public base URL for the MCP server
+VITE_GOOGLE_MAPS_MAP_ID=your-cloud-map-id         # Map styling for the trip map (falls back to a demo ID)
+SITE_URL=https://wanderluxe.io                    # Canonical URL for sitemap, prerender & share links
+ALLOWED_ORIGINS=https://wanderluxe.io             # Comma-separated CORS allowlist for the Express server
 ```
 
 Edge Functions read their secrets from Supabase (set via dashboard or `supabase secrets set`):
 
 ```env
 GEMINI_API_KEY=...            # ai-chat + parse-travel-doc
-GOOGLE_PLACES_API_KEY=...     # google-places-proxy, timezone-proxy
+GOOGLE_PLACES_API_KEY=...     # google-places-proxy, timezone-proxy, place-coordinates-proxy
 OPENWEATHERMAP_API_KEY=...    # weather-proxy (5-day forecasts)
 AERODATABOX_API_KEY=...       # flight-status-proxy (flight-number lookup; free tier: 600 calls/mo)
 SERPER_API_KEY=...            # ai-chat web search (bookable restaurant links)
@@ -245,19 +253,22 @@ CRON_SECRET=...               # auth for scheduled functions (reminders, exchang
 wanderluxe/
 ├── 📱 src/
 │   ├── components/
-│   │   ├── trip/              # 16 trip feature modules
+│   │   ├── trip/              # 17 trip feature modules
 │   │   │   ├── accommodation/ # Hotel & lodging management
 │   │   │   ├── ai-assistant/  # AI chat + document extraction + paywall
 │   │   │   ├── budget/        # Expense tracking & currencies
 │   │   │   ├── calendar/      # FullCalendar view + iCal sync sheet
-│   │   │   ├── timeline/      # Visual itinerary display
+│   │   │   ├── day/           # Day card, timeline rows, event detail dialog
+│   │   │   ├── map/           # Trip map: stops, routes, playback, geocoding
+│   │   │   ├── timeline/      # Day navigation, trip dates, summary panels
 │   │   │   ├── transportation/# Flights (AeroDataBox lookup), trains, cars
 │   │   │   ├── weather/       # Forecast badges & detail modal
 │   │   │   └── ...           # Activities, dining, travelers, hero, stats
 │   │   ├── admin/            # Admin dashboard (metrics + AI insights)
+│   │   ├── discovery/        # One-time first-run hints
 │   │   ├── layout/           # AppLayout, Sidebar, Navigation
-│   │   └── ui/               # 50+ Shadcn/ui components
-│   ├── pages/                # Routes (MyTrips, TripDetails, Explore, Profile, InviteRedeem, etc.)
+│   │   └── ui/               # 55 Shadcn/ui components
+│   ├── pages/                # Routes (MyTrips, TripDetails, Explore, Guide, Profile, InviteRedeem, etc.)
 │   ├── hooks/                # Custom hooks (useTripQuery, useAIAssistant, useWeather, etc.)
 │   ├── services/             # Business logic (pdf/ export pipeline, flightStatus, sharing, etc.)
 │   ├── contexts/             # React Context (AuthContext, ConsentContext)
@@ -266,13 +277,14 @@ wanderluxe/
 ├── ⚙️ server/
 │   ├── index.ts             # Express server (CSP, canonical redirects, static serving)
 │   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), account (GDPR),
-│                            # admin-insights, invite-preview
+│                            # admin-insights, invite-preview, share-notification
 ├── 🗄️ supabase/
-│   ├── functions/           # 13 Edge Functions (Deno runtime)
+│   ├── functions/           # 14 Edge Functions (Deno runtime)
 │   │   ├── ai-chat/         # Gemini chat + find_place/search_web tools
 │   │   ├── parse-travel-doc/# AI-powered document parsing
 │   │   ├── google-places-proxy/  # Autocomplete, details, photo proxy
 │   │   ├── timezone-proxy/  # Place → IANA timezone (cached)
+│   │   ├── place-coordinates-proxy/ # Place → lat/lng for the map (cached)
 │   │   ├── flight-status-proxy/  # AeroDataBox flight lookup
 │   │   ├── weather-proxy/   # OpenWeatherMap forecasts
 │   │   └── ...             # emails, reminders, exchange rates, Unsplash
@@ -286,24 +298,6 @@ wanderluxe/
     ├── tailwind.config.ts  # Design system configuration
     └── CLAUDE.md           # AI assistant instructions
 ```
-
-## 📸 See It In Action
-
-<div align="center">
-
-<!-- Add your screenshots here -->
-<img src="docs/screenshots/dashboard.png" alt="WanderLuxe Dashboard" width="800" />
-<p><em>Trip dashboard with real-time collaboration</em></p>
-
-<img src="docs/screenshots/timeline.png" alt="Timeline View" width="800" />
-<p><em>Day-by-day timeline with drag-and-drop scheduling</em></p>
-
-<img src="docs/screenshots/ai-chat.png" alt="AI Assistant" width="800" />
-<p><em>AI-powered travel assistant with contextual recommendations</em></p>
-
-</div>
-
-> 💡 **Coming soon:** Interactive demo and video walkthrough
 
 ## 🎨 Design Philosophy
 
@@ -363,7 +357,7 @@ npm run evals            # Full eval harness (chat + parsing + MCP)
 
 ### 🖥️ Desktop Experience
 - **Fixed Sidebar** — Persistent navigation with expandable trip sections
-- **Timeline ⇄ Calendar Toggle** — Switch between editorial timeline and a drag-to-reschedule time grid
+- **Timeline / Calendar / Map** — Switch between the editorial timeline, a drag-to-reschedule time grid, and a mapped route; the choice lives in the URL, so a view is shareable
 - **Assistant Dock** — AI panel docked beside the timeline, collapsible to a floating button, overlaying the full-width calendar
 - **Hover Peek Cards** — Glance at event essentials without opening a dialog
 
