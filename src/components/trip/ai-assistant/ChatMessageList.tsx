@@ -1,7 +1,11 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import ChatMessage from './ChatMessage';
-import { Loader2, Sparkles, ChevronUp } from 'lucide-react';
-import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
+import React, { useEffect, useRef, useCallback, useMemo } from "react";
+import ChatMessage from "./ChatMessage";
+import { Loader2, Sparkles, ChevronUp } from "lucide-react";
+import type {
+  AIChatMessage,
+  ExtractedItem,
+  PlaceCard,
+} from "@/types/ai-assistant";
 
 // --- Chronological ordering + day anchoring -------------------------------
 // Messages can arrive from three sources (server history, optimistic sends,
@@ -23,7 +27,7 @@ const bySendTime = (a: AIChatMessage, b: AIChatMessage): number => {
   if (ta !== tb) return ta - tb;
   // Same instant: the user's message leads its own turn, then fall back to a
   // stable id comparison so the order never shuffles between renders.
-  if (a.role !== b.role) return a.role === 'user' ? -1 : 1;
+  if (a.role !== b.role) return a.role === "user" ? -1 : 1;
   return String(a.id).localeCompare(String(b.id));
 };
 
@@ -40,7 +44,7 @@ const dayKey = (iso: string): number => {
 // it isn't the current one. Intl keeps this correct across locales.
 const formatDayLabel = (iso: string): string => {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return 'Earlier';
+  if (Number.isNaN(d.getTime())) return "Earlier";
 
   const now = new Date();
   const today = startOfDay(now);
@@ -51,13 +55,13 @@ const formatDayLabel = (iso: string): string => {
   })();
   const msgDay = startOfDay(d);
 
-  if (msgDay === today) return 'Today';
-  if (msgDay === yesterday) return 'Yesterday';
+  if (msgDay === today) return "Today";
+  if (msgDay === yesterday) return "Yesterday";
 
   return new Intl.DateTimeFormat(undefined, {
-    month: 'long',
-    day: 'numeric',
-    ...(d.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+    month: "long",
+    day: "numeric",
+    ...(d.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
   }).format(d);
 };
 
@@ -111,7 +115,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   onReviewEdit,
   onAddPlaceCard,
   isImporting = false,
-  emptyStateSlot
+  emptyStateSlot,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -128,7 +132,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       if (last?.key === key) {
         last.items.push(message);
       } else {
-        groups.push({ key, label: formatDayLabel(message.created_at), items: [message] });
+        groups.push({
+          key,
+          label: formatDayLabel(message.created_at),
+          items: [message],
+        });
       }
     }
     return groups;
@@ -144,7 +152,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     if (!container) return;
 
     if (smooth) {
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     } else {
       container.scrollTop = container.scrollHeight;
     }
@@ -152,7 +160,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
   // Scroll to bottom on initial load
   useEffect(() => {
-    if (messages.length > 0 && !hasInitialScrolled.current && containerRef.current) {
+    if (
+      messages.length > 0 &&
+      !hasInitialScrolled.current &&
+      containerRef.current
+    ) {
       // Use rAF to ensure DOM has laid out before scrolling
       requestAnimationFrame(() => {
         scrollToBottom(false);
@@ -170,7 +182,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
   // Preserve scroll position after loading more messages
   useEffect(() => {
-    if (containerRef.current && prevScrollHeightRef.current > 0 && !isLoadingMore) {
+    if (
+      containerRef.current &&
+      prevScrollHeightRef.current > 0 &&
+      !isLoadingMore
+    ) {
       const newScrollHeight = containerRef.current.scrollHeight;
       const scrollDiff = newScrollHeight - prevScrollHeightRef.current;
       containerRef.current.scrollTop = scrollDiff;
@@ -184,7 +200,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     if (!hasInitialScrolled.current) return;
     if (messages.length > lastMessageCountRef.current) {
       const newest = messages[messages.length - 1];
-      if (newest?.role === 'user') {
+      if (newest?.role === "user") {
         requestAnimationFrame(() => scrollToBottom(true));
       }
     }
@@ -205,7 +221,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       // Load more when near top — only after user has opted into history,
       // otherwise they'd be surprised by auto-loading when the feature was
       // supposed to be behind the "Show older chats" button.
-      if (historyLoaded && hasMore && !isLoadingMore && onLoadMore && container.scrollTop < 50) {
+      if (
+        historyLoaded &&
+        hasMore &&
+        !isLoadingMore &&
+        onLoadMore &&
+        container.scrollTop < 50
+      ) {
         prevScrollHeightRef.current = container.scrollHeight;
         onLoadMore();
       }
@@ -264,14 +286,12 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
               <h2 className="font-display text-2xl text-foreground leading-[1.15] tracking-tight">
                 What can I help you plan?
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Paste a booking confirmation to add it to your trip.
-              </p>
             </div>
           </div>
           {emptyStateSlot}
           <p className="text-xs text-muted-foreground/80 max-w-[280px] text-center leading-relaxed">
-            Trip details go to Google Gemini for recommendations. Messages are never used to train AI models.
+            Trip details go to Google Gemini for recommendations. Messages are
+            never used to train AI models.
           </p>
         </div>
       </div>
@@ -279,23 +299,27 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   }
 
   // Create a streaming message if currently streaming
-  const streamingMessage: AIChatMessage | null = isStreaming && streamingContent
-    ? {
-        id: 'streaming',
-        thread_id: '',
-        role: 'assistant',
-        content: streamingContent,
-        metadata: {},
-        created_at: new Date().toISOString()
-      }
-    : null;
+  const streamingMessage: AIChatMessage | null =
+    isStreaming && streamingContent
+      ? {
+          id: "streaming",
+          thread_id: "",
+          role: "assistant",
+          content: streamingContent,
+          metadata: {},
+          created_at: new Date().toISOString(),
+        }
+      : null;
 
   return (
     <div
       ref={containerRef}
       onScroll={handleScroll}
       className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-2 space-y-1 touch-pan-y"
-      style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+      style={{
+        WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
+      }}
     >
       {/* "Show older chats" button (before history loaded) */}
       {loadHistoryControl}
@@ -346,9 +370,18 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           </div>
           <div className="bg-sand-50 border border-border rounded-2xl rounded-tl-sm px-4 py-3">
             <div className="flex gap-1">
-              <span className="w-2 h-2 bg-earth-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-earth-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-earth-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span
+                className="w-2 h-2 bg-earth-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="w-2 h-2 bg-earth-400 rounded-full animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="w-2 h-2 bg-earth-400 rounded-full animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              />
             </div>
           </div>
         </div>
