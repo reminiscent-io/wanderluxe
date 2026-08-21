@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**WanderLuxe** is an AI-powered travel planning platform that combines real-time trip collaboration, comprehensive booking management, AI-assisted recommendations, calendar sync (FullCalendar view + iCal feed), a built-in MCP server, and professional PDF export. It's a full-stack React/TypeScript application with a PostgreSQL backend via Supabase.
+**WanderLuxe** is an AI-powered travel planning platform that combines real-time trip collaboration, comprehensive booking management, AI-assisted recommendations, three itinerary views (timeline, FullCalendar, interactive map), calendar sync (iCal feed), a built-in MCP server, and professional PDF export. It's a full-stack React/TypeScript application with a PostgreSQL backend via Supabase.
 
 ## Quick Start Commands
 
@@ -55,7 +55,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 ```
 src/
 ├── components/
-│   ├── trip/              # Trip feature components (16 subdirs)
+│   ├── trip/              # Trip feature components (17 subdirs)
 │   │   ├── _shared/       # Shared trip utilities
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
@@ -67,21 +67,25 @@ src/
 │   │   ├── details/       # Trip detail views
 │   │   ├── dining/        # Restaurant reservations
 │   │   ├── hero/          # Trip hero/header
+│   │   ├── map/           # Interactive trip map (Google Maps + route playback)
 │   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
 │   │   ├── travelers/     # Collaborator management
 │   │   └── weather/       # Weather display components
 │   ├── admin/             # Admin dashboard components
+│   ├── discovery/         # One-time first-run hints (DiscoverHint)
 │   ├── layout/            # Sidebar, Navigation, AppLayout
 │   ├── navigation/        # Navigation components
 │   ├── landing/           # Landing page sections (WhySignUp, etc.)
-│   └── ui/                # Shadcn/ui primitive components (~53)
-├── pages/                 # Route pages (MyTrips, TripDetails, Budget, Profile, Explore, Settings, InviteRedeem, etc.)
+│   └── ui/                # Shadcn/ui primitive components (~55)
+├── pages/                 # Route pages (MyTrips, TripDetails, Budget, Profile, Explore, Settings, InviteRedeem,
+│                          #   Guide `/guide`, LLMTraining `/about`, OauthConsent `/oauth/consent`, etc.)
 ├── hooks/                 # Custom hooks (useSidebarState, useAIAssistant, useTripQuery, etc.)
 ├── services/              # Business logic (pdfmake-export, travelers, tripDaysService, etc.)
 ├── contexts/              # React Context (AuthContext, ConsentContext)
 ├── config/                # Environment config (env.ts)
+├── constants/             # Shared constants (unsplash.ts)
 ├── lib/                   # Theme, utilities
 ├── integrations/supabase/ # Supabase client & auto-generated types
 ├── test/                  # Test setup & mocks
@@ -92,10 +96,11 @@ server/
 ├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving)
 ├── dev-server.ts         # Development server config
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary
-└── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights, invite preview, account export/deletion)
+└── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights,
+                          #   invite preview, share notification, account export/deletion)
 
 supabase/
-├── functions/            # Serverless Deno functions (13 functions)
+├── functions/            # Serverless Deno functions (14 functions + _shared)
 │   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
@@ -103,6 +108,7 @@ supabase/
 │   ├── generate-image/           # Unsplash photo search (NOT AI image generation, despite the name)
 │   ├── google-places-proxy/      # Google Places API proxy (autocomplete, details, photo proxy)
 │   ├── parse-travel-doc/         # Travel document parsing (Gemini vision OCR)
+│   ├── place-coordinates-proxy/  # Batch place → lat/lng for the map view (cached, soft-fail)
 │   ├── send-email/               # Share notification email via SendGrid
 │   ├── send-share-notification/  # Trip share notifications (SendGrid; legacy path)
 │   ├── send-trip-reminders/      # Scheduled trip reminder emails (Mailgun, pg_cron + CRON_SECRET)
@@ -171,7 +177,8 @@ PostgreSQL database
 - Responsive: Fixed on desktop, drawer on mobile
 
 **Trip Details Page**
-- Wrapper component routes to different views (Timeline — with a Timeline ⇄ Calendar toggle, Budget, Booking — Expedia affiliate widget, Chat)
+- Wrapper component routes to top-level tabs: Timeline, Budget, Booking (Expedia affiliate widget), Chat
+- The Timeline tab carries its own three-way **Timeline ⇄ Calendar ⇄ Map** switch, persisted in the `?view=` query param (`timeline` is the absent state, so old bookmarks keep working)
 - Each view fetches its own data via React Query
 - Real-time subscriptions keep data fresh
 - Shared trip permissions checked via `useTripPermissions()`
@@ -194,15 +201,7 @@ PostgreSQL database
 - **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
 - **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `node_modules/.cache/wanderluxe-pdf-preview.pdf`
 
-#### 15. **Eval Harness** (`evals/`)
-- **On-demand only**: `npm run evals` (never in CI; `npm test` excludes `evals/` — eval files use the `.eval.ts` suffix, helper logic uses `.test.ts` and DOES run in CI)
-- **Suites**: `evals/mcp` (deterministic MCP tool + auth/RLS/discovery checks, no LLM cost), `evals/chat` (hybrid: deterministic asserts + Gemini-as-judge, pass ≥ 3.5/5, N=1 so judge scores vary run-to-run — the scorecard records raw scores for drift), `evals/parsing` (golden-file grading vs the **deployed** `parse-travel-doc`, pass ≥ 90% field accuracy; text fixtures are wrapped in PDFs via `evals/helpers/textToPdf.ts` since the function rejects non-image/non-PDF uploads)
-- **Fixtures**: dedicated eval user (`EVAL_USER_EMAIL`/`EVAL_USER_PASSWORD` in `.env`) in the prod Supabase project with two fixed-UUID trips (`evals/fixtures/trips.ts`); `npm run evals:seed` is idempotent (ownership-guarded) and resets chat history + AI usage
-- **Server**: `evals/globalSetup.ts` spawns Express from the working tree on port 8090 (override with `EVALS_SERVER_URL`); chat cases proxy to the **deployed** ai-chat Edge Function, so Edge Function changes need a redeploy before chat evals reflect them
-- **Results**: `evals/results/<timestamp>.json` (gitignored) + console summary table; status `error` = infra flake (retried once), distinct from `fail` = quality regression
-- **Helper unit tests** (`evals/helpers/*.test.ts`, node-env via `// @vitest-environment node`) run in the main CI suite — SSE parsing, scorecard math, field comparison, retry, text-to-PDF
-
-#### 8. **Database Schema** (28 tables)
+#### 8. **Database Schema** (29 tables)
 Key tables:
 - `trips` - Trip records with dates, budget, destination, default timezone, calendar-feed token
 - `trip_days` - Days within a trip
@@ -218,6 +217,7 @@ Key tables:
 - `currencies` / `exchange_rates` - Multi-currency support
 - `weather_cache` - Cached weather data (6h TTL)
 - `timezone_cache` - place_id → IANA timezone (permanent)
+- `place_coordinates` - place/text → lat,lng cache for the map view (shared across trips; cache keys are derived server-side only)
 - `flight_status_cache` - AeroDataBox lookups (30-min TTL)
 - `expenses` / `other_expenses` - Expense tracking
 - `trip_reminder_sends` - Reminder-email dedup
@@ -240,7 +240,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
 - `useTripSubscription()` - Trip-wide realtime for detail views (lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
-- `usePublicTrips()` - Explore showcase trips
+- `usePublicTrips()` - Explore showcase trips (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`)
 - `useIsAdmin()` - Admin role checking
 - `usePWAInstall()` - PWA install prompt
 - `useWeather()` - Weather data fetching
@@ -251,7 +251,9 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useVersionCheck()` - App version update detection
 - `useBufferedStreaming()` - Buffered AI streaming responses
 - `useVisualViewport()` - Mobile viewport handling
-- `useRealtimeSubscription()` - Generic real-time subscription helper
+- `useRealtimeSubscription()` - Generic real-time subscription helper (**dedupes by `channelKey` in a module-level Set** — two views sharing a key means the second one gets no events)
+- `useTripMapData()` / `usePlaceCoordinates()` / `usePlayback()` / `useMapRealtime()` - Map view data, geocoding, route playback, realtime (live in `components/trip/map/`)
+- `useFirstRun()` - One-time discovery hints (`map-view`, `calendar-sync`, `doc-import`, `live-collab`)
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
@@ -261,10 +263,12 @@ All tables have RLS policies: users can only access their own trips or shared tr
   - Sunset (50-600): orange accent scale for CTAs and highlights
   - Navy (800-950): dark tones
   - CSS vars (`--background`, `--foreground`, `--border`, etc.) in `src/index.css` control semantic tokens
+  - `--destructive-ink` is the **text** step of destructive red (5.6:1 on cream); `--destructive` is tuned as a *fill* and reaches only 3.7:1 as ink — use `text-destructive-ink` for small red text, never `text-destructive`
+- **Dark mode**: `darkMode: 'class'` in `tailwind.config.ts`; the `.dark` block in `index.css` redefines the same token set
 - **Shadows**: Brown-tinted warm shadows (`shadow-warm-sm`, `shadow-warm`, `shadow-warm-lg`, `shadow-warm-xl`)
 - **Border Radius**: `rounded-card` (0.75rem) for cards
 - **Button Variants**: `sunset` variant for primary CTAs (gradient orange)
-- **Components**: Shadcn/ui (~53 Radix UI primitives)
+- **Components**: Shadcn/ui (~55 Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
 - **Utilities**: `bg-grain` (subtle noise texture, parent must be positioned), `img-warm` (subtle saturation filter for photos)
@@ -291,8 +295,16 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - Caching: 6h server-side in `weather_cache`; 30-min client staleTime in `useWeather()`
 - UI: `DayWeatherBadge` on timeline days + `WeatherDetailModal` (`src/components/trip/weather/`)
 
+#### 15. **Eval Harness** (`evals/`)
+- **On-demand only**: `npm run evals` (never in CI; `npm test` excludes `evals/` — eval files use the `.eval.ts` suffix, helper logic uses `.test.ts` and DOES run in CI)
+- **Suites**: `evals/mcp` (deterministic MCP tool + auth/RLS/discovery checks, no LLM cost), `evals/chat` (hybrid: deterministic asserts + Gemini-as-judge, pass ≥ 3.5/5, N=1 so judge scores vary run-to-run — the scorecard records raw scores for drift), `evals/parsing` (golden-file grading vs the **deployed** `parse-travel-doc`, pass ≥ 90% field accuracy; text fixtures are wrapped in PDFs via `evals/helpers/textToPdf.ts` since the function rejects non-image/non-PDF uploads)
+- **Fixtures**: dedicated eval user (`EVAL_USER_EMAIL`/`EVAL_USER_PASSWORD` in `.env`) in the prod Supabase project with two fixed-UUID trips (`evals/fixtures/trips.ts`); `npm run evals:seed` is idempotent (ownership-guarded) and resets chat history + AI usage
+- **Server**: `evals/globalSetup.ts` spawns Express from the working tree on port 8090 (override with `EVALS_SERVER_URL`); chat cases proxy to the **deployed** ai-chat Edge Function, so Edge Function changes need a redeploy before chat evals reflect them
+- **Results**: `evals/results/<timestamp>.json` (gitignored) + console summary table; status `error` = infra flake (retried once), distinct from `fail` = quality regression
+- **Helper unit tests** (`evals/helpers/*.test.ts`, node-env via `// @vitest-environment node`) run in the main CI suite — SSE parsing, scorecard math, field comparison, retry, text-to-PDF
+
 #### 16. **Calendar View & iCal Feed**
-- `src/components/trip/calendar/` — `TripCalendarView` (lazy-loaded FullCalendar time grid) behind a Timeline ⇄ Calendar toggle in `TimelineView.tsx`
+- `src/components/trip/calendar/` — `TripCalendarView` (lazy-loaded FullCalendar time grid), one arm of the three-way view switch in `TimelineView.tsx`
 - Defaults: 3-day view anchored at trip start (today if mid-trip); dense 7am–10pm slot window with a show-full-day toggle (`slotWindow.ts`)
 - `eventMapping.ts` maps trip entities → events; drag/resize applies minimal mutations (`calendarMutations.ts`); click-to-edit opens entity dialogs; `AddEntityPicker` for empty-slot adds
 - Warm-themed chips (`CalendarEventChip` + `calendarTheme.css`, with timezone badges), desktop hover peek (`CalendarEventPeek`/`peekFacts.ts`)
@@ -301,11 +313,11 @@ All tables have RLS policies: users can only access their own trips or shared tr
 #### 17. **Timezone System**
 - Times are floating wall-clock values (`HH:MM`) — **never convert them between zones**. Each trip has a default IANA `timezone`; items carry nullable overrides (`day_activities.timezone`, `reservations.timezone`, `accommodations.timezone`, `transportation.departure_timezone`/`arrival_timezone`); NULL = inherit trip default
 - Resolution: `timezone-proxy` Edge Function (place_id → geometry → Google Time Zone API → IANA id, with an offline boundary-lookup fallback via `tz-lookup` when the Time Zone API is refused/unavailable), cached permanently in `timezone_cache`; client side `useResolveTimezone()` + `useTripTimezone()` (lazy self-healing)
-- UI: searchable IANA `TimezoneSelect` combobox; forms auto-fill the zone from the chosen place; label helpers in `src/utils/timezoneLabel.ts` (`effectiveTz`, `tzAbbrev`) drive badges on timeline rows, calendar chips, PDF times, and iCal summaries
+- UI: searchable IANA `TimezoneSelect` combobox; forms auto-fill the zone from the chosen place; label helpers in `src/utils/timezoneLabel.ts` (`effectiveTz`, `tzAbbrev`, `shouldShowBadge`, `transportTzLabels`, `getTimezoneOptions`) drive badges on timeline rows, calendar chips, map stops, PDF times, and iCal summaries
 
 #### 18. **MCP Server**
 - `server/routes/mcp.ts`: streamable-HTTP, stateless; OAuth 2.1 via Supabase (ES256 JWT, RFC 9728 discovery); `MCP_PUBLIC_BASE_URL` sets the public base URL
-- Tools in `server/lib/mcpTools.ts` — **21 total**: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, plus add/update/delete for activity, dining, accommodation, transportation, and expense
+- Tools in `server/lib/mcpTools.ts` — **20 total**: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, plus add/update/delete for activity, dining, accommodation, transportation, and expense
 - Timezone-aware (times stay wall-clock); `update_trip` returns at-risk days and requires `confirm_remove_days: true` before dropping days that contain items; writes go through `server/lib/tripWrites.ts`
 - Covered by `evals/mcp` (full read+write lifecycle, auth/RLS/discovery)
 
@@ -313,6 +325,32 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `src/components/trip/BookingView.tsx` + `src/lib/expedia.ts` — embedded Expedia Group affiliate search widget (stays + flights, Partnerize network), fallback deep link, and a human travel-advisor CTA (Fora Travel)
 - AI-chat hotel place cards (`is_stay`) get "Book on Expedia" deep links (`buildExpediaHotelSearchUrl`)
 - Affiliate click tracking via gtag (`trackExpediaClick`); CSP/COEP in `server/index.ts` is tuned so the widget iframe loads — don't re-enable COEP
+
+#### 20. **Trip Map View**
+- `src/components/trip/map/` — `TripMapView` (lazy-loaded), the third arm of the itinerary view switch. Google Maps via `@vis.gl/react-google-maps`
+- **Data**: `useTripMapData` composes the same five sources as `useCalendarEvents` (days, stays, transportation, reservations, + the `day_id → date` join), then projects them through the pure `buildStops.ts` ordering engine into `MapStop[]` / per-day `DayFrame[]` with lead/trail "ghost" stops so a day never appears to start from nowhere
+- **Geocoding**: `usePlaceCoordinates` batches places (≤100/request) to the `place-coordinates-proxy` Edge Function → `place_coordinates` table. Soft-fail contract like `timezone-proxy`: a bad item yields `null`, never a non-200. **Cache keys are derived server-side only** — if the client sent them, a caller could point a well-known place at arbitrary coordinates in a table every trip reads
+- **Playback**: `usePlayback` + `useCameraTween` animate day-by-day through stops; honours `prefers-reduced-motion`, and any user gesture interrupts the camera
+- **Realtime**: `useMapRealtime` uses channel key `map:${tripId}` — deliberately *not* `calendar:${tripId}`. `useRealtimeSubscription` dedupes by key through a module-level Set, so a shared key would leave whichever view mounted second permanently dead
+- **Editing**: clicking a stop opens the same entity dialogs as the timeline (activity, dining, accommodation, transportation)
+- **Config**: needs `VITE_GOOGLE_MAPS_API_KEY` (renders a "Map unavailable" panel without it). `VITE_GOOGLE_MAPS_MAP_ID` is optional — `resolveMapId()` falls back to a demo map ID. Note a Cloud map ID disables inline marker styles
+- Camera fitting uses a **bounds literal**, not `new google.maps.LatLngBounds()`, so a render before the Maps script settles cannot throw and take the view down
+
+#### 21. **Timeline & Day Card**
+The timeline is the default itinerary view; each day renders as a `CompactDayCard`.
+- **Engine**: `day/components/useDayTimeline.ts` turns the four entity types into ordered rows; `timeline-utils.ts` holds the pure logic — time periods (`getTimePeriod` → early-morning…night), `groupSimilarEvents` for collapsible clusters, and event categories (`ocean`/`clay`/`sage`/`slate`/`lodging`) that drive row icons
+- **Rows**: `TimelineRow` / `SortableTimelineRow` / `GroupedEventCard`, sectioned by `TimePeriodHeader`, with `NowIndicator` on today and `LayoverHintRow` for layover / free-time / overlap hints
+- **Click = read, not edit**: clicking any event opens `EventDetailDialog`, a read-only view of every populated field with an explicit **Edit** button. One tagged union covers activities, stays, transport and dining; empty fields drop out. Dates are built **from their parts, never `Date.parse`** — these are floating wall-clock values (see §17)
+- **Design invariants** (from the redesign; changing them re-breaks what was fixed):
+  - No resting category wash on rows — at 4% over cream those hues only muddy the paper. Category is carried at full strength by the row icon; hover keeps the wash
+  - Overlap hints never fire on lodging rows — a check-in is a window you pass through, not an appointment, and a false alarm in red teaches people to ignore the real ones
+  - A missing end time renders as *absence*, not a "tbd" placeholder in real-time weight
+  - Past events recede by **ink level**, not `opacity-50`, which had crushed the meta line to 2.1:1. Every text element must clear AA
+  - The rail hairline terminates at the first and last node (`railStart`/`railEnd`); a single-row day draws a node and no line
+
+#### 22. **First-Run Discovery Hints**
+- `src/components/discovery/DiscoverHint.tsx` + `useFirstRun` — a single dismissible line that appears once, in place, beside the feature it describes. Deliberately not a tour
+- Keys (`DiscoveryKey`): `map-view`, `calendar-sync`, `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
 ## Common Development Tasks
 
@@ -365,11 +403,16 @@ All tables have RLS policies: users can only access their own trips or shared tr
 | `integrations/supabase/` | Supabase types & client (auto-generated) |
 | `services/` | Business logic layer |
 | `server/routes/stripe.ts` | Stripe payment routes |
-| `server/routes/mcp.ts` + `server/lib/mcpTools.ts` | MCP server & 21-tool registry |
+| `server/routes/mcp.ts` + `server/lib/mcpTools.ts` | MCP server & 20-tool registry |
 | `server/routes/calendar.ts` + `server/lib/icalFeed.ts` | Token-gated iCal feed |
 | `components/trip/calendar/` | FullCalendar view, sync sheet, calendar hooks |
+| `components/trip/map/` | Trip map view — stop model, route playback, geocoding |
+| `components/trip/day/components/timeline-utils.ts` | Pure timeline logic (periods, grouping, categories) |
+| `components/trip/day/components/useDayTimeline.ts` | Builds a day's rows from the four entity types |
 | `utils/timezoneLabel.ts` | Timezone label/badge helpers |
+| `DESIGN.md` + `DESIGN.json` | Full design-system spec (palette hexes, type scale, component rules) — **read before visual work** |
 | `vitest.config.ts` | Test configuration |
+| `sonar-project.properties` | SonarQube scan config (`reminiscent-io_wanderluxe`) |
 
 ## Performance Considerations
 
@@ -395,7 +438,7 @@ Required in `.env`:
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 - `SUPABASE_SERVICE_ROLE_KEY` - Server-only service-role key used by Express routes (`server/routes/*`). Bypasses RLS, so those routes do their own authorization checks (e.g. `canAccessTrip` in `ai-chat.ts`). Never expose to the client. The server reuses `VITE_SUPABASE_URL` for the project URL.
-- `VITE_GOOGLE_MAPS_API_KEY` - Google Places API
+- `VITE_GOOGLE_MAPS_API_KEY` - Google Places API + the trip Map view (map renders "Map unavailable" without it)
 - `GEMINI_API_KEY` - Google Gemini API key (used by both the chat Edge Function and `parse-travel-doc`). Model is hardcoded to `gemini-2.5-flash` in each function; no env override.
 - `SERPER_API_KEY` - (optional, Edge Function secret) Serper API for web search when recommending restaurants; enables direct Resy/OpenTable booking links
 - `AERODATABOX_API_KEY` - (Edge Function secret) RapidAPI key for AeroDataBox; consumed by the `flight-status-proxy` Edge Function. Required for the flight-number lookup button in the transportation dialog. Free tier: 600 calls/month.
@@ -405,14 +448,19 @@ Required in `.env`:
 - `VITE_ADMIN_EMAIL` - Admin user email
 - `VITE_PARSE_TRAVEL_DOC_URL` - Travel document parsing endpoint
 - `MCP_PUBLIC_BASE_URL` - Public base URL advertised by the MCP server (OAuth discovery)
+- `VITE_GOOGLE_MAPS_MAP_ID` - (optional) Cloud map ID for the map view; `resolveMapId()` falls back to a demo ID. A Cloud map ID disables inline marker styles
+- `VITE_PLACE_PHOTO_CACHE_TTL_MS` - (optional) TTL for the client-side place-photo cache
+- `SITE_URL` - (server) canonical site URL used by sitemap/prerender/share links
+- `ALLOWED_ORIGINS` - (server, comma-separated) CORS allowlist for Express (distinct from the Edge Functions' singular `ALLOWED_ORIGIN`)
 - `VITE_POSTHOG_KEY` / `VITE_POSTHOG_HOST` - (optional) PostHog analytics
 
 Edge Function secrets (set via `supabase secrets set`, not `.env`):
-- `GOOGLE_PLACES_API_KEY` - `google-places-proxy` + `timezone-proxy`
+- `GOOGLE_PLACES_API_KEY` - `google-places-proxy` + `timezone-proxy` + `place-coordinates-proxy`
 - `OPENWEATHERMAP_API_KEY` - `weather-proxy` (5-day forecasts)
 - `SENDGRID_API_KEY` - `send-email` / `send-share-notification` (share emails)
 - `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` - `send-trip-reminders` (reminder emails; domain defaults to `mail.wanderluxe.io`)
 - `EXCHANGE_RATE_API` - `update-exchange-rates` (ExchangeRate-API key)
+- `UNSPLASH_ACCESS_KEY` - `generate-image` / `fetch-unsplash-metadata` (server-side counterpart of `VITE_UNSPLASH_ACCESS_KEY`)
 - `CRON_SECRET` - auth for scheduled functions (`send-trip-reminders`, `update-exchange-rates`)
 - `ALLOWED_ORIGIN` - CORS origin for Edge Functions (defaults to `https://wanderluxe.io`)
 
@@ -422,7 +470,8 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - **Supabase Studio**: Direct database inspection and RLS testing
 - **Console Logs**: Check for real-time subscription errors
 - **Network Tab**: Verify Supabase API calls and WebSocket connections
-- **TypeScript**: Strict mode enabled; type errors catch bugs early
+- **TypeScript**: `strict` is **off** (`strict: false` in `tsconfig.app.json`, `strictNullChecks: false` in `tsconfig.json`); only `noImplicitAny` is on
+- **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something — compare against a pre-change run, or grep the output for the files you touched
 - **ESLint**: Run `npm run lint` to catch code quality issues
 
 ## Deployment
