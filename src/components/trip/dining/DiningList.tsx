@@ -21,6 +21,7 @@ interface DiningListProps {
     trip_id: string;
     restaurant_name: string;
     reservation_time?: string;
+    end_time?: string;
     number_of_people?: number;
     confirmation_number?: string;
     notes?: string;
@@ -67,7 +68,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
 
     /* ---------- save (insert / update) ---------- */
     const handleSave = useCallback(
-      async (raw: Record<string, unknown> & { day_id?: string; order_index?: number; reservation_time?: string | null }) => {
+      async (raw: Record<string, unknown> & { day_id?: string; order_index?: number; reservation_time?: string | null; end_time?: string | null }) => {
         setIsSubmitting(true);
 
         // Use the day_id from the form data (already looked up in RestaurantReservationForm)
@@ -82,6 +83,7 @@ const DiningList = forwardRef<HTMLDivElement, DiningListProps>(
               ? raw.order_index
               : reservations.length,
           reservation_time: raw.reservation_time || null,
+          end_time: raw.end_time || null,
         };
 
         try {

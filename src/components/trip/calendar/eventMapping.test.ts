@@ -51,19 +51,34 @@ describe('mapActivityToEvent', () => {
 describe('mapReservationToEvent', () => {
   const res: RestaurantReservation = {
     id: 'r1', day_id: 'd1', trip_id: 't1', restaurant_name: 'Septime',
-    reservation_time: '20:00:00', number_of_people: 2, notes: null,
+    reservation_time: '20:00:00', end_time: null, number_of_people: 2, notes: null,
     confirmation_number: null, cost: null, currency: null, is_paid: false,
     address: null, phone_number: null, place_id: null, rating: null,
     created_at: '', order_index: 0,
   };
-  it('maps a timed reservation to a point-in-time block', () => {
+  it('maps a timed reservation with an end to a block', () => {
+    const e = mapReservationToEvent({ ...res, end_time: '23:00:00' }, '2026-07-01');
+    expect(e).toMatchObject({
+      id: 'dining:r1', title: 'Septime', allDay: false,
+      start: '2026-07-01T20:00:00', end: '2026-07-01T23:00:00',
+    });
+  });
+  it('never fabricates an end the user did not enter', () => {
+    // FullCalendar prints the chip's time range from `end` and hands it back on
+    // a drag, so a synthesized default would both lie and persist itself.
     const e = mapReservationToEvent(res, '2026-07-01');
-    expect(e).toMatchObject({ id: 'dining:r1', title: 'Septime', allDay: false, start: '2026-07-01T20:00:00' });
+    expect(e).toMatchObject({ start: '2026-07-01T20:00:00' });
+    expect(e?.end).toBeUndefined();
+  });
+  it('drops an end that is not after the start rather than rendering backwards', () => {
+    // No end date exists on a reservation, so 00:30 would sort before 20:00.
+    const e = mapReservationToEvent({ ...res, end_time: '00:30:00' }, '2026-07-01');
     expect(e?.end).toBeUndefined();
   });
   it('maps an untimed reservation to an all-day chip', () => {
     const e = mapReservationToEvent({ ...res, reservation_time: null }, '2026-07-01');
     expect(e).toMatchObject({ id: 'dining:r1', start: '2026-07-01', allDay: true });
+    expect(e?.end).toBeUndefined();
   });
 });
 
@@ -126,9 +141,21 @@ describe('buildDropPatch', () => {
     const patch = buildDropPatch({ eventId: 'activity:a1', newStart: new Date(2026, 6, 5), newEnd: null, allDay: true });
     expect(patch).toEqual({ entityType: 'activity', recordId: 'a1', date: '2026-07-05', startTime: null, endTime: null });
   });
-  it('retimes dining to a point in time', () => {
+  it('retimes dining, carrying the resized end', () => {
+    const patch = buildDropPatch({ eventId: 'dining:r1', newStart: new Date(2026, 6, 2, 19, 30), newEnd: new Date(2026, 6, 2, 21, 45), allDay: false });
+    expect(patch).toEqual({ entityType: 'dining', recordId: 'r1', date: '2026-07-02', time: '19:30', endTime: '21:45' });
+  });
+  it('retimes dining with no end when the drag supplies none', () => {
     const patch = buildDropPatch({ eventId: 'dining:r1', newStart: new Date(2026, 6, 2, 19, 30), newEnd: null, allDay: false });
-    expect(patch).toEqual({ entityType: 'dining', recordId: 'r1', date: '2026-07-02', time: '19:30' });
+    expect(patch).toEqual({ entityType: 'dining', recordId: 'r1', date: '2026-07-02', time: '19:30', endTime: null });
+  });
+  it('drops an end that a drag rolled past midnight, for dining and activities alike', () => {
+    // These rows carry a start date and two wall-clock times — no end date — so
+    // an end on the next day would persist as one that sorts before its start.
+    const dining = buildDropPatch({ eventId: 'dining:r1', newStart: new Date(2026, 6, 2, 23, 0), newEnd: new Date(2026, 6, 3, 0, 30), allDay: false });
+    expect(dining).toMatchObject({ time: '23:00', endTime: null });
+    const activity = buildDropPatch({ eventId: 'activity:a1', newStart: new Date(2026, 6, 2, 23, 0), newEnd: new Date(2026, 6, 3, 0, 30), allDay: false });
+    expect(activity).toMatchObject({ startTime: '23:00', endTime: null });
   });
   it('converts an all-day accommodation span back to inclusive checkout (exclusive end - 1)', () => {
     const patch = buildDropPatch({

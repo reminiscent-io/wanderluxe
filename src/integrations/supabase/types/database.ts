@@ -799,6 +799,7 @@ export type Database = {
           created_at: string
           currency: string | null
           day_id: string
+          end_time: string | null
           id: string
           image_url: string | null
           is_paid: boolean | null
@@ -822,6 +823,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           day_id: string
+          end_time?: string | null
           id?: string
           image_url?: string | null
           is_paid?: boolean | null
@@ -845,6 +847,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           day_id?: string
+          end_time?: string | null
           id?: string
           image_url?: string | null
           is_paid?: boolean | null

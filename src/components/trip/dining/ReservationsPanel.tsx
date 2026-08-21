@@ -15,6 +15,7 @@ type ReservationSummary = {
   id: string | number;
   restaurant_name: string;
   reservation_time?: string | null;
+  end_time?: string | null;
   number_of_people?: number | null;
   cost?: number | null;
   currency?: string | null;
@@ -114,7 +115,7 @@ export default function ReservationsPanel({
                 {/* Clickable header area (edit-only) */}
                 <div onClick={canEdit ? () => onEdit(r) : undefined} role={canEdit ? "button" : undefined} className={`w-full text-left ${canEdit ? 'cursor-pointer' : ''}`}>
                   <h4 className="mb-1 text-sm font-medium">{r.restaurant_name}</h4>
-                  <p className="text-xs text-sand-600">{formatTime(r.reservation_time)}</p>
+                  <p className="text-xs text-sand-600">{r.reservation_time && r.end_time ? `${formatTime(r.reservation_time)} – ${formatTime(r.end_time)}` : formatTime(r.reservation_time || r.end_time)}</p>
                   {r.number_of_people && (
                     <p className="text-xs text-sand-600">{r.number_of_people} people</p>
                   )}

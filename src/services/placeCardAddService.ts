@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { generateDateArray } from '@/utils/dateUtils';
 import type { PlaceCard } from '@/types/ai-assistant';
+import { defaultReservationEnd } from '@/utils/timeUtils';
 
 const toDbTime = (t: unknown): string | null =>
   typeof t === 'string' && /^\d{2}:\d{2}$/.test(t) ? t : null;
@@ -77,6 +78,7 @@ export async function addPlaceCardItem(
         day_id: dayId,
         restaurant_name: strOrNull(suggestion.fields.restaurant_name) || card.name,
         reservation_time: time,
+        end_time: toDbTime(suggestion.fields.end_time) ?? defaultReservationEnd(time),
         number_of_people: numOrNull(suggestion.fields.party_size),
         address: strOrNull(suggestion.fields.address) || card.address || null,
         phone_number: strOrNull(suggestion.fields.phone) || card.phone || null,

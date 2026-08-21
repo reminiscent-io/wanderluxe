@@ -27,7 +27,7 @@ interface ItemStepperDialogProps {
 }
 
 // Helper functions to map extracted fields to dialog initial data
-const toDbTime = (t?: string | null) => (t && /^\d{2}:\d{2}$/.test(t) ? t : null);
+const toDbTime = (t?: unknown) => (typeof t === 'string' && /^\d{2}:\d{2}$/.test(t) ? t : null);
 
 const mapToTransportation = (f: Record<string, unknown>): Partial<Tables<'transportation'>> => {
   const toType = (raw?: string | null): Tables<'transportation'>['type'] | undefined => {
@@ -102,6 +102,10 @@ const mapToReservation = (f: Record<string, unknown>, tripId: string) => ({
   restaurant_name: f.restaurant_name ?? '',
   reservation_date: f.date ?? '',
   reservation_time: toDbTime(f.time) ?? '',
+  // Deliberately NOT defaulted here: the form seeds start+90 itself, and a
+  // value arriving via defaultValues reads as a deliberate choice, freezing the
+  // end so it no longer follows a corrected start time.
+  end_time: toDbTime(f.end_time) ?? '',
   number_of_people: typeof f.party_size === 'number' ? f.party_size : undefined,
   address: f.address ?? '',
   phone_number: f.phone ?? undefined,

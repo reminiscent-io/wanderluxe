@@ -135,6 +135,7 @@ export interface RestaurantReservation {
   trip_id: string; // Add trip_id field for proper RLS policy evaluation in shared trips
   restaurant_name: string;
   reservation_time: string | null;
+  end_time: string | null;
   number_of_people: number | null;
   notes: string | null;
   confirmation_number: string | null;

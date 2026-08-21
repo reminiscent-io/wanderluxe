@@ -148,6 +148,81 @@ describe('timezone flows through write payloads and return selects', () => {
     expect(lastCall(calls, 'reservations', 'select')?.columns?.split(',')).toContain('timezone');
   });
 
+  it('addDining defaults the end time to 90 minutes after the start', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      trip_days: [{ data: { day_id: 'day-1' } }],
+      reservations: [{ data: [] }, { data: { id: 'r1' } }],
+    });
+    await addDining(supabase, {
+      trip_id: 'trip-1',
+      date: '2026-09-14',
+      restaurant_name: 'Le Cinq',
+      reservation_time: '19:30',
+    });
+    expect(lastCall(calls, 'reservations', 'insert')?.payload).toMatchObject({ end_time: '21:00' });
+    expect(lastCall(calls, 'reservations', 'select')?.columns?.split(',')).toContain('end_time');
+  });
+
+  it('addDining keeps an explicit end time over the default', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      trip_days: [{ data: { day_id: 'day-1' } }],
+      reservations: [{ data: [] }, { data: { id: 'r1' } }],
+    });
+    await addDining(supabase, {
+      trip_id: 'trip-1',
+      date: '2026-09-14',
+      restaurant_name: 'Le Cinq',
+      reservation_time: '19:30',
+      end_time: '22:45',
+    });
+    expect(lastCall(calls, 'reservations', 'insert')?.payload).toMatchObject({ end_time: '22:45' });
+  });
+
+  it('updateDining passes the end time through', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      reservations: [{ data: { trip_id: 't1', reservation_time: '19:00:00', end_time: '20:30:00' } }, { data: { id: 'r1' } }],
+    });
+    await updateDining(supabase, { reservation_id: 'r1', end_time: '22:00' });
+    expect(lastCall(calls, 'reservations', 'update')?.payload).toMatchObject({ end_time: '22:00' });
+  });
+
+  it('updateDining shifts the end with the start so the booking keeps its length', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      reservations: [{ data: { trip_id: 't1', reservation_time: '19:00:00', end_time: '22:00:00' } }, { data: { id: 'r1' } }],
+    });
+    // A 3-hour dinner pushed two hours later is still a 3-hour dinner.
+    await updateDining(supabase, { reservation_id: 'r1', reservation_time: '21:00' });
+    expect(lastCall(calls, 'reservations', 'update')?.payload).toMatchObject({
+      reservation_time: '21:00',
+      end_time: '23:59',
+    });
+  });
+
+  it('updateDining leaves a NULL end alone when only the start moves', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      reservations: [{ data: { trip_id: 't1', reservation_time: '19:00:00', end_time: null } }, { data: { id: 'r1' } }],
+    });
+    await updateDining(supabase, { reservation_id: 'r1', reservation_time: '21:00' });
+    expect(lastCall(calls, 'reservations', 'update')?.payload).not.toHaveProperty('end_time');
+  });
+
+  it('rejects a dining end time that is not after the start', async () => {
+    const { supabase } = createFakeSupabase({
+      trip_days: [{ data: { day_id: 'day-1' } }],
+      reservations: [{ data: [] }, { data: { id: 'r1' } }],
+    });
+    await expect(
+      addDining(supabase, { trip_id: 'trip-1', date: '2026-09-14', restaurant_name: 'Le Cinq', reservation_time: '19:30', end_time: '00:30' }),
+    ).rejects.toThrow(/must be later than/);
+
+    const upd = createFakeSupabase({
+      reservations: [{ data: { trip_id: 't1', reservation_time: '19:00:00', end_time: '20:30:00' } }, { data: { id: 'r1' } }],
+    });
+    await expect(
+      updateDining(upd.supabase, { reservation_id: 'r1', end_time: '18:00' }),
+    ).rejects.toThrow(/must be later than/);
+  });
+
   it('updateDining passes timezone through', async () => {
     const { supabase, calls } = createFakeSupabase({
       reservations: [{ data: { id: 'r1' } }],

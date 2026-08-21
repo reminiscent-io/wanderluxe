@@ -11,6 +11,7 @@ type ReservationLike = {
   website?: string;
   rating?: number;
   reservation_time?: string;
+  end_time?: string;
   number_of_people?: number;
   cost?: number;
   currency?: string;
@@ -119,7 +120,11 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
         {reservation.reservation_time && (
           <InfoItem
             icon={<Clock className="h-4 w-4 text-earth-400" />}
-            text={formatTime(reservation.reservation_time)}
+            text={
+              reservation.reservation_time && reservation.end_time
+                ? `${formatTime(reservation.reservation_time)} – ${formatTime(reservation.end_time)}`
+                : formatTime(reservation.reservation_time || reservation.end_time)
+            }
           />
         )}
         

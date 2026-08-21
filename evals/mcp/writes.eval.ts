@@ -57,10 +57,11 @@ describe.skipIf(missing.length > 0)('mcp writes (lifecycle)', () => {
       const dining = toolJson(
         await client.callTool({
           name: 'add_dining',
-          arguments: { trip_id: tripId, date: '2030-01-10', restaurant_name: 'Eval Bistro', reservation_time: '19:30' },
+          arguments: { trip_id: tripId, date: '2030-01-10', restaurant_name: 'Eval Bistro', reservation_time: '19:30', end_time: '21:15' },
         }),
       );
       expect(dining.restaurant_name).toBe('Eval Bistro');
+      expect(String(dining.end_time)).toContain('21:15');
     }));
 
   it('add_activity on an out-of-range date returns a clear error', () =>

@@ -75,6 +75,7 @@ function buildFixture() {
         day_id: 'd1',
         restaurant_name: 'Le Comptoir',
         reservation_time: '12:00',
+        end_time: null,
         place_id: 'comptoir',
         order_index: 0,
       },

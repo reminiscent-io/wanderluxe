@@ -132,7 +132,10 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             {finalInitialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none">
+        {/* overflow-x-hidden is load-bearing: `overflow-y: auto` alone makes
+            the other axis `auto` too, so any over-wide descendant turns this
+            into a horizontal scroller with no scrollbar to reveal it. */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={legacyIsSubmitting ?? isSubmitting}

@@ -33,6 +33,13 @@ describe('buildPeekFacts', () => {
     expect(facts.map((f) => f.text)).toEqual(['9:00 PM', 'Party of 6', '4.5']);
   });
 
+  it('shows a range for dining only when an end time was actually entered', () => {
+    const facts = buildPeekFacts('dining', {
+      reservation_time: '21:00:00', end_time: '22:30:00', number_of_people: 6,
+    });
+    expect(facts.map((f) => f.text)).toEqual(['9:00 PM – 10:30 PM', 'Party of 6']);
+  });
+
   it('builds date range and check-in/out times for a stay', () => {
     const facts = buildPeekFacts('accommodation', {
       hotel_checkin_date: '2026-08-06', hotel_checkout_date: '2026-08-11',

@@ -2,6 +2,7 @@ import type { EventInput } from '@fullcalendar/core';
 import { addDays, format, parse } from 'date-fns';
 import type { DayActivity, RestaurantReservation, HotelStay, Transportation } from '@/types/trip';
 import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
+import { explicitReservationEnd } from '@/utils/timeUtils';
 
 function entityTzBadge(entityTz: string | null | undefined, tripTz: string | null | undefined, onDate: string): string {
   return shouldShowBadge(entityTz, tripTz) ? tzAbbrev(effectiveTz(entityTz, tripTz)!, onDate) : '';
@@ -61,10 +62,16 @@ export function mapReservationToEvent(reservation: RestaurantReservation, dayDat
       extendedProps: { entityType: 'dining', record: reservation, tzBadge: '' },
     };
   }
+  // Only a real end goes on the event. FullCalendar derives both the chip's
+  // height AND its printed time range from `end`, and a drag hands whatever is
+  // there back to us to persist — so a fabricated 90-minute end would both
+  // claim a range the user never typed and write itself into the row.
+  const end = explicitReservationEnd(reservation.reservation_time, reservation.end_time);
   return {
     id: makeEventId('dining', reservation.id),
     title: reservation.restaurant_name,
     start: combineDateTime(dayDate, reservation.reservation_time),
+    end: end ? combineDateTime(dayDate, end) : undefined,
     allDay: false,
     extendedProps: { entityType: 'dining', record: reservation, tzBadge: entityTzBadge(reservation.timezone, tripTz ?? null, dayDate) },
   };
@@ -124,7 +131,7 @@ export function mapTransportationToEvent(t: Transportation, tripTz?: string | nu
 
 export type EntityDropPatch =
   | { entityType: 'activity'; recordId: string; date: string; startTime: string | null; endTime: string | null }
-  | { entityType: 'dining'; recordId: string; date: string; time: string | null }
+  | { entityType: 'dining'; recordId: string; date: string; time: string | null; endTime: string | null }
   | { entityType: 'accommodation'; recordId: string; checkinDate: string; checkoutDate: string }
   | { entityType: 'transportation'; recordId: string; startDate: string; startTime: string | null; endDate: string; endTime: string | null };
 
@@ -138,15 +145,29 @@ export interface DropInput {
 const fmtDate = (d: Date) => format(d, 'yyyy-MM-dd');
 const fmtTime = (d: Date) => format(d, 'HH:mm');
 
+/**
+ * An end time is only representable when it lands on the same day as the start:
+ * these rows carry a start date and two wall-clock times, with no end date. A
+ * drag that rolls the end past midnight would otherwise persist an end that
+ * sorts before its own start.
+ */
+function sameDayEndTime(start: Date, end: Date | null): string | null {
+  if (!end) return null;
+  if (fmtDate(end) !== fmtDate(start)) return null;
+  return end > start ? fmtTime(end) : null;
+}
+
 export function buildDropPatch(input: DropInput): EntityDropPatch {
   const { entityType, recordId } = parseEventId(input.eventId);
   switch (entityType) {
     case 'activity':
       return input.allDay
         ? { entityType, recordId, date: fmtDate(input.newStart), startTime: null, endTime: null }
-        : { entityType, recordId, date: fmtDate(input.newStart), startTime: fmtTime(input.newStart), endTime: input.newEnd ? fmtTime(input.newEnd) : null };
+        : { entityType, recordId, date: fmtDate(input.newStart), startTime: fmtTime(input.newStart), endTime: sameDayEndTime(input.newStart, input.newEnd) };
     case 'dining':
-      return { entityType, recordId, date: fmtDate(input.newStart), time: input.allDay ? null : fmtTime(input.newStart) };
+      return input.allDay
+        ? { entityType, recordId, date: fmtDate(input.newStart), time: null, endTime: null }
+        : { entityType, recordId, date: fmtDate(input.newStart), time: fmtTime(input.newStart), endTime: sameDayEndTime(input.newStart, input.newEnd) };
     case 'accommodation': {
       const checkoutExclusive = input.newEnd ?? addDays(input.newStart, 1);
       return { entityType, recordId, checkinDate: fmtDate(input.newStart), checkoutDate: fmtDate(addDays(checkoutExclusive, -1)) };

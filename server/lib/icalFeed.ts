@@ -1,9 +1,10 @@
 import ical from 'ical-generator';
+import { effectiveReservationEnd } from '../../src/utils/timeUtils';
 import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '../../src/utils/timezoneLabel';
 
 export interface FeedTrip { destination: string; timezone: string | null; }
 export interface FeedActivity { id: string; title: string; date: string; start_time: string | null; end_time: string | null; description: string | null; location_address: string | null; timezone: string | null; }
-export interface FeedReservation { id: string; restaurant_name: string; date: string; reservation_time: string | null; address: string | null; notes: string | null; timezone: string | null; }
+export interface FeedReservation { id: string; restaurant_name: string; date: string; reservation_time: string | null; end_time: string | null; address: string | null; notes: string | null; timezone: string | null; }
 export interface FeedAccommodation { stay_id: string; hotel: string; hotel_checkin_date: string; hotel_checkout_date: string; hotel_address: string | null; hotel_details: string | null; }
 export interface FeedTransportation { id: string; type: string; start_date: string; start_time: string | null; end_date: string | null; end_time: string | null; departure_location: string | null; arrival_location: string | null; provider: string | null; details: string | null; departure_timezone: string | null; arrival_timezone: string | null; }
 export interface FeedInput {
@@ -82,7 +83,11 @@ export function buildTripCalendarICS(input: FeedInput): string {
   for (const r of input.reservations) {
     if (!r.date) continue;
     if (r.reservation_time) {
-      cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: floatingDate(r.date, r.reservation_time), floating: true, summary: summaryWithTz(r.restaurant_name, r.timezone, tripTz, r.date), location: r.address ?? undefined, description: r.notes ?? undefined });
+      // Unlike an activity, a dinner always gets an end: a subscriber wants the
+      // hour blocked out, and a DTSTART with no DTEND is zero-duration per
+      // RFC 5545. An unset end_time falls back to the 90-minute default.
+      const end = effectiveReservationEnd(r.reservation_time, r.end_time);
+      cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: floatingDate(r.date, r.reservation_time), end: end ? floatingDate(r.date, end) : undefined, floating: true, summary: summaryWithTz(r.restaurant_name, r.timezone, tripTz, r.date), location: r.address ?? undefined, description: r.notes ?? undefined });
     } else {
       cal.createEvent({ id: `dining-${r.id}@wanderluxe.io`, start: dateOnly(r.date), end: plusOneDay(r.date), allDay: true, summary: r.restaurant_name, location: r.address ?? undefined, description: r.notes ?? undefined });
     }

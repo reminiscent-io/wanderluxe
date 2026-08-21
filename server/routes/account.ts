@@ -261,6 +261,7 @@ router.get('/api/account/export', async (req: Request, res: Response) => {
           phone: r.phone_number || null,
           website: r.website || null,
           reservation_time: r.reservation_time || null,
+          end_time: r.end_time || null,
           number_of_people: r.number_of_people ?? null,
           confirmation_number: r.confirmation_number || null,
           notes: r.notes || null,
