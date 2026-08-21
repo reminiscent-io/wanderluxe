@@ -31,7 +31,7 @@ export async function applyDropPatch(patch: EntityDropPatch, tripId: string, ori
       if (!dayId) throw new Error('No trip day exists for that date');
       const { error } = await supabase
         .from('reservations')
-        .update({ day_id: dayId, reservation_time: patch.time })
+        .update({ day_id: dayId, reservation_time: patch.time, end_time: patch.endTime })
         .eq('id', patch.recordId);
       if (error) throw error;
       return;

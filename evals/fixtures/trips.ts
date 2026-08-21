@@ -137,13 +137,13 @@ export const PARIS_ACTIVITIES = [
 export const PARIS_RESERVATIONS = [
   {
     id: PARIS_RESERVATION_IDS[0], trip_id: PARIS_TRIP_ID, day_id: PARIS_DAY_IDS[0],
-    restaurant_name: 'Le Cinq', reservation_time: '19:30:00', number_of_people: 2,
+    restaurant_name: 'Le Cinq', reservation_time: '19:30:00', end_time: '21:00:00', number_of_people: 2,
     address: '31 Avenue George V, 75008 Paris, France', confirmation_number: 'LC-88421',
     cost: 350, currency: 'EUR', amount_paid: 100, is_paid: false, order_index: 0,
   },
   {
     id: PARIS_RESERVATION_IDS[1], trip_id: PARIS_TRIP_ID, day_id: PARIS_DAY_IDS[1],
-    restaurant_name: 'Septime', reservation_time: '20:00:00', number_of_people: 2,
+    restaurant_name: 'Septime', reservation_time: '20:00:00', end_time: '22:00:00', number_of_people: 2,
     address: '80 Rue de Charonne, 75011 Paris, France', confirmation_number: 'SEP-2031',
     cost: 200, currency: 'EUR', amount_paid: 0, is_paid: false, order_index: 0,
   },

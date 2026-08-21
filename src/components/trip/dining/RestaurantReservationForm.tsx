@@ -26,6 +26,7 @@ import { Globe, ChevronDown } from 'lucide-react';
 import TimezoneSelect from '../_shared/TimezoneSelect';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
+import { defaultReservationEnd } from '@/utils/timeUtils';
 
 import {
   loadGoogleMapsAPI,
@@ -140,6 +141,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       // back controlled inputs, so normalize before react-hook-form sees them —
       // a null here fails validation and blocks Save with no visible reason.
       reservation_time: defaultValues?.reservation_time ?? '',
+      end_time: defaultValues?.end_time ?? '',
       notes: defaultValues?.notes ?? '',
       timezone: defaultValues?.timezone ?? null,
       reservation_date: getPreselectedDate(), // Smart date preselection
@@ -170,6 +172,31 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placeTz, tzTouched]);
+
+  /* ------------------------------ End-time default ------------------------------ */
+  // A dinner runs 90 minutes unless the user says otherwise. An end already on
+  // the record counts as a manual choice, exactly like the timezone above — so
+  // editing a reservation never silently rewrites an end the user picked.
+  const [endTouched, setEndTouched] = useState(() => !!defaultValues?.end_time);
+
+  const applyDefaultEnd = React.useCallback((startTime: string) => {
+    if (endTouched) {
+      // The end is the user's own; re-run the cross-field check so a stale
+      // "must be after the start" error clears once they fix it from this side.
+      if (form.getValues('end_time')) void form.trigger('end_time');
+      return;
+    }
+    form.setValue('end_time', defaultReservationEnd(startTime) ?? '');
+  }, [endTouched, form]);
+
+  // Seed the default on mount too, so a reservation created before this field
+  // existed — or one seeded with only a start from the calendar — picks it up.
+  useEffect(() => {
+    if (endTouched) return;
+    const start = form.getValues('reservation_time');
+    if (start && !form.getValues('end_time')) applyDefaultEnd(start);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ------------------- Track place_id changes ---------------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
@@ -263,6 +290,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
     const processedData: Record<string, unknown> = {
       ...dataWithout,
+      // An emptied <input type="time"> yields '', which Postgres rejects for a
+      // `time` column. NULL is the right shape for "no end stated".
+      end_time: dataWithout.end_time || null,
       trip_id: effectiveTripId,
       day_id: finalDayId,
       order_index: (defaultValues as { order_index?: number } | undefined)?.order_index ?? 0,
@@ -371,9 +401,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               type="button"
               className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Timezone{form.watch('timezone') ? `: ${form.watch('timezone')}` : ''}
+              <span className="flex min-w-0 items-center gap-2">
+                <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate">
+                  Timezone{form.watch('timezone') ? `: ${form.watch('timezone')}` : ''}
+                </span>
               </span>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${tzOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -391,7 +423,12 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         {restaurantPhotos.length > 0 && (
           <div className="mt-2 space-y-2">
             <div className="text-xs text-sand-600">Photos</div>
-            <div className="-mx-1 overflow-x-auto">
+            {/* No negative margin here: an auto-width block widened by -mx-1
+                sticks 4px past the dialog's scroll container, and because
+                `overflow-y: auto` forces the other axis to `auto` too, that
+                4px is exactly what makes the sheet pan sideways on touch. The
+                inner track's px-1 already supplies the gutter. */}
+            <div className="overflow-x-auto">
               <div className="flex gap-2 px-1 py-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {restaurantPhotos.slice(0, 12).map((p, i) => {
                   const url480  = resolvePhotoUrl(p, 480);
@@ -443,13 +480,15 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           </div>
         )}
 
-        {/* Reservation Date & Time */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Reservation Date & Time. Two tracks on mobile so the start/end pair
+            sits side by side under a full-width date; four on desktop so the
+            date keeps half the row. */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <FormField
             control={form.control}
             name="reservation_date"
             render={({ field }) => (
-              <FormItem className="relative z-50">
+              <FormItem className="relative z-50 col-span-2">
                 <FormLabel>
                   Reservation Date <span className="text-red-500">*</span>
                 </FormLabel>
@@ -480,17 +519,43 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="reservation_time"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="min-w-0">
                 <FormLabel className="text-sm font-medium text-sand-700">
-                  Reservation Time <span className="text-red-500">*</span>
+                  Start Time <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="time"
                     value={field.value || ''}
-                    onChange={field.onChange}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      applyDefaultEnd(e.target.value);
+                    }}
                     step="300"
-                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500 max-w-[150px] sm:max-w-full"
+                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="end_time"
+            render={({ field }) => (
+              <FormItem className="min-w-0">
+                <FormLabel className="text-sm font-medium text-sand-700">End Time</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      setEndTouched(true);
+                      field.onChange(e.target.value);
+                    }}
+                    step="300"
+                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
                 <FormMessage />
@@ -505,7 +570,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="number_of_people"
             render={({ field }) => (
-              <FormItem className="w-20">
+              <FormItem className="w-20 min-w-0">
                 <FormLabel>Party Size</FormLabel>
                 <FormControl>
                   <Input
@@ -533,7 +598,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="cost"
             render={({ field }) => (
-              <FormItem className="flex-1">
+              <FormItem className="min-w-0 flex-1">
                 <FormLabel>Cost</FormLabel>
                 <FormControl>
                   <Input
@@ -559,7 +624,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="currency"
             render={({ field }) => (
-              <FormItem className="shrink-0">
+              <FormItem className="min-w-0 shrink-0">
                 <FormControl>
                   <CurrencySelector
                     value={field.value || 'USD'}

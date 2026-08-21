@@ -6,6 +6,7 @@
 // because they use the browser Supabase singleton.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { addMinutesToTime, defaultReservationEnd, explicitReservationEnd, toMinutesOfDay } from '../../src/utils/timeUtils';
 import { dateRange, planDateChange } from './tripDates';
 
 /** A user-facing error whose message is safe to return verbatim via toolError. */
@@ -466,6 +467,7 @@ export interface AddDiningInput {
   date: string;
   restaurant_name: string;
   reservation_time?: string;
+  end_time?: string;
   number_of_people?: number;
   address?: string;
   confirmation_number?: string;
@@ -477,7 +479,23 @@ export interface AddDiningInput {
   timezone?: string | null;
 }
 
+/**
+ * A reservation has a start date and two wall-clock times but no end date, so an
+ * end at or before its start has nowhere to live — it renders backwards on the
+ * timeline and emits DTEND < DTSTART in the feed. The form's zod schema rejects
+ * it; the MCP tools need the same guard, since their per-field regex cannot see
+ * across two fields.
+ */
+function assertDiningTimesOrdered(reservationTime?: string | null, endTime?: string | null) {
+  if (!reservationTime || !endTime) return;
+  if (explicitReservationEnd(reservationTime, endTime)) return;
+  throw new WriteError(
+    `end_time (${endTime}) must be later than reservation_time (${reservationTime}); a reservation cannot run past midnight.`,
+  );
+}
+
 export async function addDining(supabase: SupabaseClient, input: AddDiningInput) {
+  assertDiningTimesOrdered(input.reservation_time, input.end_time);
   const dayId = await resolveDayId(supabase, input.trip_id, input.date);
   const orderIndex = await nextOrderIndex(supabase, 'reservations', 'day_id', dayId);
   const { data, error } = await supabase
@@ -488,6 +506,10 @@ export async function addDining(supabase: SupabaseClient, input: AddDiningInput)
       order_index: orderIndex,
       restaurant_name: input.restaurant_name,
       reservation_time: input.reservation_time ?? null,
+      // Same 90-minute default the reservation form applies, so an
+      // agent-created dinner and a hand-created one are indistinguishable.
+      end_time: input.end_time ?? defaultReservationEnd(input.reservation_time),
+
       number_of_people: input.number_of_people ?? null,
       address: input.address ?? null,
       confirmation_number: input.confirmation_number ?? null,
@@ -499,7 +521,7 @@ export async function addDining(supabase: SupabaseClient, input: AddDiningInput)
       timezone: input.timezone ?? null,
     })
     .select(
-      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
+      'id,day_id,restaurant_name,reservation_time,end_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
     )
     .single();
   if (error || !data) throw new WriteError(`Failed to add dining reservation: ${error?.message ?? 'no row returned'}`);
@@ -511,6 +533,7 @@ export interface UpdateDiningInput {
   date?: string;
   restaurant_name?: string;
   reservation_time?: string;
+  end_time?: string;
   number_of_people?: number;
   address?: string;
   confirmation_number?: string;
@@ -526,6 +549,7 @@ export async function updateDining(supabase: SupabaseClient, input: UpdateDining
   const updates: Record<string, unknown> = {};
   if (input.restaurant_name !== undefined) updates.restaurant_name = input.restaurant_name;
   if (input.reservation_time !== undefined) updates.reservation_time = input.reservation_time;
+  if (input.end_time !== undefined) updates.end_time = input.end_time;
   if (input.number_of_people !== undefined) updates.number_of_people = input.number_of_people;
   if (input.address !== undefined) updates.address = input.address;
   if (input.confirmation_number !== undefined) updates.confirmation_number = input.confirmation_number;
@@ -536,15 +560,41 @@ export async function updateDining(supabase: SupabaseClient, input: UpdateDining
   if (input.is_paid !== undefined) updates.is_paid = input.is_paid;
   if (input.timezone !== undefined) updates.timezone = input.timezone;
 
-  if (input.date !== undefined) {
+  // Anything that touches one half of the time pair has to see the other half:
+  // to shift the end with the start, and to range-check an end against a start
+  // the caller did not resend.
+  const movingStart = input.reservation_time !== undefined && input.end_time === undefined;
+  const needsExisting = input.date !== undefined || movingStart || input.end_time !== undefined;
+
+  if (needsExisting) {
     const { data: existing, error: exErr } = await supabase
       .from('reservations')
-      .select('trip_id')
+      .select('trip_id,reservation_time,end_time')
       .eq('id', input.reservation_id)
       .maybeSingle();
     if (exErr) throw new WriteError(`Failed to load reservation: ${exErr.message}`);
     if (!existing) throw new WriteError('Reservation not found, or you do not have access to it.');
-    updates.day_id = await resolveDayId(supabase, existing.trip_id, input.date);
+
+    if (input.date !== undefined) {
+      updates.day_id = await resolveDayId(supabase, existing.trip_id, input.date);
+    }
+
+    if (input.end_time !== undefined) {
+      assertDiningTimesOrdered(input.reservation_time ?? existing.reservation_time, input.end_time);
+    }
+
+    // "Push dinner to 9pm" on a 19:00-20:30 row must not store 21:00-20:30.
+    // Shift the end by the same delta so the booking keeps its length.
+    if (movingStart) {
+      const previousStart = toMinutesOfDay(existing.reservation_time);
+      const previousEnd = toMinutesOfDay(existing.end_time);
+      if (previousStart !== null && previousEnd !== null && previousEnd > previousStart) {
+        updates.end_time = addMinutesToTime(input.reservation_time, previousEnd - previousStart);
+      } else if (existing.end_time) {
+        // An end we cannot shift coherently is worse than none at all.
+        updates.end_time = defaultReservationEnd(input.reservation_time);
+      }
+    }
   }
 
   if (Object.keys(updates).length === 0) {
@@ -556,7 +606,7 @@ export async function updateDining(supabase: SupabaseClient, input: UpdateDining
     .update(updates)
     .eq('id', input.reservation_id)
     .select(
-      'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
+      'id,day_id,restaurant_name,reservation_time,end_time,number_of_people,address,confirmation_number,notes,cost,currency,amount_paid,is_paid,timezone',
     )
     .maybeSingle();
   if (error) throw new WriteError(`Failed to update reservation: ${error.message}`);

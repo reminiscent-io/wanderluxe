@@ -37,7 +37,7 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
       sb.from('day_activities').select('id, title, day_id, start_time, end_time, description, location_address, timezone').eq('trip_id', tripId),
       sb.from('accommodations').select('stay_id, hotel, hotel_checkin_date, hotel_checkout_date, hotel_address, hotel_details').eq('trip_id', tripId),
       sb.from('transportation').select('id, type, start_date, start_time, end_date, end_time, departure_location, arrival_location, provider, details, departure_timezone, arrival_timezone').eq('trip_id', tripId),
-      sb.from('reservations').select('id, restaurant_name, day_id, reservation_time, address, notes, timezone').eq('trip_id', tripId),
+      sb.from('reservations').select('id, restaurant_name, day_id, reservation_time, end_time, address, notes, timezone').eq('trip_id', tripId),
     ]);
 
     // A PostgREST/DB error resolves (it does not reject) as { data: null, error },
@@ -55,7 +55,7 @@ router.get('/api/trips/:tripId/calendar.ics', async (req: Request, res: Response
         .map((a: Tables<'day_activities'>) => ({ id: a.id, title: a.title, date: dayDate.get(a.day_id) ?? '', start_time: a.start_time, end_time: a.end_time, description: a.description, location_address: a.location_address, timezone: a.timezone }))
         .filter((a) => a.date),
       reservations: (resvRes.data ?? [])
-        .map((r: Tables<'reservations'>) => ({ id: r.id, restaurant_name: r.restaurant_name, date: dayDate.get(r.day_id) ?? '', reservation_time: r.reservation_time, address: r.address, notes: r.notes, timezone: r.timezone }))
+        .map((r: Tables<'reservations'>) => ({ id: r.id, restaurant_name: r.restaurant_name, date: dayDate.get(r.day_id) ?? '', reservation_time: r.reservation_time, end_time: r.end_time, address: r.address, notes: r.notes, timezone: r.timezone }))
         .filter((r) => r.date),
       accommodations: (accRes.data ?? [])
         .map((s: Tables<'accommodations'>) => ({ stay_id: s.stay_id, hotel: s.hotel ?? 'Accommodation', hotel_checkin_date: s.hotel_checkin_date ?? '', hotel_checkout_date: s.hotel_checkout_date ?? '', hotel_address: s.hotel_address, hotel_details: s.hotel_details }))

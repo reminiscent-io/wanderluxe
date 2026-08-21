@@ -209,7 +209,7 @@ Key tables:
 - `day_activities` / `day_activity_travelers` - Activities and assignments
 - `accommodations` / `accommodations_days` / `accommodation_travelers` - Hotel bookings
 - `transportation` / `transportation_travelers` - Flight/train/car bookings
-- `reservations` / `reservation_travelers` - Dining reservations
+- `reservations` / `reservation_travelers` - Dining reservations (`reservation_time` + optional `end_time`; a NULL end is read as 90 minutes by duration-shaped surfaces — see `src/utils/timeUtils.ts`)
 - `trip_shares` - Trip sharing & permissions
 - `trip_invite_links` - Link-based invites (permission + optional expiry)
 - `profiles` - User profiles (auto-created on signup; holds `subscription_tier` + AI limits)

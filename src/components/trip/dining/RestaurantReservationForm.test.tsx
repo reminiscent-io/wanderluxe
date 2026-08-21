@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RestaurantReservationForm from './RestaurantReservationForm';
 import { reservationFormSchema } from './reservationFormSchema';
@@ -57,11 +57,14 @@ const savedReservation = {
   timezone: null,
 };
 
-const renderForm = (onSubmit: ReturnType<typeof vi.fn>) =>
+const renderForm = (
+  onSubmit: ReturnType<typeof vi.fn>,
+  defaultValues: Record<string, unknown> = savedReservation,
+) =>
   render(
     <RestaurantReservationForm
       onSubmit={onSubmit}
-      defaultValues={savedReservation}
+      defaultValues={defaultValues}
       tripId="trip-1"
       tripArrivalDate="2026-07-01"
       tripDepartureDate="2026-07-05"
@@ -90,6 +93,69 @@ describe('RestaurantReservationForm', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ notes: 'Window table' });
+  });
+
+  it('defaults the end time to 90 minutes after the start', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderForm(onSubmit);
+
+    await waitFor(() => expect(screen.getByLabelText('End Time')).toHaveValue('21:00'));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ end_time: '21:00' });
+  });
+
+  it('never rewrites an end time already on the record', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderForm(onSubmit, { ...savedReservation, end_time: '23:00:00' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ end_time: '23:00:00' });
+  });
+
+  it('follows the start time until the user picks an end of their own', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderForm(onSubmit);
+
+    // The required marker is part of the accessible name.
+    const start = screen.getByLabelText(/Start Time/);
+    const end = screen.getByLabelText('End Time');
+    await waitFor(() => expect(end).toHaveValue('21:00'));
+
+    // Moving the start drags the untouched default along...
+    fireEvent.change(start, { target: { value: '12:00' } });
+    await waitFor(() => expect(end).toHaveValue('13:30'));
+
+    // ...but once the user sets an end themselves it stops following.
+    fireEvent.change(end, { target: { value: '15:45' } });
+    fireEvent.change(start, { target: { value: '18:00' } });
+    await waitFor(() => expect(start).toHaveValue('18:00'));
+    expect(end).toHaveValue('15:45');
+  });
+
+  it('writes NULL rather than an empty string when the end is cleared', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderForm(onSubmit, { ...savedReservation, end_time: '23:00:00' });
+
+    await userEvent.clear(screen.getByLabelText('End Time'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ end_time: null });
+  });
+
+  it('rejects an end time at or before the start', () => {
+    const base = {
+      restaurant_name: 'Septime',
+      reservation_date: '2026-07-01',
+      reservation_time: '19:30:00',
+    };
+    expect(reservationFormSchema.safeParse({ ...base, end_time: '19:30' }).success).toBe(false);
+    expect(reservationFormSchema.safeParse({ ...base, end_time: '00:30' }).success).toBe(false);
+    expect(reservationFormSchema.safeParse({ ...base, end_time: '21:00' }).success).toBe(true);
+    expect(reservationFormSchema.safeParse({ ...base, end_time: null }).success).toBe(true);
   });
 
   it('accepts a null notes value from the database', () => {

@@ -37,7 +37,7 @@ function activityFacts(r: DayActivity, tzBadge?: string): (PeekFact | null)[] {
 
 function diningFacts(r: RestaurantReservation, tzBadge?: string): (PeekFact | null)[] {
   return [
-    r.reservation_time ? { icon: 'clock', text: timeRange(r.reservation_time, null, tzBadge) } : null,
+    r.reservation_time ? { icon: 'clock', text: timeRange(r.reservation_time, r.end_time, tzBadge) } : null,
     r.number_of_people ? { icon: 'users', text: `Party of ${r.number_of_people}` } : null,
     r.address ? { icon: 'pin', text: r.address } : null,
     r.rating != null ? { icon: 'star', text: r.rating.toFixed(1) } : null,

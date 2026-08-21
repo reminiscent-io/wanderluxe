@@ -4,7 +4,7 @@ import { buildTripCalendarICS, isFeedAuthorized, type FeedInput } from './icalFe
 const input: FeedInput = {
   trip: { destination: 'Paris', timezone: 'America/New_York' },
   activities: [{ id: 'a1', title: 'Louvre', date: '2026-06-30', start_time: '14:30:00', end_time: '16:00:00', description: 'Tickets booked', location_address: 'Rue de Rivoli', timezone: null }],
-  reservations: [{ id: 'r1', restaurant_name: 'Septime', date: '2026-07-01', reservation_time: '20:00:00', address: '80 Rue de Charonne', notes: null, timezone: null }],
+  reservations: [{ id: 'r1', restaurant_name: 'Septime', date: '2026-07-01', reservation_time: '20:00:00', end_time: '22:15:00', address: '80 Rue de Charonne', notes: null, timezone: null }],
   accommodations: [{ stay_id: 's1', hotel: 'Hotel Lutetia', hotel_checkin_date: '2026-06-30', hotel_checkout_date: '2026-07-03', hotel_address: '45 Bd Raspail', hotel_details: 'Deluxe room, breakfast included' }],
   transportation: [{ id: 't1', type: 'flight', start_date: '2026-06-30', start_time: '09:00:00', end_date: '2026-06-30', end_time: '11:30:00', departure_location: 'JFK', arrival_location: 'CDG', provider: 'Air France', details: 'AF17, seat 12A', departure_timezone: null, arrival_timezone: null }],
 };
@@ -53,12 +53,30 @@ describe('buildTripCalendarICS edge cases', () => {
     expect(ics).not.toContain('VALUE=DATE:20260701');
   });
 
-  it('omits DTEND for a timed event with no end time', () => {
+  it('emits the explicit DTEND for a timed reservation', () => {
+    const ics = buildTripCalendarICS(input);
+    expect(ics).toContain('DTSTART:20260701T200000');
+    expect(ics).toContain('DTEND:20260701T221500');
+  });
+
+  it('blocks out 90 minutes for a reservation with no stated end', () => {
+    // A subscriber wants the dinner hour held; a DTSTART with no DTEND is
+    // zero-duration per RFC 5545 and shows as an instant.
     const ics = buildTripCalendarICS({
       trip: { destination: 'Test' },
       activities: [],
-      reservations: [{ id: 'ro', restaurant_name: 'Dinner', date: '2026-07-01', reservation_time: '20:00:00', address: null, notes: null }],
+      reservations: [{ id: 'ro', restaurant_name: 'Dinner', date: '2026-07-01', reservation_time: '20:00:00', end_time: null, address: null, notes: null }],
       accommodations: [], transportation: [],
+    });
+    expect(ics).toContain('DTSTART:20260701T200000');
+    expect(ics).toContain('DTEND:20260701T213000');
+  });
+
+  it('omits DTEND for a timed activity with no end time', () => {
+    const ics = buildTripCalendarICS({
+      trip: { destination: 'Test' },
+      activities: [{ id: 'ao', title: 'Wander', date: '2026-07-01', start_time: '20:00:00', end_time: null, description: null, location_address: null, timezone: null }],
+      reservations: [], accommodations: [], transportation: [],
     });
     expect(ics).toContain('DTSTART:20260701T200000');
     expect(ics).not.toContain('DTEND');

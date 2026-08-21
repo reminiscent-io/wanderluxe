@@ -208,15 +208,21 @@ function buildDiningItems(reservations: RestaurantReservation[] | undefined | nu
   const items: TimelineItem[] = [];
   for (const r of reservations || []) {
     if (!r.reservation_time) continue;
+    const suffix = entityTzSuffix(r.timezone, tripTz, normalizedDay);
     items.push({
       type: 'dining',
       time: r.reservation_time,
+      endTime: r.end_time || undefined,
       title: r.restaurant_name,
       description: r.notes || undefined,
       icon: null,
       id: r.id,
       data: r,
-      tzSuffix: entityTzSuffix(r.timezone, tripTz, normalizedDay),
+      // With a range, the zone badge belongs on the end so the row reads
+      // "7:00p / 8:30p BST" rather than badging both halves — same split the
+      // activity builder uses.
+      tzSuffix: r.end_time ? '' : suffix,
+      endTzSuffix: r.end_time ? suffix : undefined,
     });
   }
   return items;

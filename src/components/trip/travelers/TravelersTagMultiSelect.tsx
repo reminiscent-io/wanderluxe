@@ -94,7 +94,7 @@ export default function TravelersTagMultiSelect({
             className="w-full justify-between h-auto min-h-[2.5rem] p-2"
             disabled={disabled}
           >
-            <div className="flex flex-wrap gap-1 flex-1 text-left">
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1 text-left">
               {selectedTravelers.length === 0 ? (
                 <span className="text-muted-foreground">Select travelers...</span>
               ) : (
@@ -102,7 +102,7 @@ export default function TravelersTagMultiSelect({
                   <Badge
                     key={t.id}
                     variant="secondary"
-                    className="gap-1 pr-1 text-xs"
+                    className="max-w-full gap-1 whitespace-normal break-words pr-1 text-xs"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRemove(t.id);
@@ -119,7 +119,7 @@ export default function TravelersTagMultiSelect({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-full p-0 z-[99999] bg-white border shadow-md pointer-events-auto"
+          className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-0 z-[99999] bg-white border shadow-md pointer-events-auto"
           align="start"
           side="bottom"
           sideOffset={4}

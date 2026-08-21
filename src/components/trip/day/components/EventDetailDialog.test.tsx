@@ -148,6 +148,7 @@ describe('EventDetailDialog', () => {
       trip_id: 'trip-1',
       restaurant_name: 'Bonito',
       reservation_time: '19:30',
+      end_time: null,
       number_of_people: 1,
       notes: null,
       confirmation_number: null,

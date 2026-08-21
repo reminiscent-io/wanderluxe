@@ -81,7 +81,7 @@ export const GET_TRIP_SELECT = {
   activities:
     'id,day_id,title,description,start_time,end_time,location_address,location_phone,location_website,cost,currency,amount_paid,is_paid,timezone',
   dining:
-    'id,day_id,restaurant_name,reservation_time,number_of_people,address,confirmation_number,notes,phone_number,website,cost,currency,amount_paid,is_paid,timezone',
+    'id,day_id,restaurant_name,reservation_time,end_time,number_of_people,address,confirmation_number,notes,phone_number,website,cost,currency,amount_paid,is_paid,timezone',
 } as const;
 
 /**
@@ -398,6 +398,9 @@ function registerWriteTools(
         date: dateField.describe('Date within the trip range (YYYY-MM-DD)'),
         restaurant_name: z.string().min(1),
         reservation_time: timeField.optional(),
+        end_time: timeField
+          .optional()
+          .describe('When the meal ends, floating wall-clock HH:MM. Omit to let it default to 90 minutes after the start.'),
         number_of_people: z.number().int().positive().optional(),
         address: z.string().optional(),
         confirmation_number: z.string().optional(),
@@ -429,6 +432,9 @@ function registerWriteTools(
         date: dateField.optional(),
         restaurant_name: z.string().min(1).optional(),
         reservation_time: timeField.optional(),
+        end_time: timeField
+          .optional()
+          .describe('When the meal ends, floating wall-clock HH:MM. Omit to keep the reservation its current length: changing reservation_time alone shifts the end with it.'),
         number_of_people: z.number().int().positive().optional(),
         address: z.string().optional(),
         confirmation_number: z.string().optional(),

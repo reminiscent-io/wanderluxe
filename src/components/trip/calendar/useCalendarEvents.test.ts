@@ -12,7 +12,7 @@ vi.mock('@/hooks/use-transportation-events', () => ({
   useTransportationEvents: () => ({ transportationData: [{ id: 'tr1', trip_id: 't1', type: 'flight', provider: null, details: null, confirmation_number: null, start_date: '2026-06-30', start_time: '09:00:00', end_date: '2026-06-30', end_time: '11:00:00', departure_location: 'JFK', arrival_location: 'CDG', cost: null, currency: null, is_paid: false, created_at: '' }] }),
 }));
 vi.mock('./useTripReservations', () => ({
-  useTripReservations: () => ({ data: [{ id: 'r1', day_id: 'd1', trip_id: 't1', restaurant_name: 'Septime', reservation_time: '20:00:00', number_of_people: 2, notes: null, confirmation_number: null, cost: null, currency: null, is_paid: false, address: null, phone_number: null, place_id: null, rating: null, created_at: '', order_index: 0 }], isLoading: false }),
+  useTripReservations: () => ({ data: [{ id: 'r1', day_id: 'd1', trip_id: 't1', restaurant_name: 'Septime', reservation_time: '20:00:00', end_time: null, number_of_people: 2, notes: null, confirmation_number: null, cost: null, currency: null, is_paid: false, address: null, phone_number: null, place_id: null, rating: null, created_at: '', order_index: 0 }], isLoading: false }),
 }));
 // useCalendarEvents calls useTripTimezone internally (Task 12). It's backed by
 // useQuery/useTripPermissions which need a QueryClientProvider this test doesn't

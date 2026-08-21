@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
 import type { Database } from '@/integrations/supabase/types/database';
+import { defaultReservationEnd } from '@/utils/timeUtils';
 
 // Helper to normalize time format
 const toDbTime = (t?: string | null): string | null =>
@@ -176,6 +177,7 @@ async function importReservation(
         day_id: dayId,
         restaurant_name: strField(fields, 'restaurant_name'),
         reservation_time: toDbTime(fields.time as string) || '',
+        end_time: toDbTime(fields.end_time as string) ?? defaultReservationEnd(fields.time as string),
         number_of_people: typeof fields.party_size === 'number' ? fields.party_size : null,
         address: strField(fields, 'address') || null,
         phone_number: strField(fields, 'phone') || null,

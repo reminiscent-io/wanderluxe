@@ -23,4 +23,10 @@ describe('GET_TRIP_SELECT', () => {
     expect(GET_TRIP_SELECT.transportation.split(',')).toContain('departure_timezone');
     expect(GET_TRIP_SELECT.transportation.split(',')).toContain('arrival_timezone');
   });
+
+  it('reads the reservation end time back on get_trip', () => {
+    // An explicit column list drops a new field silently — no type error, no
+    // runtime error, just missing data.
+    expect(GET_TRIP_SELECT.dining.split(',')).toContain('end_time');
+  });
 });

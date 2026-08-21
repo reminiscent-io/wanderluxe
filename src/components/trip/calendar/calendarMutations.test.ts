@@ -29,9 +29,16 @@ describe('applyDropPatch', () => {
     expect(updateEq).toHaveBeenCalledWith('id', 'a1');
   });
 
+  it('updates a reservation day_id + times after resolving the day', async () => {
+    selectMaybeSingle.mockResolvedValue({ data: { day_id: 'd2' }, error: null });
+    await applyDropPatch({ entityType: 'dining', recordId: 'r1', date: '2026-07-02', time: '19:30', endTime: '21:45' }, 't1', null);
+    expect(updateFn).toHaveBeenCalledWith({ day_id: 'd2', reservation_time: '19:30', end_time: '21:45' });
+    expect(updateEq).toHaveBeenCalledWith('id', 'r1');
+  });
+
   it('throws when the target date has no trip day', async () => {
     selectMaybeSingle.mockResolvedValue({ data: null, error: null });
-    await expect(applyDropPatch({ entityType: 'dining', recordId: 'r1', date: '2030-01-01', time: '20:00' }, 't1', null)).rejects.toThrow();
+    await expect(applyDropPatch({ entityType: 'dining', recordId: 'r1', date: '2030-01-01', time: '20:00', endTime: null }, 't1', null)).rejects.toThrow();
   });
 
   it('updates transportation dates/times directly', async () => {

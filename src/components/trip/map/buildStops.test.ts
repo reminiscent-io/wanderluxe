@@ -48,6 +48,7 @@ function dining(
     trip_id: 'trip-1',
     restaurant_name: 'Restaurant',
     reservation_time: null,
+  end_time: null,
     number_of_people: null,
     notes: null,
     confirmation_number: null,

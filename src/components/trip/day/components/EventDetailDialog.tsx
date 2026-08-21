@@ -163,7 +163,12 @@ const buildFacts = (event: EventDetail): { facts: Fact[]; notes?: string | null;
   const r = event.data;
   return {
     facts: [
-      { label: 'Time', value: formatTime12(r.reservation_time || undefined) },
+      {
+        label: 'Time',
+        value: r.reservation_time && r.end_time
+          ? `${formatTime12(r.reservation_time)} – ${formatTime12(r.end_time)}`
+          : formatTime12(r.reservation_time || r.end_time || undefined),
+      },
       {
         label: 'Party',
         value: r.number_of_people

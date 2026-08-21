@@ -110,6 +110,7 @@ describe.skipIf(missing.length > 0)('mcp tools', () => {
       expect(day1.dining).toHaveLength(1);
       expect(day1.dining[0].restaurant_name).toBe('Le Cinq');
       expect(String(day1.dining[0].reservation_time)).toContain('19:30');
+      expect(String(day1.dining[0].end_time)).toContain('21:00');
       expect(day1.dining[0].confirmation_number).toBe('LC-88421');
 
       const day2 = payload.days[1];
