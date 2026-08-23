@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { formatCurrencyWithSymbol } from '../utils/budgetCalculations';
 
 type ExpenseLike = {
-  amount: number;
+  // Already expressed in the selected display currency by the caller.
+  convertedCost: number;
   currency?: string | null;
   category?: string | null;
   description?: string | null;

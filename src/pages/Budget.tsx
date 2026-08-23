@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrencyWithSymbol } from '../components/trip/budget/utils/budgetCalculations';
 import CurrencySelector from '../components/trip/budget/CurrencySelector';
+import { getConversionRate, useCurrencyRates } from '../components/trip/budget/utils/currencyConverter';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -126,6 +127,7 @@ const CustomTooltip = ({ active, payload, selectedCurrency }: CustomTooltipProps
 const Budget = () => {
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const { user } = useAuth();
+  const { rates, isLoading: ratesLoading } = useCurrencyRates();
 
   // Fetch all user trips and their expenses across 5 batched queries
   // (instead of 5 queries per trip).
@@ -257,10 +259,37 @@ const Budget = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // --- Currency conversion ---
+
+  // Every amount is aggregated in the selected currency. Anything we can't
+  // reach a rate for is left out rather than added in as if it were already
+  // in that currency — a yen figure counted as dollars would silently blow
+  // the totals apart.
+  const { expensesInSelectedCurrency, unconvertedCurrencies } = useMemo(() => {
+    const source = result?.expenses ?? [];
+    const converted: CombinedExpense[] = [];
+    const missing = new Set<string>();
+
+    for (const expense of source) {
+      const from = (expense.currency || 'USD').toUpperCase();
+      const rate = getConversionRate(from, selectedCurrency, rates);
+      if (rate === null) {
+        if (expense.amount) missing.add(from);
+        continue;
+      }
+      converted.push({ ...expense, amount: expense.amount * rate, currency: selectedCurrency });
+    }
+
+    return {
+      expensesInSelectedCurrency: converted,
+      unconvertedCurrencies: [...missing].sort(),
+    };
+  }, [result?.expenses, selectedCurrency, rates]);
+
   // --- Derived data (single-pass aggregation) ---
 
   const aggregates = useMemo(() => {
-    const expenses = result?.expenses ?? [];
+    const expenses = expensesInSelectedCurrency;
     const tripMap = result?.tripMap ?? {};
 
     let totalSpent = 0;
@@ -337,9 +366,11 @@ const Budget = () => {
       tripBarData,
       monthlyData,
       topExpenses: top,
-      hasExpenses: expenses.length > 0,
+      // Based on what the user actually recorded, not on what converted, so a
+      // missing rate never masquerades as "no expenses yet".
+      hasExpenses: (result?.expenses?.length ?? 0) > 0,
     };
-  }, [result]);
+  }, [expensesInSelectedCurrency, result?.expenses, result?.tripMap]);
 
   const {
     totalSpent,
@@ -377,6 +408,14 @@ const Budget = () => {
             className="w-[100px]"
           />
         </motion.div>
+
+        {!isLoading && !ratesLoading && unconvertedCurrencies.length > 0 && (
+          <p className="text-xs text-sand-500">
+            No exchange rate available for {unconvertedCurrencies.join(', ')} — spending in
+            {unconvertedCurrencies.length > 1 ? ' those currencies is' : ' that currency is'} not
+            included below.
+          </p>
+        )}
 
         {/* Loading State */}
         {isLoading && (

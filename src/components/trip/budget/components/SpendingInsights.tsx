@@ -5,7 +5,8 @@ import { AlertTriangle, Zap, TrendingUp, Award } from 'lucide-react';
 import { formatCurrencyWithSymbol } from '../utils/budgetCalculations';
 
 type ExpenseLike = {
-  amount: number;
+  // Already expressed in the selected display currency by the caller.
+  convertedCost: number;
   currency?: string | null;
   category?: string | null;
   date?: string | null;

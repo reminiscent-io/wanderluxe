@@ -1,45 +1,27 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { CURRENCIES } from '@/utils/currencyConstants';
+import { PIVOT_CURRENCY, type RateTable } from './currencyMath';
+
+export { getConversionRate, convertCurrency, PIVOT_CURRENCY } from './currencyMath';
+export type { RateTable } from './currencyMath';
 
 // Type for exchange rate data from database
 type ExchangeRate = {
   currency_from: string;
   currency_to: string;
-  rate: number;
+  rate: number | string;
   last_updated: string;
 };
 
-export function convertCurrency(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: string,
-  rates: Record<string, Record<string, number>>
-): number {
-  // Force uppercase for consistency
-  const from = fromCurrency.toUpperCase();
-  const to = toCurrency.toUpperCase();
-
-  if (!amount || from === to) return amount;
-
-  // Direct conversion: if a rate from 'from' to 'to' exists, use it
-  if (rates[from]?.[to]) {
-    return amount * rates[from][to];
-  }
-
-  // Reverse conversion: if a rate from 'to' to 'from' exists, invert it
-  if (rates[to]?.[from]) {
-    return amount * (1 / rates[to][from]);
-  }
-
-  console.warn(`No conversion rate found for ${fromCurrency} to ${toCurrency}`);
-  return amount;
-}
+const isUsableRate = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
 
 export function useCurrencyRates() {
-  const [rates, setRates] = useState<Record<string, Record<string, number>>>({});
+  const [rates, setRates] = useState<RateTable>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts true: a fetch is kicked off on mount, and callers must not read an
+  // empty rate table as "no rate exists" before it settles.
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRates = async () => {
@@ -47,35 +29,43 @@ export function useCurrencyRates() {
     setError(null);
 
     try {
+      // Only USD-anchored rows. The table holds thousands of pairs and an
+      // unfiltered select silently truncates at PostgREST's row cap — which is
+      // how the USD/EUR/JPY rows went missing and conversion turned into a
+      // no-op. This slice is ~150 rows, refreshed daily, and covers every
+      // currency in the app (including ones outside the picker, e.g. MAD/ZAR).
       const { data, error: fetchError } = await supabase
         .from('exchange_rates')
-        .select('*')
-        .in('currency_from', CURRENCIES)
-        .in('currency_to', CURRENCIES);
+        .select('currency_from, currency_to, rate, last_updated')
+        .or(`currency_from.eq.${PIVOT_CURRENCY},currency_to.eq.${PIVOT_CURRENCY}`);
 
       if (fetchError) throw fetchError;
-
-
 
       if (!data || data.length === 0) {
         throw new Error('No exchange rates found in database');
       }
 
-      // Transform the flat array into nested object structure, enforcing uppercase keys
-      const ratesMap: Record<string, Record<string, number>> = {};
-      (data as ExchangeRate[]).forEach(rate => {
-        const from = rate.currency_from.toUpperCase();
-        const to = rate.currency_to.toUpperCase();
-        if (!ratesMap[from]) {
-          ratesMap[from] = {};
+      // Transform the flat array into nested object structure, enforcing
+      // uppercase keys and numeric rates (numeric columns can arrive as text).
+      const ratesMap: RateTable = {};
+      let newest: string | null = null;
+
+      (data as ExchangeRate[]).forEach(row => {
+        const rate = typeof row.rate === 'number' ? row.rate : Number(row.rate);
+        if (!isUsableRate(rate)) return;
+
+        const from = row.currency_from.toUpperCase();
+        const to = row.currency_to.toUpperCase();
+        if (!ratesMap[from]) ratesMap[from] = {};
+        ratesMap[from][to] = rate;
+
+        if (row.last_updated && (!newest || row.last_updated > newest)) {
+          newest = row.last_updated;
         }
-        ratesMap[from][to] = rate.rate;
       });
 
-
-
       setRates(ratesMap);
-      setLastUpdated(new Date().toISOString());
+      setLastUpdated(newest);
     } catch (err) {
       console.error('Error fetching currency rates:', err);
       setError('Failed to fetch currency rates');

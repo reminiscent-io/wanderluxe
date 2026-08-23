@@ -8,8 +8,7 @@ import { useBudgetMutations } from './budget/hooks/useBudgetMutations';
 import ExpenseActions from './budget/components/ExpenseActions';
 import CategoryBreakdownChart from './budget/components/CategoryBreakdownChart';
 import SpendingInsights from './budget/components/SpendingInsights';
-import { convertCurrency } from './budget/utils/currencyConverter';
-import { useBudgetEvents } from './budget/hooks/useBudgetEvents';
+import { getConversionRate } from './budget/utils/currencyConverter';
 import { useTripQuery } from '@/hooks/useTripQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from "@/components/ui/input";
@@ -60,14 +59,18 @@ const hueFor = (category: string): string =>
   CATEGORY_HUES[category.toLowerCase()] ?? CATEGORY_HUES.other;
 
 const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
-  const { selectedCurrency, handleCurrencyChange, lastUpdated: currencyLastUpdated } = useCurrencyState();
+  const {
+    selectedCurrency,
+    handleCurrencyChange,
+    rates,
+    lastUpdated: ratesLastUpdated,
+    isLoading: ratesLoading,
+  } = useCurrencyState();
   const { data: expenses } = useExpenses(tripId);
   const { addExpense } = useBudgetMutations(tripId);
   const { trip } = useTripQuery(tripId);
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Use the hook that provides expenses and exchange rates
-  const { exchangeRates, lastUpdated } = useBudgetEvents(tripId);
 
   // Additional state for the modern UI
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,36 +167,45 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     }
   };
 
-  // Transform the exchangeRates array into an object:
-  // { currency_from: { currency_to: rate, ... }, ... }
-  const ratesObject = useMemo(() => {
-    if (!exchangeRates || exchangeRates.length === 0) return {};
-    const obj: Record<string, Record<string, number>> = {};
-    exchangeRates.forEach((rate) => {
-      // Use the correct field names: currency_from and currency_to
-      const from = rate.currency_from;
-      const to = rate.currency_to;
-      if (!obj[from]) {
-        obj[from] = {};
-      }
-      obj[from][to] = rate.rate;
-    });
-    return obj;
-  }, [exchangeRates]);
-
-  // Convert expenses to selected currency using the rates from the hook
+  // Convert every expense into the selected display currency. A row whose
+  // currency can't be reached from the rate table keeps its own amount and
+  // currency rather than borrowing the selected symbol — showing 12,000 yen
+  // relabelled as $12,000 is worse than showing it as yen.
   const convertedExpenses = useMemo(() => {
-    if (!expenses?.items || !Object.keys(ratesObject).length) return [];
-    return expenses.items.map(expense => ({
-      ...expense,
-      convertedCost: convertCurrency(
-        expense.cost || 0,
-        expense.currency || 'USD',
-        selectedCurrency,
-        ratesObject
-      )
-    }));
-  }, [expenses?.items, selectedCurrency, ratesObject]);
+    return (expenses?.items ?? []).map((expense) => {
+      const sourceCurrency = (expense.currency || 'USD').toUpperCase();
+      const rate = getConversionRate(sourceCurrency, selectedCurrency, rates);
+      const cost = expense.cost || 0;
+      return {
+        ...expense,
+        sourceCurrency,
+        converted: rate !== null,
+        convertedCost: rate === null ? cost : cost * rate,
+        displayCurrency: rate === null ? sourceCurrency : selectedCurrency,
+      };
+    });
+  }, [expenses?.items, selectedCurrency, rates]);
+
+  // Charts and insights aggregate amounts, so they may only see rows that are
+  // actually expressed in the selected currency.
+  const convertibleExpenses = useMemo(
+    () => convertedExpenses.filter((e) => e.converted),
+    [convertedExpenses]
+  );
+
+  // Currencies we could not convert, so the headline total can say so instead
+  // of quietly under-reporting.
+  const unconvertedCurrencies = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          convertedExpenses
+            .filter((e) => !e.converted && (e.cost || 0) !== 0)
+            .map((e) => e.sourceCurrency)
+        )
+      ).sort(),
+    [convertedExpenses]
+  );
 
   // Defer search input so heavy table re-render doesn't block keystrokes.
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -210,6 +222,9 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
     };
 
     for (const e of convertedExpenses) {
+      // Unconvertible rows are listed in their own currency; folding them into
+      // a selected-currency total would mix units.
+      if (!e.converted) continue;
       const cost = e.convertedCost;
       total += cost;
       const c = e.category?.toLowerCase() || '';
@@ -365,7 +380,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
           <BudgetHeader
             selectedCurrency={selectedCurrency}
             onCurrencyChange={handleCurrencyChange}
-            lastUpdated={lastUpdated || currencyLastUpdated}
+            lastUpdated={ratesLastUpdated}
           />
         </motion.div>
 
@@ -475,6 +490,13 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               />
             </div>
           )}
+
+          {!ratesLoading && unconvertedCurrencies.length > 0 && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No exchange rate available for {unconvertedCurrencies.join(', ')} — those
+              expenses are listed in their own currency and left out of the total above.
+            </p>
+          )}
         </motion.section>
 
         {/* Tabs Navigation */}
@@ -520,7 +542,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                           </div>
                         </div>
                         <p className="font-semibold text-earth-600">
-                          {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
+                          {formatCurrencyWithSymbol(expense.convertedCost, expense.displayCurrency)}
                         </p>
                       </div>
                     ))
@@ -594,7 +616,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
                             </td>
                             <td className="px-4 py-3 text-sm text-muted-foreground">{expense.date}</td>
                             <td className="px-4 py-3 text-right text-sm font-semibold text-earth-600">
-                              {formatCurrencyWithSymbol(expense.convertedCost, selectedCurrency)}
+                              {formatCurrencyWithSymbol(expense.convertedCost, expense.displayCurrency)}
                             </td>
                           </tr>
                         ))}
@@ -746,7 +768,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
               <div>
                 <h3 className="font-display text-2xl text-earth-600 mb-4">Spending insights</h3>
                 <SpendingInsights
-                  expenses={convertedExpenses}
+                  expenses={convertibleExpenses}
                   totalBudget={totalBudget}
                   totalSpent={totalSpent}
                   selectedCurrency={selectedCurrency}
@@ -755,7 +777,7 @@ const BudgetView: React.FC<BudgetViewProps> = ({ tripId, canEdit = true }) => {
 
               {/* Charts Section */}
               <CategoryBreakdownChart
-                expenses={convertedExpenses}
+                expenses={convertibleExpenses}
                 selectedCurrency={selectedCurrency}
               />
             </TabsContent>
