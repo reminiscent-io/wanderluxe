@@ -105,16 +105,18 @@ const LLMTraining = () => {
       <section className="bg-background pb-16 md:pb-24 overflow-hidden">
         <div className="mx-auto max-w-4xl px-6">
           <motion.figure
-            className="rounded-card overflow-hidden shadow-warm-xl ring-1 ring-border"
+            className="mx-auto max-w-[300px] rounded-card overflow-hidden shadow-warm-xl ring-1 ring-border"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             viewport={{ once: true, margin: "-60px" }}
           >
             <img
-              src="/images/example trip.jpeg"
-              alt="A WanderLuxe trip overview: a Paris itinerary anchored by a hero photograph and a calm day-by-day timeline."
+              src="/images/app-timeline.jpg"
+              alt="A WanderLuxe trip: an arrival day in Tokyo laid out as a calm hour-by-hour timeline of the flight, hotel check-in, and afternoon plans."
               className="w-full h-auto block img-warm"
+              width={620}
+              height={1200}
               loading="lazy"
             />
           </motion.figure>

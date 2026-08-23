@@ -14,7 +14,7 @@ const FinalCTA = () => {
           transition={{ duration: 0.7 }}
           viewport={{ once: true, margin: "-80px" }}
         >
-          Your next adventure starts here
+          Start your next trip
         </motion.h2>
         <motion.p
           className="text-lg text-earth-100 mt-4 leading-relaxed"
@@ -23,8 +23,7 @@ const FinalCTA = () => {
           transition={{ duration: 0.6, delay: 0.15 }}
           viewport={{ once: true }}
         >
-          Join travelers like you who plan, share, and remember their journeys
-          with WanderLuxe.
+          Free to start, no credit card, no limit on how many trips you keep.
         </motion.p>
         <motion.div
           className="flex flex-col sm:flex-row gap-4 justify-center mt-8"

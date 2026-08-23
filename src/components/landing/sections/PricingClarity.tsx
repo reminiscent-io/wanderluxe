@@ -6,18 +6,18 @@ import { Link } from "react-router-dom";
 
 const freeFeatures = [
   "Unlimited trips",
-  "Share with anyone\u2014view or edit",
-  "Full itinerary builder",
-  "Collaborative planning",
-  "PDF export",
+  "Share with anyone, to view or edit",
+  "Timeline, calendar, and map views",
+  "PDF export and calendar sync",
+  "10 AI messages a day",
 ];
 
-const premiumFeatures = [
+const proFeatures = [
   "Everything in Free",
-  "Unlimited AI travel companion",
-  "Receipt uploads & OCR",
-  "Smart recommendations",
-  "Latest AI models",
+  "Unlimited AI messages",
+  "Unlimited document imports",
+  "Web search for dining and activities",
+  "Cancel anytime",
 ];
 
 const PricingClarity = () => {
@@ -33,11 +33,12 @@ const PricingClarity = () => {
           viewport={{ once: true, margin: "-80px" }}
         >
           <h2 className="font-display text-3xl md:text-4xl text-earth-600">
-            Generous by default
+            Free for the parts that should be free
           </h2>
           <p className="font-sans text-lg text-earth-400 mt-4 max-w-xl mx-auto leading-relaxed">
-            Most of what makes WanderLuxe great is completely free. We only
-            charge for the extras that cost us money to run.
+            Planning, sharing, and exporting cost nothing, on as many trips as
+            you like. The $3.99 covers the AI, which costs us money every time
+            you use it.
           </p>
         </motion.div>
 
@@ -76,7 +77,7 @@ const PricingClarity = () => {
             </Card>
           </motion.div>
 
-          {/* Premium card */}
+          {/* Pro card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -85,10 +86,10 @@ const PricingClarity = () => {
           >
             <Card className="p-8 h-full border-sunset-200 shadow-warm-lg relative">
               <div className="absolute -top-3 right-6 bg-sunset-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Popular
+                Unlimited AI
               </div>
               <p className="text-sm font-semibold uppercase tracking-wider text-sunset-600">
-                Premium
+                Pro
               </p>
               <div className="mt-2 flex items-baseline gap-1">
                 <span className="font-display text-4xl text-earth-600">
@@ -97,7 +98,7 @@ const PricingClarity = () => {
                 <span className="text-earth-400 text-sm">/month</span>
               </div>
               <ul className="mt-8 space-y-4 list-none ml-0">
-                {premiumFeatures.map((f) => (
+                {proFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-sunset-500 mt-0.5 shrink-0" />
                     <span className="text-earth-500 text-sm">{f}</span>
