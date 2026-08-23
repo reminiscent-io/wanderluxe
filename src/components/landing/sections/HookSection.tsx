@@ -21,9 +21,8 @@ const HookSection = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true, margin: "-100px" }}
         >
-          WanderLuxe is the place where your travel stories live on - every
-          flight, every meal, every sunset, every person you explored the world
-          with. Plan together, remember forever.
+          One itinerary holds the flights, the hotels, the dinner you booked
+          back in March. Everyone traveling with you can see it, and change it.
         </motion.p>
         <motion.div
           className="w-16 h-0.5 bg-sunset-300 mx-auto mt-10"

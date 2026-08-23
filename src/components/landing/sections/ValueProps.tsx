@@ -3,15 +3,15 @@ import { motion } from "framer-motion";
 const values = [
   {
     headline: "Plan together, in real time",
-    body: "Share your trip with friends and family. Everyone sees the same itinerary \u2014 hotels, restaurants, activities \u2014 always up to date.",
+    body: "Share a trip with anyone, to view or to edit. When someone books a hotel or pushes dinner back an hour, everyone else sees it happen.",
   },
   {
     headline: "Every trip you\u2019ve ever taken, in one place",
-    body: "Not just a planner. WanderLuxe keeps every booking, every favorite restaurant, every adventure \u2014 so you can look back anytime.",
+    body: "Trips don\u2019t disappear when you get home. Next year you can still pull up the confirmation number, the restaurant you loved, and what you did on day three.",
   },
   {
     headline: "AI that handles the busywork",
-    body: "Drop in a screenshot or PDF of your booking confirmation. Get restaurant picks for where you\u2019re going. Ask anything about your trip. You stay in control \u2014 AI does the legwork.",
+    body: "Drop in a screenshot or PDF of a confirmation email and it comes back as itinerary items you can add with one tap. Ask for a dinner spot near your hotel and get real places with working links.",
   },
 ];
 
