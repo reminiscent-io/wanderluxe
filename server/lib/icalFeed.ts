@@ -36,6 +36,27 @@ function plusOneDay(date: string): Date {
   const base = dateOnly(date);
   return new Date(base.getTime() + 24 * 60 * 60 * 1000);
 }
+/**
+ * A rental car is a resource you hold, not a leg you ride. The two moments a
+ * subscriber needs on their calendar are the counter visits at each end; the
+ * days in between are just days you happen to have keys. Emitting the booking
+ * as one pickup->return block leaves an event "in progress" for the whole
+ * rental, which a phone then reports as the current/next thing all week.
+ */
+const RENTAL_PICKUP_MINUTES = 60;
+const RENTAL_RETURN_MINUTES = 30;
+
+function plusMinutes(d: Date, minutes: number): Date {
+  return new Date(d.getTime() + minutes * 60 * 1000);
+}
+
+/** "Rental Car Pickup: Nice Airport" — wording mirrors the in-app timeline rows. */
+function rentalTitle(t: FeedTransportation, phase: 'pickup' | 'return'): string {
+  const label = phase === 'pickup' ? 'Rental Car Pickup' : 'Rental Car Return';
+  const detail = (phase === 'pickup' ? t.departure_location : t.arrival_location) || t.provider;
+  return detail ? `${label}: ${detail}` : label;
+}
+
 function transportTitle(t: FeedTransportation): string {
   const label = t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : 'Transport';
   if (t.departure_location && t.arrival_location) return `${label}: ${t.departure_location} to ${t.arrival_location}`;
@@ -54,6 +75,66 @@ function transportTzNote(t: FeedTransportation, tripTz: string | null): string {
   const labels = transportTzLabels(t.departure_timezone, t.arrival_timezone, tripTz, t.start_date);
   if (labels.dep && labels.arr && labels.dep !== labels.arr) return ` (${labels.dep} -> ${labels.arr})`;
   return labels.dep ? ` (${labels.dep})` : '';
+}
+
+/**
+ * Two short bookends instead of one multi-day block. Each end is timed when we
+ * know its wall-clock, and falls back to an all-day marker on its own date when
+ * we don't — never a span, which is the shape that caused the problem.
+ */
+function addRentalCarEvents(cal: ReturnType<typeof ical>, t: FeedTransportation, tripTz: string | null): void {
+  const returnDate = t.end_date ?? t.start_date;
+  const details = t.details ?? undefined;
+
+  if (t.start_time) {
+    const start = floatingDate(t.start_date, t.start_time);
+    cal.createEvent({
+      id: `transportation-${t.id}-pickup@wanderluxe.io`,
+      start,
+      end: plusMinutes(start, RENTAL_PICKUP_MINUTES),
+      floating: true,
+      summary: summaryWithTz(rentalTitle(t, 'pickup'), t.departure_timezone, tripTz, t.start_date),
+      location: t.departure_location ?? undefined,
+      description: details,
+    });
+  } else {
+    cal.createEvent({
+      id: `transportation-${t.id}-pickup@wanderluxe.io`,
+      start: dateOnly(t.start_date),
+      end: plusOneDay(t.start_date),
+      allDay: true,
+      summary: rentalTitle(t, 'pickup'),
+      location: t.departure_location ?? undefined,
+      description: details,
+    });
+  }
+
+  // Nothing is known about the return beyond the pickup day itself — a second
+  // event there would just duplicate the first.
+  if (returnDate === t.start_date && !t.end_time) return;
+
+  if (t.end_time) {
+    const start = floatingDate(returnDate, t.end_time);
+    cal.createEvent({
+      id: `transportation-${t.id}-return@wanderluxe.io`,
+      start,
+      end: plusMinutes(start, RENTAL_RETURN_MINUTES),
+      floating: true,
+      summary: summaryWithTz(rentalTitle(t, 'return'), t.arrival_timezone, tripTz, returnDate),
+      location: t.arrival_location ?? undefined,
+      description: details,
+    });
+  } else {
+    cal.createEvent({
+      id: `transportation-${t.id}-return@wanderluxe.io`,
+      start: dateOnly(returnDate),
+      end: plusOneDay(returnDate),
+      allDay: true,
+      summary: rentalTitle(t, 'return'),
+      location: t.arrival_location ?? undefined,
+      description: details,
+    });
+  }
 }
 
 export function buildTripCalendarICS(input: FeedInput): string {
@@ -100,6 +181,10 @@ export function buildTripCalendarICS(input: FeedInput): string {
 
   for (const t of input.transportation) {
     if (!t.start_date) continue;
+    if (t.type === 'rental_car') {
+      addRentalCarEvents(cal, t, tripTz);
+      continue;
+    }
     const sameDay = !t.end_date || t.end_date === t.start_date;
     // Emit a timed event whenever we have a start time AND a real end (an end
     // time, possibly on a later day) or the leg is same-day. This keeps the

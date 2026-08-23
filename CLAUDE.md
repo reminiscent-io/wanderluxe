@@ -308,6 +308,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - Defaults: 3-day view anchored at trip start (today if mid-trip); dense 7am–10pm slot window with a show-full-day toggle (`slotWindow.ts`)
 - `eventMapping.ts` maps trip entities → events; drag/resize applies minimal mutations (`calendarMutations.ts`); click-to-edit opens entity dialogs; `AddEntityPicker` for empty-slot adds
 - Warm-themed chips (`CalendarEventChip` + `calendarTheme.css`, with timezone badges), desktop hover peek (`CalendarEventPeek`/`peekFacts.ts`)
+- **Rental cars in the feed**: a `rental_car` leg is emitted as two short bookends (`-pickup` 60 min, `-return` 30 min UIDs) rather than one pickup→return block — a multi-day span would sit "in progress" all week and read as the current/next event on a phone. Other multi-day legs (red-eyes, overnight trains) stay a single timed event; you really are on them. Mirrors the timeline's rental split in `useDayTimeline.ts`
 - **iCal feed**: `server/routes/calendar.ts` serves `GET /api/trips/:tripId/calendar.ics?token=…` built by `server/lib/icalFeed.ts` (ical-generator; floating times, stable UIDs, zone text in summaries). Gated by `trips.calendar_feed_token`/`calendar_feed_enabled`; `CalendarSyncSheet` + `useCalendarFeed` handle subscribe URL (Google/Apple/Outlook), `.ics` download, token reset, and disable
 
 #### 17. **Timezone System**
