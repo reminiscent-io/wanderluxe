@@ -5,6 +5,8 @@ import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 import LandingNav from "./landing/LandingNav";
+import EnterHereRing from "./landing/EnterHereRing";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SLIDE_MS = 2500; // time each image is shown
 const FADE_MS = 2000;  // crossfade duration
@@ -30,6 +32,15 @@ const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
+  const { session } = useAuth();
+
+  // Send visitors where they can actually act: sign-in first, trips once
+  // they're authenticated (avoids bouncing through ProtectedRoute).
+  const isSignedIn = Boolean(session);
+  const enterDestination = isSignedIn ? "/my-trips" : "/auth";
+  const enterLabel = isSignedIn
+    ? "Enter — go to My Trips"
+    : "Enter — sign in to start planning";
 
   // Normalize to a consistent size/quality for smoother transitions
   const images = useMemo(
@@ -177,34 +188,21 @@ const Hero = () => {
               animate={{ scale: 1 }}
               transition={{ duration: 1.0, ease: "easeOut" }}
               whileHover={{ scale: 1.03, transition: { duration: 0.25 } }}
-              onClick={() => navigate("/my-trips")}
-              aria-label="Go to My Trips"
-              className="w-full cursor-pointer bg-transparent border-none p-0"
+              onClick={() => navigate(enterDestination)}
+              aria-label={enterLabel}
+              className="group relative w-[min(88vw,calc(var(--app-height,1vh)*72),600px)] cursor-pointer rounded-lg border-none bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
             >
+              {/* Spinning "ENTER HERE" ring — sized from this button's width
+                  (capped by viewport height above) so it always clears both
+                  the wordmark and the hero edges */}
+              <EnterHereRing />
               <LogoFromSupabase
                 logoName="White Full"
-                className="max-w-[600px] w-full h-auto mx-auto"
-                fallbackClassName="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
+                className="relative w-full h-auto mx-auto"
+                fallbackClassName="relative text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
                 fallbackText="WanderLuxe"
               />
             </motion.button>
-
-            {/* Subtle click hint */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0.7, 0.7, 0] }}
-              transition={{
-                duration: 4,
-                delay: 2,
-                times: [0, 0.1, 0.8, 1],
-                repeat: Infinity,
-                repeatDelay: 3
-              }}
-              className="mt-6 text-white/70 text-sm tracking-widest uppercase cursor-pointer"
-              onClick={() => navigate("/my-trips")}
-            >
-              Click to enter
-            </motion.p>
           </motion.div>
         </div>
       </motion.div>
