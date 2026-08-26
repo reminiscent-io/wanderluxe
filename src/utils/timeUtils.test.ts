@@ -6,6 +6,8 @@ import {
   addMinutesToTime,
   defaultReservationEnd,
   effectiveReservationEnd,
+  durationMinutes,
+  formatDurationShort,
   DEFAULT_RESERVATION_DURATION_MINUTES,
 } from './timeUtils';
 
@@ -106,5 +108,31 @@ describe('effectiveReservationEnd', () => {
 
   it('is null without a start, so callers emit no end at all', () => {
     expect(effectiveReservationEnd(null, '21:00')).toBeNull();
+  });
+});
+
+describe('durationMinutes', () => {
+  it('measures a wall-clock span, in either stored shape', () => {
+    expect(durationMinutes('19:30', '21:00')).toBe(90);
+    expect(durationMinutes('19:30:00', '21:00:00')).toBe(90);
+    expect(durationMinutes('12:00', '12:45')).toBe(45);
+  });
+
+  it('is null when the pair cannot describe a duration', () => {
+    expect(durationMinutes('19:30', '19:30')).toBeNull();
+    expect(durationMinutes('20:00', '00:30')).toBeNull();
+    expect(durationMinutes('19:30', null)).toBeNull();
+    expect(durationMinutes(null, '21:00')).toBeNull();
+    expect(durationMinutes('19:30', '')).toBeNull();
+  });
+});
+
+describe('formatDurationShort', () => {
+  it('drops the empty half of the label', () => {
+    expect(formatDurationShort(45)).toBe('45m');
+    expect(formatDurationShort(60)).toBe('1h');
+    expect(formatDurationShort(120)).toBe('2h');
+    expect(formatDurationShort(95)).toBe('1h 35m');
+    expect(formatDurationShort(DEFAULT_RESERVATION_DURATION_MINUTES)).toBe('1h 30m');
   });
 });

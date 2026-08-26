@@ -376,6 +376,34 @@
     @apply leading-7;
   }
 
+  /* Native date/time controls.
+
+     Mobile WebKit enforces its own minimum width on these, so a `w-full`
+     control in a narrow column renders wider than the column and overflows
+     instead of fitting — which is how the dining form's start/end pair ran off
+     the edge of the sheet and got clipped by the dialog's `overflow-x-hidden`.
+     Blink honours a declared width all the way down, so this never reproduces
+     on Android or desktop Chrome. `min-width: 0` drops the floor where the
+     engine takes the hint; where it doesn't, only the layout can help, so give
+     one of these a row of its own on phones rather than half of one.
+
+     WebKit also centres the value in the box while every other field in the
+     app aligns to the start. `inherit` follows the field's own alignment, so a
+     `text-center` utility on the input still wins where one is used. */
+  input[type="time"],
+  input[type="date"],
+  input[type="datetime-local"] {
+    min-width: 0;
+  }
+
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: inherit;
+    /* Horizontal only: the UA's vertical margins do the optical centring. */
+    margin-inline: 0;
+  }
+
   ul {
     @apply my-6 ml-6 list-disc [&>li]:mt-2;
   }
