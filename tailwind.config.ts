@@ -179,6 +179,7 @@ export default {
         "fade-down": "fadeDown 0.5s ease-out forwards",
         "slide-up": "slideUp 0.5s ease-out forwards",
         "slide-down": "slideDown 0.5s ease-out forwards",
+        "spin-slow": "spin 28s linear infinite",
       },
       keyframes: {
         fadeUp: {
