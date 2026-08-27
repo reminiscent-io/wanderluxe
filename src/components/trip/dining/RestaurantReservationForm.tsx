@@ -26,7 +26,7 @@ import { Globe, ChevronDown } from 'lucide-react';
 import TimezoneSelect from '../_shared/TimezoneSelect';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
-import { defaultReservationEnd } from '@/utils/timeUtils';
+import { defaultReservationEnd, durationMinutes, formatDurationShort } from '@/utils/timeUtils';
 
 import {
   loadGoogleMapsAPI,
@@ -197,6 +197,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
     if (start && !form.getValues('end_time')) applyDefaultEnd(start);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Start and end read as one fact — how long the table is held — only once
+  // both are set and the end is actually after the start.
+  const watchedStart = form.watch('reservation_time');
+  const watchedEnd = form.watch('end_time');
+  const spanMinutes = durationMinutes(watchedStart, watchedEnd);
+  const durationLabel = spanMinutes === null ? null : formatDurationShort(spanMinutes);
 
   /* ------------------- Track place_id changes ---------------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
@@ -480,15 +487,26 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           </div>
         )}
 
-        {/* Reservation Date & Time. Two tracks on mobile so the start/end pair
-            sits side by side under a full-width date; four on desktop so the
-            date keeps half the row. */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* Reservation Date & Time.
+
+            One control per row on mobile. Mobile WebKit enforces a minimum
+            width on a native time input, and half a phone is under it: the
+            pair overflowed the sheet and the end time was clipped by the
+            dialog's `overflow-x-hidden`. A row of its own clears that floor on
+            any device at any text size. Side by side from sm up, where the
+            600px dialog leaves each control ~270px — the old four-track row
+            gave them ~107px, which was under the floor on desktop Safari too.
+
+            `max-w` rather than a fixed width, because a time input stretched
+            edge to edge reads as a broken text field but a *fixed* width is
+            the thing WebKit overrides. Capped, an engine that insists on more
+            simply renders wider, and a full row has the slack to absorb it. */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="reservation_date"
             render={({ field }) => (
-              <FormItem className="relative z-50 col-span-2">
+              <FormItem className="relative z-50 sm:col-span-2">
                 <FormLabel>
                   Reservation Date <span className="text-red-500">*</span>
                 </FormLabel>
@@ -532,7 +550,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       applyDefaultEnd(e.target.value);
                     }}
                     step="300"
-                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                    className="max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
                 <FormMessage />
@@ -545,7 +563,14 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             name="end_time"
             render={({ field }) => (
               <FormItem className="min-w-0">
-                <FormLabel className="text-sm font-medium text-sand-700">End Time</FormLabel>
+                {/* The readout sits outside the <label> on purpose: inside, it
+                    would become part of the field's accessible name. */}
+                <div className="flex items-baseline gap-2">
+                  <FormLabel className="text-sm font-medium text-sand-700">End Time</FormLabel>
+                  {durationLabel && (
+                    <span className="text-xs text-sand-600">{durationLabel}</span>
+                  )}
+                </div>
                 <FormControl>
                   <Input
                     type="time"
@@ -555,7 +580,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       field.onChange(e.target.value);
                     }}
                     step="300"
-                    className="bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                    className="max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
                 <FormMessage />

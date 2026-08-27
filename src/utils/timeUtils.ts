@@ -86,3 +86,26 @@ export const effectiveReservationEnd = (
   endTime?: string | null,
 ): string | null =>
   explicitReservationEnd(reservationTime, endTime) ?? defaultReservationEnd(reservationTime);
+
+/**
+ * Wall-clock minutes between two times, or null when the pair cannot describe
+ * a duration: either side unparseable, or an end that is not after its start
+ * (see `explicitReservationEnd` for why a backwards range is never valid).
+ */
+export const durationMinutes = (
+  start?: string | null,
+  end?: string | null,
+): number | null => {
+  const from = toMinutesOfDay(start);
+  const to = toMinutesOfDay(end);
+  if (from === null || to === null || to <= from) return null;
+  return to - from;
+};
+
+/** `45` → `45m`, `95` → `1h 35m`, `120` → `2h`. */
+export const formatDurationShort = (minutes: number): string => {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+};

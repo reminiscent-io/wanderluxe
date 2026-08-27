@@ -135,6 +135,20 @@ describe('RestaurantReservationForm', () => {
     expect(end).toHaveValue('15:45');
   });
 
+  it('reads the span back as a duration, and drops it when there is none', async () => {
+    renderForm(vi.fn());
+
+    // 19:30 + the 90-minute default.
+    expect(await screen.findByText('1h 30m')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('End Time'), { target: { value: '20:15' } });
+    await waitFor(() => expect(screen.getByText('45m')).toBeInTheDocument());
+
+    // An end that isn't after its start describes no span at all.
+    fireEvent.change(screen.getByLabelText('End Time'), { target: { value: '19:00' } });
+    await waitFor(() => expect(screen.queryByText(/^\d+h|^\d+m/)).not.toBeInTheDocument());
+  });
+
   it('writes NULL rather than an empty string when the end is cleared', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderForm(onSubmit, { ...savedReservation, end_time: '23:00:00' });
