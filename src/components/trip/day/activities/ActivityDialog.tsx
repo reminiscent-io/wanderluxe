@@ -152,17 +152,23 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
   }, [isEditMode, activityId, finalActivity]);
 
-  // Keep internal state in sync when chat passes new initialData (OCR result)
+  // Keep internal state in sync when chat passes new initialData (OCR result).
+  // Keyed on the *value*, not the object identity: the calendar and map views
+  // build initialData inline, so a fresh object arrives on every parent render
+  // (a realtime event, a query refetch) and re-seeding on identity would wipe
+  // whatever the user had typed but not yet saved.
+  const initialDataKey = initialData ? JSON.stringify(initialData) : null;
+
   useEffect(() => {
-    if (initialData) {
-      const mapped = { ...initialData };
-      if (mapped.name && !mapped.title) {
-        mapped.title = mapped.name;
-        delete mapped.name;
-      }
-      setInternalActivity((curr) => ({ ...curr, ...mapped }));
+    if (!initialDataKey) return;
+    const mapped = { ...(initialData as Record<string, unknown>) };
+    if (mapped.name && !mapped.title) {
+      mapped.title = mapped.name;
+      delete mapped.name;
     }
-  }, [initialData]);
+    setInternalActivity((curr) => ({ ...curr, ...mapped } as ActivityFormData));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDataKey]);
 
   const handleDelete = async () => {
     if (activityId && onDelete) {

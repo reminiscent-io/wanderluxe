@@ -49,6 +49,10 @@ const DURATION_PRESETS = [
   { label: 'Full day', minutes: 480 },
 ] as const;
 
+// <input type="time" step="300"> works in HH:MM; a saved row may arrive as a
+// Postgres "HH:MM:SS".
+const toHHMM = (time?: string | null): string => (time ? time.slice(0, 5) : '');
+
 // Helper to add minutes to a time string (HH:MM format)
 const addMinutesToTime = (time: string, minutes: number): string => {
   const [hours, mins] = time.split(':').map(Number);
@@ -129,9 +133,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityId, tripId]);
 
-  // Local UI state for time values
-  const [startTime, setStartTime] = useState(activity.start_time || "");
-  const [endTime, setEndTime] = useState(activity.end_time || "");
+  // Times are read straight off the form data — deliberately not mirrored into
+  // local state. A mirror meant an interaction that moves both fields at once
+  // (Start changing while a duration preset is active, or picking a preset)
+  // emitted two patches built from the same stale `activity`, so the second
+  // silently reverted the first and the field snapped back.
+  const startTime = toHHMM(activity.start_time);
+  const endTime = toHHMM(activity.end_time);
+
+  // One patch per interaction: Start and End always move together.
+  const applyTimes = (times: { start_time?: string; end_time?: string }) => {
+    onActivityChange({ ...activity, ...times });
+  };
 
   // Generate trip date options with timezone-safe handling
   const tripDateOptions = React.useMemo(() => {
@@ -169,12 +182,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preselectedDate, activity.date]);
 
-  // Update local state when activity prop changes (e.g., editing existing)
-  useEffect(() => {
-    if (activity.start_time) setStartTime(activity.start_time);
-    if (activity.end_time) setEndTime(activity.end_time);
-  }, [activity.start_time, activity.end_time]);
-
   // Detect preset vs. custom end time ONCE when loading an existing activity.
   // Must not re-run on live edits, or picking a preset-length custom end time
   // would flip useCustomEndTime off and unmount the picker mid-selection.
@@ -195,22 +202,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
     didInitDurationMode.current = true;
   }, [activityId, activity.start_time, activity.end_time]);
 
-  // Sync local startTime with parent activity
-  useEffect(() => {
-    if (activity.start_time !== startTime) {
-      onActivityChange({ ...activity, start_time: startTime });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startTime]);
-
-  // Sync local endTime with parent activity
-  useEffect(() => {
-    if (activity.end_time !== endTime) {
-      onActivityChange({ ...activity, end_time: endTime });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endTime]);
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -222,10 +213,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       newErrors.date = 'Date is required';
     }
 
-    if (activity.start_time && activity.end_time) {
-      if (activity.start_time > activity.end_time) {
-        newErrors.time = 'End time must be after start time';
-      }
+    // Compare the normalized HH:MM values — a stored "HH:MM:SS" would otherwise
+    // sort after an equal HH:MM and flag a valid range as invalid.
+    if (startTime && endTime && startTime > endTime) {
+      newErrors.time = 'End time must be after start time';
     }
 
     if (activity.cost && !isValidCost(activity.cost)) {
@@ -413,14 +404,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
             type="time"
             value={startTime}
             onChange={(e) => {
-              setStartTime(e.target.value);
-              // Auto-update end time if duration is selected
-              if (selectedDuration && e.target.value) {
-                setEndTime(addMinutesToTime(e.target.value, selectedDuration));
-              }
+              const value = e.target.value;
+              applyTimes({
+                start_time: value,
+                // Keep the selected duration intact as the start moves.
+                ...(selectedDuration && value
+                  ? { end_time: addMinutesToTime(value, selectedDuration) }
+                  : {}),
+              });
             }}
             onFocus={() => {
-              if (!startTime) setStartTime(DEFAULT_START_TIME);
+              if (!startTime) applyTimes({ start_time: DEFAULT_START_TIME });
             }}
             step="300"
             className="w-28 text-center"
@@ -444,8 +438,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
                   setSelectedDuration(preset.minutes);
                   setUseCustomEndTime(false);
                   const start = startTime || DEFAULT_START_TIME;
-                  if (!startTime) setStartTime(start);
-                  setEndTime(addMinutesToTime(start, preset.minutes));
+                  applyTimes({ start_time: start, end_time: addMinutesToTime(start, preset.minutes) });
                 }}
                 className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                   selectedDuration === preset.minutes && !useCustomEndTime
@@ -483,12 +476,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
               id="end-time"
               type="time"
               value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              onChange={(e) => applyTimes({ end_time: e.target.value })}
               onFocus={() => {
                 if (!endTime) {
                   // Default to 1 hour after start time, or 9:00 AM
                   const start = startTime || DEFAULT_START_TIME;
-                  setEndTime(addMinutesToTime(start, 60));
+                  applyTimes({ start_time: start, end_time: addMinutesToTime(start, 60) });
                 }
               }}
               step="300"
