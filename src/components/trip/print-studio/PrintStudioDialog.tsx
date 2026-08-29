@@ -3,9 +3,10 @@
 // everyone can open editions that already exist on the trip (RLS allows any
 // trip member to read them — only generation is gated).
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Check, Loader2, Palette, Printer, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +45,10 @@ const GENERATING_LINES = [
   'Setting the cover…',
 ];
 
+/** Past this, the 300-character limit starts silently eating keystrokes. */
+const THEME_MAX = 300;
+const THEME_COUNTER_FROM = 240;
+
 async function getToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data?.session?.access_token ?? null;
@@ -58,8 +64,9 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingLine, setGeneratingLine] = useState(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const { data: designs } = useQuery({
+  const { data: designs, isLoading: designsLoading } = useQuery({
     queryKey: ['print-designs', tripId],
     enabled: open && !!user,
     queryFn: async (): Promise<DesignListRow[]> => {
@@ -81,6 +88,8 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
       return;
     }
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     setIsGenerating(true);
     setGeneratingLine(0);
     const ticker = setInterval(
@@ -97,6 +106,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(theme.trim() ? { theme: theme.trim() } : {}),
+        signal: controller.signal,
       });
 
       const body = await resp.json().catch((): null => null);
@@ -116,12 +126,26 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
       onOpenChange(false);
       navigate(`/trip/${tripId}/print/${body.id}`);
     } catch (e) {
+      // A cancel is a choice, not a failure — the server may still finish, and
+      // the edition shows up in the list when it does.
+      if ((e as Error)?.name === 'AbortError') return;
       console.error('Print design error:', e);
       toast.error('Could not reach the Print Studio. Check your connection and try again.');
     } finally {
       clearInterval(ticker);
+      abortRef.current = null;
       setIsGenerating(false);
     }
+  };
+
+  const cancelGeneration = () => {
+    abortRef.current?.abort();
+  };
+
+  /** Closing mid-generation cancels rather than leaving a dead close button. */
+  const handleOpenChange = (next: boolean) => {
+    if (!next && isGenerating) cancelGeneration();
+    onOpenChange(next);
   };
 
   const handleUpgrade = async () => {
@@ -154,40 +178,49 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
     navigate(`/trip/${tripId}/print/${id}`);
   };
 
-  const editionList = (designs?.length ?? 0) > 0 && (
+  const hasEditions = (designs?.length ?? 0) > 0;
+
+  const editionList = (designsLoading || hasEditions) && (
     <div className="mt-1">
       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Editions of this trip
       </p>
-      <ul className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-        {designs!.map((d) => (
-          <li key={d.id}>
-            <button
-              type="button"
-              onClick={() => openDesign(d.id)}
-              className="flex w-full items-center gap-3 rounded-card border border-border bg-sand-50/60 px-3 py-2 text-left transition-colors hover:border-earth-300 hover:bg-sand-100"
-            >
-              <span
-                className="h-6 w-6 flex-shrink-0 rounded-full border border-border"
-                style={{
-                  background: `linear-gradient(135deg, ${d.design?.palette?.primary ?? '#3f4a5c'} 50%, ${d.design?.palette?.accent ?? '#b0562e'} 50%)`,
-                }}
-                aria-hidden
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-foreground">
-                  {d.design?.themeName ?? 'Edition'}
+      {designsLoading ? (
+        <div className="space-y-1.5" aria-hidden>
+          <Skeleton className="h-[54px] w-full rounded-card" />
+          <Skeleton className="h-[54px] w-full rounded-card" />
+        </div>
+      ) : (
+        <ul className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
+          {designs!.map((d) => (
+            <li key={d.id}>
+              <button
+                type="button"
+                onClick={() => openDesign(d.id)}
+                className="flex w-full items-center gap-3 rounded-card border border-border bg-sand-50/60 px-3 py-2 text-left transition-colors hover:border-earth-300 hover:bg-sand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <span
+                  className="h-6 w-6 flex-shrink-0 rounded-full border border-border"
+                  style={{
+                    background: `linear-gradient(135deg, ${d.design?.palette?.primary ?? '#3f4a5c'} 50%, ${d.design?.palette?.accent ?? '#b0562e'} 50%)`,
+                  }}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-foreground">
+                    {d.design?.themeName ?? 'Edition'}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {format(new Date(d.created_at), 'MMM d, yyyy')}
+                    {d.theme_prompt ? ` · “${d.theme_prompt}”` : ''}
+                  </span>
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {new Date(d.created_at).toLocaleDateString()}
-                  {d.theme_prompt ? ` · “${d.theme_prompt}”` : ''}
-                </span>
-              </span>
-              <Printer className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-            </button>
-          </li>
-        ))}
-      </ul>
+                <Printer className="h-4 w-4 flex-shrink-0 text-muted-foreground" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 
@@ -197,20 +230,20 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="text-center sm:text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <Palette className="h-6 w-6 text-amber-600" />
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent">
+              <Palette className="h-6 w-6 text-primary" aria-hidden />
             </div>
             <DialogTitle className="font-display text-xl leading-tight tracking-tight">
               Print Studio
             </DialogTitle>
-            <DialogDescription className="text-sand-600">
+            <DialogDescription>
               A keepsake itinerary, designed by AI around this trip — with its own
               palette, typefaces, and a caption for every day.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-2">
-            <div className="rounded-card border-2 border-earth-500 bg-sand-50/60 p-4">
+            <div className="rounded-card border border-border bg-sand-50 p-4">
               <div className="mb-3 flex items-end justify-between gap-2">
                 <span className="font-display text-lg leading-tight tracking-tight text-foreground">
                   WanderLuxe Pro
@@ -224,11 +257,11 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
                 {[
                   'A custom theme designed for each trip',
                   'Every activity, stay, and reservation included',
-                  'Print it, or save as a beautiful PDF',
+                  'Print it, or save it as a PDF',
                   'Cancel anytime',
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-earth-600">
-                    <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
+                    <Check className="h-4 w-4 flex-shrink-0 text-primary" aria-hidden />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -238,14 +271,23 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button variant="sunset" onClick={handleUpgrade} disabled={isUpgrading} className="w-full">
-              {isUpgrading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Unlock the Print Studio
+            <Button
+              variant="sunset"
+              onClick={handleUpgrade}
+              disabled={isUpgrading}
+              className="h-11 w-full sm:h-10"
+            >
+              {isUpgrading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" aria-hidden />
+              )}
+              {isUpgrading ? 'Opening checkout…' : 'Unlock the Print Studio'}
             </Button>
             <Button
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="w-full text-muted-foreground hover:text-foreground"
+              className="h-11 w-full text-muted-foreground hover:text-foreground sm:h-10"
             >
               Not now
             </Button>
@@ -257,23 +299,29 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
 
   // ------------------------------------------------------------------- Pro
   return (
-    <Dialog open={open} onOpenChange={(next) => !isGenerating && onOpenChange(next)}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-xl leading-tight tracking-tight">
-            <Palette className="h-5 w-5 text-earth-600" />
+            <Palette className="h-5 w-5 text-primary" aria-hidden />
             Print Studio
           </DialogTitle>
-          <DialogDescription className="text-sand-600">
+          <DialogDescription>
             The AI reads everything on this trip and designs a printable keepsake
             edition — theme, palette, typefaces, and a caption for every day.
           </DialogDescription>
         </DialogHeader>
 
+        <p className="sr-only" role="status" aria-live="polite">
+          {isGenerating ? GENERATING_LINES[generatingLine] : ''}
+        </p>
+
         {isGenerating ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-sand-400" />
-            <p className="text-sm text-earth-600">{GENERATING_LINES[generatingLine]}</p>
+            <Loader2 className="h-6 w-6 animate-spin text-sand-400" aria-hidden />
+            <p className="text-sm text-foreground" aria-hidden>
+              {GENERATING_LINES[generatingLine]}
+            </p>
             <p className="text-xs text-muted-foreground">This usually takes under a minute.</p>
           </div>
         ) : (
@@ -286,30 +334,48 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
                 id="print-theme"
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                maxLength={300}
+                maxLength={THEME_MAX}
                 placeholder="e.g. Riviera art deco, botanical field notes…"
+                aria-describedby="print-theme-hint"
               />
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Leave blank and the AI will pick a direction that fits the trip.
-              </p>
+              <div className="mt-1.5 flex items-start justify-between gap-3">
+                <p id="print-theme-hint" className="text-xs text-muted-foreground">
+                  Leave blank and the AI will pick a direction that fits the trip.
+                </p>
+                {theme.length >= THEME_COUNTER_FROM && (
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {theme.length}/{THEME_MAX}
+                  </span>
+                )}
+              </div>
             </div>
             {editionList}
           </div>
         )}
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
-          <Button variant="sunset" onClick={handleGenerate} disabled={isGenerating} className="w-full">
-            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            {isGenerating ? 'Designing…' : 'Design my edition'}
-          </Button>
-          {!isGenerating && (
+          {isGenerating ? (
             <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="w-full text-muted-foreground hover:text-foreground"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              className="h-11 w-full sm:h-10"
             >
-              Close
+              Cancel
             </Button>
+          ) : (
+            <>
+              <Button variant="sunset" onClick={handleGenerate} className="h-11 w-full sm:h-10">
+                <Sparkles className="mr-2 h-4 w-4" aria-hidden />
+                Design my edition
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="h-11 w-full text-muted-foreground hover:text-foreground sm:h-10"
+              >
+                Close
+              </Button>
+            </>
           )}
         </DialogFooter>
       </DialogContent>

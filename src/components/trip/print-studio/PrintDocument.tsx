@@ -20,6 +20,15 @@ const ITEM_ICONS: Record<Item['type'], React.ComponentType<{ className?: string 
   dining: UtensilsCrossed,
 };
 
+// The icon ring is the only thing that says what kind of item this is, so the
+// same distinction has to reach a screen reader as words.
+const ITEM_TYPE_LABELS: Record<Item['type'], string> = {
+  accommodation: 'Stay',
+  transportation: 'Journey',
+  activity: 'Activity',
+  dining: 'Reservation',
+};
+
 interface PrintDocumentProps {
   design: PrintDesignSpec;
   data: PdfTripData;
@@ -78,7 +87,10 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
           {data.dateRange && <p className="pd-cover-dates">{data.dateRange}</p>}
           {data.coverImageDataUri && (
             <figure className="pd-cover-photo">
-              <img src={data.coverImageDataUri} alt={data.destination} />
+              <img
+                src={data.coverImageDataUri}
+                alt={data.destination ? `Photograph of ${data.destination}` : ''}
+              />
             </figure>
           )}
           <div className="pd-cover-foot">
@@ -129,7 +141,10 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
                       const Icon = ITEM_ICONS[item.type];
                       return (
                         <div className="pd-item" key={`${day.date}-${j}`}>
-                          <span className="pd-item-icon"><Icon /></span>
+                          <span className="pd-item-icon">
+                            <span className="pd-sr-only">{ITEM_TYPE_LABELS[item.type]}</span>
+                            <Icon aria-hidden />
+                          </span>
                           <span className="pd-item-time">{item.time}</span>
                           <div className="pd-item-body">
                             <div className="pd-item-title-row">
@@ -157,7 +172,8 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
             <SectionLabel>The Particulars</SectionLabel>
 
             {data.stays.length > 0 && (
-              <table className="pd-table" style={{ marginBottom: '2rem' }}>
+              <table className="pd-table">
+                <caption className="pd-sr-only">Where you are staying</caption>
                 <thead>
                   <tr>
                     <th>Stay</th>
@@ -178,7 +194,8 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
             )}
 
             {data.transports.length > 0 && (
-              <table className="pd-table" style={{ marginBottom: '2rem' }}>
+              <table className="pd-table">
+                <caption className="pd-sr-only">Flights and other journeys</caption>
                 <thead>
                   <tr>
                     <th>Journey</th>
@@ -200,6 +217,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
 
             {data.diningRefs.length > 0 && (
               <table className="pd-table">
+                <caption className="pd-sr-only">Dining reservations</caption>
                 <thead>
                   <tr>
                     <th>Reservation</th>

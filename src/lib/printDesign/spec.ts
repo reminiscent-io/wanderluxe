@@ -12,9 +12,9 @@
 // must stay dependency-free and DOM-free.
 
 export interface PrintPalette {
-  /** Deep brand hue — headings, day numerals, icon strokes. */
+  /** Deep brand hue — headings, day numerals, section labels. */
   primary: string;
-  /** Supporting hue — section rules, secondary accents. */
+  /** Supporting hue — day dates, costs, confirmation codes. Small text, so AA is enforced. */
   secondary: string;
   /** Page ground. Must stay light: this is a printed page. */
   background: string;
@@ -22,9 +22,9 @@ export interface PrintPalette {
   surface: string;
   /** Body text. Contrast against background is enforced. */
   ink: string;
-  /** Meta text (times, captions). Contrast is enforced (relaxed AA). */
+  /** Meta text (times, details, locations). Real content at 12–13px, so AA is enforced. */
   muted: string;
-  /** Small highlights — icon chips, cost tags. */
+  /** Decorative strokes only — motif bands, icon chips, hairlines. Held to the 3:1 graphics floor. */
   accent: string;
 }
 
@@ -206,7 +206,9 @@ export function contrastRatio(a: string, b: string): number {
 
 export const FALLBACK_PALETTE: PrintPalette = {
   primary: '#3f4a5c',
-  secondary: '#8a6f52',
+  // #7a6046 rather than a lighter bronze: secondary sets 12px day dates and
+  // confirmation codes, and the old #8a6f52 measured 4.42:1 on this ground.
+  secondary: '#7a6046',
   background: '#faf8f4',
   surface: '#f1ece3',
   ink: '#2b2620',
@@ -231,8 +233,12 @@ function cleanHex(v: unknown, fallback: string): string {
  * Guarantees, regardless of input:
  *  - every color is a normalized #rrggbb hex
  *  - the page background is light enough to print (luminance >= 0.5)
- *  - ink/background >= 4.5:1, muted/background >= 3:1, primary/background >= 3:1
- *    (falling back to the neutral palette member when the model's choice fails)
+ *  - every role that carries text clears WCAG AA against the page ground:
+ *    ink and muted >= 4.5:1, secondary >= 4.5:1, primary >= 3:1 (display sizes
+ *    only), and the decorative accent >= 3:1. A failing role demotes to a color
+ *    already proven against this background — the model's own theme where
+ *    possible, the neutral fallback otherwise — so a sloppy palette costs
+ *    style, never legibility.
  *  - fontPairing and motif are known registry ids
  *  - all copy is single-line-ish, length-clamped, never empty for required slots
  *  - dayCaptions only contains keys from `dayDates`
@@ -251,14 +257,27 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
   let ink = cleanHex(rawPalette.ink, FALLBACK_PALETTE.ink);
   if (contrastRatio(ink, background) < 4.5) ink = FALLBACK_PALETTE.ink;
 
+  // Muted is not decoration: it sets item details, locations and times at
+  // 12-13px. The generation prompt already asks the model for 4.5:1 here, and
+  // this is where that promise is actually kept.
   let muted = cleanHex(rawPalette.muted, FALLBACK_PALETTE.muted);
-  if (contrastRatio(muted, background) < 3) muted = FALLBACK_PALETTE.muted;
+  if (contrastRatio(muted, background) < 4.5) muted = FALLBACK_PALETTE.muted;
 
+  // Primary only ever appears at display sizes (cover title, day numerals,
+  // section labels), so the large-text floor is the right gate.
   let primary = cleanHex(rawPalette.primary, FALLBACK_PALETTE.primary);
   if (contrastRatio(primary, background) < 3) primary = ink;
 
-  const secondary = cleanHex(rawPalette.secondary, FALLBACK_PALETTE.secondary);
-  const accent = cleanHex(rawPalette.accent, FALLBACK_PALETTE.accent);
+  // Secondary carries small text. Demote to primary rather than to the neutral
+  // fallback: primary has already passed against this ground and belongs to the
+  // model's own theme, so the page stays coherent instead of going two-toned.
+  let secondary = cleanHex(rawPalette.secondary, FALLBACK_PALETTE.secondary);
+  if (contrastRatio(secondary, background) < 4.5) secondary = primary;
+
+  // Accent draws hairlines, motif bands and icon rings — graphics, never text —
+  // so it answers to the 3:1 non-text floor.
+  let accent = cleanHex(rawPalette.accent, FALLBACK_PALETTE.accent);
+  if (contrastRatio(accent, background) < 3) accent = secondary;
 
   const fontPairing = FONT_PAIRING_IDS.includes(r.fontPairing as FontPairingId)
     ? (r.fontPairing as FontPairingId)

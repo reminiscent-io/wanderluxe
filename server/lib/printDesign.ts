@@ -133,7 +133,7 @@ export function buildDesignMessages(
     '',
     'You decide:',
     '- a theme (name + one-sentence rationale) drawn from the trip itself: its destination, season, pace, and the character of its activities',
-    '- a seven-color palette as #rrggbb hex values. The page is PRINTED: background must be near-white paper tinted toward the theme; ink must be very dark and readable (aim for 7:1 contrast on the background); muted must still be readable (4.5:1); primary and secondary carry the theme; accent is a small warm highlight. Never use neon.',
+    '- a seven-color palette as #rrggbb hex values. The page is PRINTED, so every color is measured against the background: background is near-white paper tinted toward the theme; ink is very dark body text (aim for 7:1); muted sets item details and times at small sizes (4.5:1 minimum); secondary sets day dates and confirmation codes, also small (4.5:1 minimum); primary carries the theme at display sizes only (3:1 minimum); accent draws hairlines and motif strokes, never text (3:1 minimum). Anything that misses its floor is darkened away from your choice, so pick colors that already clear it. Never use neon.',
     '- a font pairing id from this menu (nothing else):',
     FONT_MENU,
     '- a decorative motif from: ' + MOTIF_MENU,
