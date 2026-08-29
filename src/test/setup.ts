@@ -25,17 +25,22 @@ if (globalThis.window !== undefined) {
     })),
   });
 
-  // Mock ResizeObserver
-  globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  // Mock ResizeObserver / IntersectionObserver. These have to be real classes:
+  // production code calls `new ResizeObserver(...)`, and a `vi.fn()` wrapping an
+  // arrow implementation throws "is not a constructor" under `new`.
+  globalThis.ResizeObserver = class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  } as unknown as typeof ResizeObserver;
 
-  // Mock IntersectionObserver
-  globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  globalThis.IntersectionObserver = class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+    takeRecords = vi.fn(() => []);
+    root: Element | null = null;
+    rootMargin = '';
+    thresholds: number[] = [];
+  } as unknown as typeof IntersectionObserver;
 }
