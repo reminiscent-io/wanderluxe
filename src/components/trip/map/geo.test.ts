@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  arcPath,
   boundsOf,
   coordKey,
   defaultUnits,
@@ -50,6 +51,51 @@ describe('midpoint', () => {
     const mid = midpoint({ lat: 0, lng: 179 }, { lat: 0, lng: -179 });
     expect(Math.abs(mid.lng)).toBeCloseTo(180, 4);
     expect(mid.lat).toBeCloseTo(0, 6);
+  });
+});
+
+describe('arcPath', () => {
+  const apexOf = (path: ReturnType<typeof arcPath>) => path[Math.floor(path.length / 2)];
+
+  it('starts and ends exactly on the endpoints', () => {
+    const path = arcPath(PARIS, LONDON);
+    expect(path[0]).toEqual(PARIS);
+    expect(path[path.length - 1]).toEqual(LONDON);
+    expect(path).toHaveLength(33);
+  });
+
+  it('bows away from the straight chord in proportion to leg length', () => {
+    // Paris→London ≈ 344 km, so a 15% bow puts the apex ~52 km off the chord.
+    const offset = haversineKm(apexOf(arcPath(PARIS, LONDON)), midpoint(PARIS, LONDON));
+    expect(offset).toBeGreaterThan(30);
+    expect(offset).toBeLessThan(80);
+  });
+
+  it('bows to opposite sides when the direction reverses', () => {
+    // Eastbound along the equator bows left of travel (north); westbound, south.
+    const a = { lat: 0, lng: 0 };
+    const b = { lat: 0, lng: 10 };
+    expect(apexOf(arcPath(a, b)).lat).toBeGreaterThan(0);
+    expect(apexOf(arcPath(b, a)).lat).toBeLessThan(0);
+  });
+
+  it('bows wider as bowScale grows, so repeat passes nest instead of stacking', () => {
+    const mid = midpoint(PARIS, LONDON);
+    const single = haversineKm(apexOf(arcPath(PARIS, LONDON, 1)), mid);
+    const double = haversineKm(apexOf(arcPath(PARIS, LONDON, 2)), mid);
+    expect(double / single).toBeGreaterThan(1.8);
+    expect(double / single).toBeLessThan(2.2);
+  });
+
+  it('falls back to the chord for identical endpoints', () => {
+    expect(arcPath(PARIS, { ...PARIS })).toEqual([PARIS, PARIS]);
+  });
+
+  it('stays continuous across the antimeridian', () => {
+    const path = arcPath({ lat: 10, lng: 175 }, { lat: 12, lng: -175 });
+    for (let i = 1; i < path.length; i += 1) {
+      expect(haversineKm(path[i - 1], path[i])).toBeLessThan(100);
+    }
   });
 });
 

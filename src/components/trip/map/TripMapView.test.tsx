@@ -176,12 +176,19 @@ describe('TripMapView', () => {
     expect(labels[checkin]).toContain('Hotel Danieli');
   });
 
-  it('draws a geodesic polyline for the flight and plain ones elsewhere', () => {
+  it('draws every leg as a sampled arc on the sphere', () => {
     renderView();
 
+    // Legs are bowed arcs (many sampled points, not a two-point chord) so
+    // nearby out-and-back legs separate instead of overlapping; drawing each
+    // sub-segment geodesically keeps antimeridian hops from streaking around
+    // the world.
     const lines = screen.getAllByTestId('polyline');
-    expect(lines.filter((l) => l.dataset.geodesic === 'true')).toHaveLength(1);
-    expect(lines.filter((l) => l.dataset.geodesic === 'false').length).toBeGreaterThan(0);
+    expect(lines.length).toBeGreaterThan(0);
+    lines.forEach((l) => {
+      expect(l.dataset.geodesic).toBe('true');
+      expect(Number(l.dataset.points)).toBeGreaterThan(2);
+    });
   });
 
   it('summarises stop count and bird’s-eye distance', () => {
