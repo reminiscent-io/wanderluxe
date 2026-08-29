@@ -53,6 +53,71 @@ export function normalizeLng(lng: number): number {
   return ((((lng + 180) % 360) + 360) % 360) - 180;
 }
 
+/** Peak sideways bow of an arc, as a fraction of its great-circle length. */
+const ARC_BOW_RATIO = 0.15;
+
+type Vec3 = [number, number, number];
+
+const toVec = (p: LatLng): Vec3 => {
+  const lat = toRad(p.lat);
+  const lng = toRad(p.lng);
+  return [Math.cos(lat) * Math.cos(lng), Math.cos(lat) * Math.sin(lng), Math.sin(lat)];
+};
+
+const toLatLng = (v: Vec3): LatLng => ({
+  lat: toDeg(Math.asin(Math.max(-1, Math.min(1, v[2])))),
+  lng: normalizeLng(toDeg(Math.atan2(v[1], v[0]))),
+});
+
+/**
+ * A gently bowed arc from `a` to `b`, sampled as a polyline path.
+ *
+ * The bow is always to the left of the direction of travel, so an out-and-back
+ * pair (hotel → dinner, dinner → hotel) curves to opposite sides instead of
+ * retracing one line — direction stays readable even where arrowheads crowd.
+ * `bowScale` widens the bow for repeat passes over the same pair of points.
+ *
+ * Built on the unit sphere (slerp plus a perpendicular rotation), so it behaves
+ * across the antimeridian and on long-haul legs alike. Identical or antipodal
+ * endpoints have no defined side to bow toward and fall back to the chord.
+ */
+export function arcPath(a: LatLng, b: LatLng, bowScale = 1, samples = 32): LatLng[] {
+  const va = toVec(a);
+  const vb = toVec(b);
+
+  const cross: Vec3 = [
+    va[1] * vb[2] - va[2] * vb[1],
+    va[2] * vb[0] - va[0] * vb[2],
+    va[0] * vb[1] - va[1] * vb[0],
+  ];
+  const sinOmega = Math.hypot(...cross);
+  if (sinOmega < 1e-9) return [{ ...a }, { ...b }];
+
+  const omega = Math.atan2(sinOmega, va[0] * vb[0] + va[1] * vb[1] + va[2] * vb[2]);
+  const n: Vec3 = [cross[0] / sinOmega, cross[1] / sinOmega, cross[2] / sinOmega];
+  const bow = omega * ARC_BOW_RATIO * bowScale;
+
+  const path: LatLng[] = [{ ...a }];
+  for (let i = 1; i < samples; i += 1) {
+    const t = i / samples;
+    const ka = Math.sin((1 - t) * omega) / sinOmega;
+    const kb = Math.sin(t * omega) / sinOmega;
+    const p: Vec3 = [
+      va[0] * ka + vb[0] * kb,
+      va[1] * ka + vb[1] * kb,
+      va[2] * ka + vb[2] * kb,
+    ];
+    // n is normal to the great-circle plane, hence perpendicular to p: rotating
+    // p toward it by ε tilts the point sideways while staying on the sphere.
+    const eps = Math.sin(Math.PI * t) * bow;
+    const cosE = Math.cos(eps);
+    const sinE = Math.sin(eps);
+    path.push(toLatLng([p[0] * cosE + n[0] * sinE, p[1] * cosE + n[1] * sinE, p[2] * cosE + n[2] * sinE]));
+  }
+  path.push({ ...b });
+  return path;
+}
+
 export function kmToMi(km: number): number {
   return km / KM_PER_MI;
 }

@@ -55,8 +55,13 @@ export function visglMock() {
         {children}
       </div>
     ),
-    Polyline: ({ geodesic, strokeColor }: { geodesic?: boolean; strokeColor?: string }) => (
-      <div data-testid="polyline" data-geodesic={String(!!geodesic)} data-stroke={strokeColor} />
+    Polyline: ({ geodesic, strokeColor, path }: { geodesic?: boolean; strokeColor?: string; path?: unknown[] }) => (
+      <div
+        data-testid="polyline"
+        data-geodesic={String(!!geodesic)}
+        data-stroke={strokeColor}
+        data-points={path?.length ?? 0}
+      />
     ),
     Pin: (): null => null,
     useMap: (): typeof map => map,

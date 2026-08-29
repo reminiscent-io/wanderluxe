@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AdvancedMarker, Polyline } from '@vis.gl/react-google-maps';
-import { formatDistance, midpoint, type DistanceUnits } from './geo';
+import { arcPath, coordKey, formatDistance, type DistanceUnits } from './geo';
 import {
   AIR_DASH_REPEAT,
   DASH_SYMBOL,
@@ -10,6 +10,33 @@ import {
   type DayEmphasis,
 } from './mapTheme';
 import type { RouteSegment } from './routeSegments';
+import type { LatLng } from './stopModel';
+
+/**
+ * Each repeat pass over the same directed pair of points bows wider, so a
+ * favourite restaurant visited three times reads as three nested arcs rather
+ * than one line drawn three times. Capped — past a few visits, wider arcs stop
+ * adding information and start colliding with unrelated legs.
+ */
+const REPEAT_BOW_STEP = 0.9;
+const REPEAT_BOW_CAP = 3;
+
+function buildArcs(segments: RouteSegment[]): Map<string, LatLng[]> {
+  const passes = new Map<string, number>();
+  const arcs = new Map<string, LatLng[]>();
+
+  segments.forEach((segment) => {
+    const pairKey = `${coordKey(segment.fromPos)}|${coordKey(segment.toPos)}`;
+    const repeat = passes.get(pairKey) ?? 0;
+    passes.set(pairKey, repeat + 1);
+    arcs.set(
+      segment.id,
+      arcPath(segment.fromPos, segment.toPos, 1 + REPEAT_BOW_STEP * Math.min(repeat, REPEAT_BOW_CAP)),
+    );
+  });
+
+  return arcs;
+}
 
 /**
  * Dashes and arrowheads are Symbol objects, which need the Maps library loaded.
@@ -72,6 +99,8 @@ const RouteLayer: React.FC<RouteLayerProps> = ({
   // render must be idempotent, and StrictMode double-invokes it.
   const firstLabelledId = segments.find((s) => labelledSegmentIds?.has(s.id))?.id ?? null;
 
+  const arcs = useMemo(() => buildArcs(segments), [segments]);
+
   return (
     <>
       {segments.map((segment) => {
@@ -83,14 +112,19 @@ const RouteLayer: React.FC<RouteLayerProps> = ({
           : 'normal';
         const stroke = segmentStroke(dayIndex, dayCount, emphasis, segment.inferred);
         const dashed = segment.mode !== 'ground';
+        const path = arcs.get(segment.id) ?? [segment.fromPos, segment.toPos];
+        // The label sits on the arc's apex, not the straight-chord midpoint —
+        // on a bowed line the chord midpoint floats off in empty space.
+        const apex = path[Math.floor(path.length / 2)];
 
         return (
           <React.Fragment key={segment.id}>
             <Polyline
-              path={[segment.fromPos, segment.toPos]}
-              // Great-circle arcs: a long-haul flight should bend across the
-              // globe, not cut a straight chord through it.
-              geodesic={segment.mode === 'air'}
+              path={path}
+              // Geodesic per sampled sub-segment: visually identical at this
+              // sampling density, and it keeps antimeridian-crossing hops from
+              // streaking the long way around the world.
+              geodesic
               strokeColor={stroke.color}
               // A dashed line is drawn entirely by its repeated icons, so the
               // underlying stroke must be invisible.
@@ -101,7 +135,7 @@ const RouteLayer: React.FC<RouteLayerProps> = ({
             />
             {labelledSegmentIds?.has(segment.id) && (
               <AdvancedMarker
-                position={midpoint(segment.fromPos, segment.toPos)}
+                position={apex}
                 zIndex={40}
               >
                 <span
