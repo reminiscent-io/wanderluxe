@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import ChatMessage from "./ChatMessage";
+import { stripCreateItemsForDisplay } from "./chatContentSanitizer";
 import { Loader2, Sparkles, ChevronUp } from "lucide-react";
 import type {
   AIChatMessage,
@@ -218,9 +219,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 
       const container = containerRef.current;
 
-      // Load more when near top — only after user has opted into history,
-      // otherwise they'd be surprised by auto-loading when the feature was
-      // supposed to be behind the "Show older chats" button.
+      // Load more when near top — only once the first history page is in
+      // (historyLoaded), so pagination has a cursor to anchor on.
       if (
         historyLoaded &&
         hasMore &&
@@ -245,9 +245,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     );
   }
 
-  // "Show older chats" control — shown before history has been loaded. Once
-  // the user clicks it we fetch the newest page and hand further loading off
-  // to the scroll-to-top behavior (hasMore).
+  // "Show older chats" control — history normally auto-restores on mount
+  // (useAIAssistant), so this only lingers while that first fetch is in
+  // flight or as the manual retry after it failed. Once a page is in,
+  // further loading hands off to the scroll-to-top behavior (hasMore).
   const showLoadHistoryButton = !historyLoaded && !!onLoadHistory;
 
   const loadHistoryControl = showLoadHistoryButton ? (
@@ -298,14 +299,20 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     );
   }
 
-  // Create a streaming message if currently streaming
+  // Create a streaming message if currently streaming. Sanitized here (not
+  // just in ChatMessage) so a stream that is momentarily *only* a
+  // create_items block falls back to the typing indicator below instead of
+  // rendering an empty bubble.
+  const visibleStreamingContent = isStreaming
+    ? stripCreateItemsForDisplay(streamingContent, { streaming: true })
+    : "";
   const streamingMessage: AIChatMessage | null =
-    isStreaming && streamingContent
+    isStreaming && visibleStreamingContent
       ? {
           id: "streaming",
           thread_id: "",
           role: "assistant",
-          content: streamingContent,
+          content: visibleStreamingContent,
           metadata: {},
           created_at: new Date().toISOString(),
         }
@@ -363,7 +370,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       )}
 
       {/* Show typing indicator when waiting for response but not yet streaming */}
-      {isStreaming && !streamingContent && (
+      {isStreaming && !visibleStreamingContent && (
         <div className="flex gap-3 py-3">
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sand-100 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-earth-600" />
