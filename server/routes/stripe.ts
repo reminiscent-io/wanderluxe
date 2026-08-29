@@ -70,8 +70,10 @@ async function handleCheckoutCompleted(
     .update({
       subscription_tier: 'pro',
       stripe_subscription_id: session.subscription as string,
+      // Chat is unlimited on every tier; the 20/day OCR cap is universal
+      // abuse protection, so Pro keeps it too.
       ai_messages_limit: -1,
-      ai_imports_limit: -1,
+      ai_imports_limit: 20,
     })
     .eq('id', userId);
 
@@ -93,8 +95,9 @@ async function handleSubscriptionUpdated(
     .from('profiles')
     .update({
       subscription_tier: isActive ? 'pro' : 'free',
-      ai_messages_limit: isActive ? -1 : 10,
-      ai_imports_limit: isActive ? -1 : 5,
+      // AI limits no longer vary by tier (unlimited chat, 20 OCR imports/day).
+      ai_messages_limit: -1,
+      ai_imports_limit: 20,
     })
     .eq('id', userId);
 
@@ -115,8 +118,8 @@ async function handleSubscriptionDeleted(
     .update({
       subscription_tier: 'free',
       stripe_subscription_id: null,
-      ai_messages_limit: 10,
-      ai_imports_limit: 5,
+      ai_messages_limit: -1,
+      ai_imports_limit: 20,
     })
     .eq('id', userId);
 
@@ -143,7 +146,7 @@ async function handleInvoicePaymentSucceeded(
     .update({
       subscription_tier: 'pro',
       ai_messages_limit: -1,
-      ai_imports_limit: -1,
+      ai_imports_limit: 20,
     })
     .eq('id', userId);
 

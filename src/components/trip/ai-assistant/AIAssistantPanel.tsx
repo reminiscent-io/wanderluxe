@@ -280,7 +280,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
 
   // Handle clear chat - also clear extraction messages
 
-  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.used >= usage.limit);
+  // limit === -1 means unlimited (the default for every signed-in account).
+  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.limit !== -1 && usage.used >= usage.limit);
 
   return (
     <>
@@ -363,7 +364,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
               isSending={isStreaming || isExtracting}
               placeholder={
                 isDisabled && usage?.used === usage?.limit
-                  ? (isAnonymous ? "Sign up free to keep chatting" : "Daily limit reached. Upgrade for unlimited messages.")
+                  ? (isAnonymous ? "Sign up free to keep chatting" : "Daily limit reached. Check back tomorrow.")
                   : "Ask about your trip..."
               }
             />

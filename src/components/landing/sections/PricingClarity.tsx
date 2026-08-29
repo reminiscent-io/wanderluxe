@@ -6,17 +6,18 @@ import { Link } from "react-router-dom";
 
 const freeFeatures = [
   "Unlimited trips",
+  "Unlimited AI chat with the Trip Assistant",
+  "20 document imports a day",
   "Share with anyone, to view or edit",
   "Timeline, calendar, and map views",
   "PDF export and calendar sync",
-  "10 AI messages a day",
 ];
 
 const proFeatures = [
   "Everything in Free",
-  "Unlimited AI messages",
-  "Unlimited document imports",
-  "Web search for dining and activities",
+  "Print Studio: keepsake itineraries designed by AI",
+  "A custom palette, type, and theme for every trip",
+  "Early access to new features",
   "Cancel anytime",
 ];
 
@@ -36,9 +37,9 @@ const PricingClarity = () => {
             Free for the parts that should be free
           </h2>
           <p className="font-sans text-lg text-earth-400 mt-4 max-w-xl mx-auto leading-relaxed">
-            Planning, sharing, and exporting cost nothing, on as many trips as
-            you like. The $3.99 covers the AI, which costs us money every time
-            you use it.
+            Planning, sharing, exporting, and AI chat cost nothing, on as many
+            trips as you like. The $3.99 unlocks the Print Studio — a keepsake
+            itinerary designed by AI around your trip.
           </p>
         </motion.div>
 
@@ -86,7 +87,7 @@ const PricingClarity = () => {
           >
             <Card className="p-8 h-full border-sunset-200 shadow-warm-lg relative">
               <div className="absolute -top-3 right-6 bg-sunset-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Unlimited AI
+                Print Studio
               </div>
               <p className="text-sm font-semibold uppercase tracking-wider text-sunset-600">
                 Pro

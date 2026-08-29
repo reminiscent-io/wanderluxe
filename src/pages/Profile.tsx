@@ -173,19 +173,19 @@ const UpgradeSection: React.FC<{ onUpgrade: () => Promise<void> }> = ({ onUpgrad
     <ul className="grid gap-2.5 text-sm text-earth-700 sm:grid-cols-2">
       <li className="flex items-start gap-2">
         <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-        Unlimited AI assistant messages
+        Print Studio: keepsake itineraries designed by AI
+      </li>
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        A custom palette, type, and theme for every trip
+      </li>
+      <li className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+        Early access to new features
       </li>
       <li className="flex items-start gap-2">
         <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
         Priority support
-      </li>
-      <li className="flex items-start gap-2">
-        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-        Advanced trip features
-      </li>
-      <li className="flex items-start gap-2">
-        <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-        Export trips to PDF
       </li>
     </ul>
     <Button
