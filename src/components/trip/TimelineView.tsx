@@ -6,7 +6,8 @@ import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
 import { Button } from '@/components/ui/button';
 // Aliased: a bare `Map` import shadows the global Map constructor used below.
-import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon } from 'lucide-react';
+import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon, Palette } from 'lucide-react';
+import PrintStudioDialog from './print-studio/PrintStudioDialog';
 import { useSearchParams } from 'react-router-dom';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
 import { toast } from 'sonner';
@@ -64,6 +65,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
+  const [isPrintStudioOpen, setIsPrintStudioOpen] = useState(false);
   // View lives in the URL so all three are deep-linkable and survive a refresh.
   // 'timeline' is the absent state, keeping existing bookmarks untouched.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -345,15 +347,24 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               open={isPdfExportOpen}
               onOpenChange={setIsPdfExportOpen}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => setIsPrintStudioOpen(true)}
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Print Studio
+            </Button>
           </div>
 
-          {/* Mobile: the same two actions as labelled buttons rather than an
+          {/* Mobile: the same actions as labelled buttons rather than an
               unlabelled overflow icon — nobody taps a menu they can't read. */}
-          <div className="flex w-full gap-2 sm:hidden">
+          <div className="grid w-full grid-cols-2 gap-2 sm:hidden">
             {canEdit && (
               <Button
                 variant="outline"
-                className="h-11 flex-1"
+                className="h-11"
                 onClick={() => setIsSyncSheetOpen(true)}
               >
                 <CalendarPlus className="mr-2 h-4 w-4" />
@@ -362,11 +373,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             )}
             <Button
               variant="outline"
-              className="h-11 flex-1"
+              className={`h-11 ${canEdit ? '' : 'col-span-2'}`}
               onClick={() => setIsPdfExportOpen(true)}
             >
               <FileDown className="mr-2 h-4 w-4" />
               Export PDF
+            </Button>
+            <Button
+              variant="outline"
+              className="col-span-2 h-11"
+              onClick={() => setIsPrintStudioOpen(true)}
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Print Studio
             </Button>
           </div>
         </header>
@@ -398,6 +417,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         {canEdit && (
           <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
         )}
+        <PrintStudioDialog tripId={tripId} open={isPrintStudioOpen} onOpenChange={setIsPrintStudioOpen} />
+
         {mapMounted && (
           <div className={itineraryView === 'map' ? undefined : 'hidden'} data-testid="map-view-host">
             <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Loading map…</div>}>
