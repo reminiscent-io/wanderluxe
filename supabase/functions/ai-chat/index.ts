@@ -3,11 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validateAndRewriteLinks } from './linkValidator.ts';
 import {
   enrichPlaceCards,
-  extractBalancedJson,
   parsePlaceCardsBlock,
   type PlaceCard,
   type PlaceResult,
 } from './placeCards.ts';
+import { hasCreateItemsMarker, parseCreateItemsBlock } from './createItems.ts';
 import { chooseForcedTool } from './toolForcing.ts';
 
 // Inlined from _shared/cors.ts to support single-function deployment
@@ -35,15 +35,6 @@ type SupabaseClient = ReturnType<typeof createClient>;
 // override can redirect traffic to a different (potentially unvetted) model.
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-
-type ExtractedItem = {
-  id: string;
-  itemType: string;
-  fields: Record<string, unknown>;
-  missingRequired: string[];
-  confidence: number;
-  status: 'pending';
-};
 
 type GeminiFunctionCall = { name: string; args: Record<string, unknown> };
 
@@ -190,58 +181,6 @@ async function findPlaces(query: string, apiKey: string): Promise<PlaceResult[]>
     }
   });
   return Promise.all(detailPromises);
-}
-
-const CREATE_ITEMS_REGEX = /```create_items\s*([\s\S]*?)```/;
-const CREATE_ITEMS_OPEN_REGEX = /```create_items\s*([\s\S]*)$/;
-
-function parseCreateItemsBlock(response: string): { cleanContent: string; extractedItems: ExtractedItem[] } {
-  // Try the strict closed-fence match first. Fall back to balanced-JSON
-  // recovery when only the opening fence is present (model was truncated
-  // at maxOutputTokens before it could emit the closing fence).
-  let jsonStr: string | null = null;
-  let matchedRange: RegExp | null = null;
-
-  const closedMatch = response.match(CREATE_ITEMS_REGEX);
-  if (closedMatch) {
-    jsonStr = closedMatch[1].trim();
-    matchedRange = CREATE_ITEMS_REGEX;
-  } else {
-    const openMatch = response.match(CREATE_ITEMS_OPEN_REGEX);
-    if (openMatch) {
-      const balanced = extractBalancedJson(openMatch[1]);
-      if (balanced) jsonStr = balanced;
-      matchedRange = CREATE_ITEMS_OPEN_REGEX;
-    }
-  }
-
-  if (!jsonStr || !matchedRange) {
-    return { cleanContent: response, extractedItems: [] };
-  }
-
-  let items: ExtractedItem[] = [];
-  try {
-    const parsed = JSON.parse(jsonStr);
-    const rawItems = Array.isArray(parsed) ? parsed : [parsed];
-    const requiredByType: Record<string, string[]> = {
-      accommodation: ['name', 'check_in_date', 'check_out_date'],
-      transportation: ['type', 'departure_location', 'arrival_location', 'departure_date'],
-      activity: ['name', 'date'],
-      reservation: ['restaurant_name', 'date', 'time']
-    };
-    items = rawItems.map((item: { itemType?: string; fields?: Record<string, unknown> } & Record<string, unknown>, idx: number) => {
-      const itemType = item.itemType || 'activity';
-      const fields = item.fields || item;
-      const required = requiredByType[itemType] || [];
-      const missingRequired = required.filter((k: string) => !fields[k]);
-      return { id: `ai-item-${idx}-${Date.now()}`, itemType, fields, missingRequired, confidence: 0.85, status: 'pending' as const };
-    });
-  } catch (e) {
-    console.error('Failed to parse create_items JSON:', e, 'raw:', jsonStr.slice(0, 500));
-  }
-
-  const cleanContent = response.replace(matchedRange, '').trim();
-  return { cleanContent, extractedItems: items };
 }
 
 type GeminiStreamState = { textContent: string; functionCalls: GeminiFunctionCall[] };
@@ -564,6 +503,7 @@ YOU MUST output this JSON block at the END of your response:
 \`\`\`create_items
 [{"itemType": "reservation", "fields": {"restaurant_name": "...", "date": "YYYY-MM-DD", "time": "HH:mm", ...}}]
 \`\`\`
+The block MUST be wrapped in triple backticks exactly as shown above. NEVER emit the create_items marker or its JSON as plain text — without the fences the item is not created and the user sees raw JSON.
 
 Item types and their fields:
 - reservation (restaurants/dining): {"restaurant_name", "date" (YYYY-MM-DD), "time" (HH:mm), "party_size", "address", "phone", "website" (booking URL when found), "notes"}
@@ -899,7 +839,7 @@ async function handleStreamResponse(
 
   // Strip structured blocks before URL validation so JSON payloads aren't touched.
   const { cleanContent: afterCreateItems, extractedItems } = parseCreateItemsBlock(rawFinal);
-  if (extractedItems.length === 0 && rawFinal.includes('```create_items')) {
+  if (extractedItems.length === 0 && hasCreateItemsMarker(rawFinal)) {
     console.warn(
       '[ai-chat] create_items marker detected but no items extracted. Response length:',
       rawFinal.length

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Components } from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { Copy, Check, Sparkles, FileText } from 'lucide-react';
@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 import ExtractionResultMessage from './ExtractionResultMessage';
 import PlaceCardCarousel from './PlaceCardCarousel';
 import { normalizeMarkdownListSpacing, safeHref } from './chatUrlSafety';
+import { stripCreateItemsForDisplay } from './chatContentSanitizer';
 import type { AIChatMessage, ExtractedItem, PlaceCard } from '@/types/ai-assistant';
 
 // Defined at module scope so the component functions aren't recreated on
@@ -157,6 +158,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const hasPlaceCards = !isUser && Array.isArray(message.placeCards) && message.placeCards.length > 0;
   const hasAttachment = !!message.attachmentPreviewUrl;
 
+  // Assistant content passes through the create_items display sanitizer so a
+  // structured block never renders as raw JSON — neither mid-stream nor from
+  // a historical message the server missed. User text is never touched.
+  const displayContent = useMemo(
+    () =>
+      isUser
+        ? message.content
+        : stripCreateItemsForDisplay(message.content, { streaming: isStreaming }),
+    [isUser, message.content, isStreaming]
+  );
+
   const getUserInitials = () => {
     if (fullName) {
       const parts = fullName.trim().split(/\s+/);
@@ -170,7 +182,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      await navigator.clipboard.writeText(displayContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -258,7 +270,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         ) : (
           // Regular assistant message
           <div className="w-full">
-            {message.content.trim().length > 0 && (
+            {displayContent.trim().length > 0 && (
               <div
                 className={cn(
                   'rounded-2xl px-4 py-2.5 text-sm overflow-hidden',
@@ -271,7 +283,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     remarkPlugins={markdownRemarkPlugins}
                     components={markdownComponents}
                   >
-                    {normalizeMarkdownListSpacing(message.content)}
+                    {normalizeMarkdownListSpacing(displayContent)}
                   </ReactMarkdown>
                   {isStreaming && (
                     <span className="inline-block w-1 h-[1.1em] ml-0.5 rounded-full bg-earth-400/60 animate-pulse" />
