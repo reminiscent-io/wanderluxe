@@ -580,7 +580,14 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       console.error('Send message error:', err);
       const errorResponse = err as StreamingErrorResponse;
 
-      if (errorResponse?.code === 'DAILY_LIMIT_REACHED') {
+      if (errorResponse?.code === 'RATE_LIMITED') {
+        // Human-pace guard (15 messages/minute) — not a paywall moment.
+        const wait = errorResponse.retryAfter && errorResponse.retryAfter > 0
+          ? ` Try again in ${errorResponse.retryAfter}s.`
+          : ' Try again in a moment.';
+        setError(`You're sending messages very quickly.${wait}`);
+        removeOptimisticMessage();
+      } else if (errorResponse?.code === 'DAILY_LIMIT_REACHED') {
         const usageInfo: AIUsageInfo = {
           used: errorResponse.used || 15,
           limit: errorResponse.limit || 15,

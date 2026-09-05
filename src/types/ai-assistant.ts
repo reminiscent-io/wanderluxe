@@ -168,6 +168,8 @@ export interface StreamingErrorResponse {
   limit?: number;
   used?: number;
   resetAt?: string;
+  /** Seconds until the per-minute rate limit window reopens (RATE_LIMITED). */
+  retryAfter?: number;
 }
 
 // SSE Event types

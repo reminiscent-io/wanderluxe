@@ -1120,6 +1120,44 @@ export type Database = {
           },
         ]
       }
+      trip_print_designs: {
+        Row: {
+          created_at: string
+          created_by: string
+          design: Json
+          id: string
+          model: string | null
+          theme_prompt: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          design: Json
+          id?: string
+          model?: string | null
+          theme_prompt?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          design?: Json
+          id?: string
+          model?: string | null
+          theme_prompt?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_print_designs_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["trip_id"]
+          },
+        ]
+      }
       trip_reminder_sends: {
         Row: {
           sent_at: string

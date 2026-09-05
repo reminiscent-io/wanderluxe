@@ -120,7 +120,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
               <ul className="space-y-2">
                 <li className="flex items-center gap-2 text-sm text-earth-600">
                   <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span>10 AI messages per day</span>
+                  <span>Unlimited AI chat</span>
                 </li>
                 <li className="flex items-center gap-2 text-sm text-earth-600">
                   <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -169,7 +169,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
           </div>
           <DialogTitle className="font-display text-xl leading-tight tracking-tight">You've reached today's limit</DialogTitle>
           <DialogDescription className="text-sand-600">
-            Free accounts include 10 messages per day.
+            Your messages will reset soon — or go Pro for the full WanderLuxe.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,11 +187,11 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-earth-600">
                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span>Unlimited Trip Assistant messages</span>
+                <span>Print Studio: keepsake itineraries designed by AI</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-earth-600">
                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span>Priority AI responses</span>
+                <span>A custom palette, type, and theme for every trip</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-earth-600">
                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />

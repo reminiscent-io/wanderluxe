@@ -967,6 +967,16 @@ async function handlePostMessage(
   const today = new Date().toISOString().split('T')[0];
   const { data: usageData } = await supabase.rpc('increment_ai_usage', { check_user_id: userId, check_date: today });
   if (usageData?.[0] && !usageData[0].allowed) {
+    // Chat is unlimited per day; the RPC only rejects for the per-minute
+    // human-pace rate limit (limit_type 'rate') or a per-user daily
+    // kill-switch an operator has set on the profile ('daily').
+    if (usageData[0].limit_type === 'rate') {
+      return jsonResponse({
+        code: 'RATE_LIMITED',
+        message: 'You are sending messages too quickly. Please wait a moment.',
+        retryAfter: usageData[0].retry_after_seconds ?? 60,
+      }, 429, cors);
+    }
     return jsonResponse({ code: 'DAILY_LIMIT_REACHED', message: 'Daily limit reached', used: usageData[0].current_count, limit: usageData[0].daily_limit }, 429, cors);
   }
 
