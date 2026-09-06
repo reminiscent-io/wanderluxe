@@ -34,7 +34,9 @@ const UsageMeter: React.FC<UsageMeterProps> = ({ usage, onUpgradeClick }) => {
     }
   };
 
-  if (isPro || isUnlimited) {
+  // Chat is unlimited for every signed-in account, so a meter row is noise
+  // for free users. Pro members keep their crown.
+  if (isPro) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-t border-amber-100">
         <Crown className="w-4 h-4 text-amber-500" />
@@ -42,6 +44,7 @@ const UsageMeter: React.FC<UsageMeterProps> = ({ usage, onUpgradeClick }) => {
       </div>
     );
   }
+  if (isUnlimited && !isAnon) return null;
 
   // Anonymous trial meter - compact single row with inline progress
   if (isAnon) {

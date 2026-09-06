@@ -41,6 +41,7 @@ const Guide = lazy(() => import("./pages/Guide"));
 const Admin = lazy(() => import("./pages/Admin"));
 const InviteRedeem = lazy(() => import("./pages/InviteRedeem"));
 const OauthConsent = lazy(() => import("./pages/OauthConsent"));
+const PrintItinerary = lazy(() => import("./pages/PrintItinerary"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -107,6 +108,12 @@ const App = () => {
                         <MyTrips />
                       </ProtectedRoute>
                     }
+                  />
+                  {/* Print Studio output — more specific than the TripDetails
+                      wildcard, so React Router ranks it first. */}
+                  <Route
+                    path="/trip/:tripId/print/:designId"
+                    element={<PrintItinerary />}
                   />
                   <Route
                     path="/trip/:tripId/*"

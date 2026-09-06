@@ -280,7 +280,8 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     setErrorBoundaryKey(prev => prev + 1);
   }, []);
 
-  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.used >= usage.limit);
+  // limit === -1 means unlimited (the default for every signed-in account).
+  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.limit !== -1 && usage.used >= usage.limit);
 
   return (
     <>
@@ -367,7 +368,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   isSending={isStreaming || isExtracting}
                   placeholder={
                     isDisabled && usage?.used === usage?.limit
-                      ? "Daily limit reached. Upgrade for unlimited messages."
+                      ? (usage?.tier === 'anon' ? "Sign up free to keep chatting" : "Daily limit reached. Check back tomorrow.")
                       : "Ask about your trip..."
                   }
                 />

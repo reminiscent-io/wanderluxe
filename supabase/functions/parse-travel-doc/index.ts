@@ -645,7 +645,28 @@ const authenticateRequest = async (req)=>{
   });
   const { data: userData, error: userErr } = await supa.auth.getUser();
   if (userErr || !userData?.user) return null;
-  return userData.user;
+  return { user: userData.user, supa };
+};
+
+// Daily OCR cap (default 20/day per user, every tier). Counted before the
+// Gemini call so a failed parse still consumes an attempt — this endpoint is
+// the most abusable one we run, so we count attempts, not successes.
+const checkImportAllowance = async (supa, userId)=>{
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supa.rpc("increment_ai_import_usage", {
+    check_user_id: userId,
+    check_date: today
+  });
+  if (error || !data?.[0]) {
+    console.error("increment_ai_import_usage failed", error);
+    // Fail open on infra errors: a broken counter should not take OCR down.
+    return { allowed: true };
+  }
+  return {
+    allowed: !!data[0].allowed,
+    used: data[0].current_count,
+    limit: data[0].daily_limit
+  };
 };
 
 const validateFile = (file)=>{
@@ -711,8 +732,9 @@ serve(async (req)=>{
     }
     if (req.method !== "POST") return err("Method not allowed", 405);
 
-    const user = await authenticateRequest(req);
-    if (!user) return err("Unauthorized", 401);
+    const auth = await authenticateRequest(req);
+    if (!auth) return err("Unauthorized", 401);
+    const { user, supa } = auth;
 
     const ctype = req.headers.get("content-type") || "";
     if (!ctype.includes("multipart/form-data")) {
@@ -723,6 +745,18 @@ serve(async (req)=>{
     const file = form.get("file");
     const fileError = validateFile(file);
     if (fileError) return err(fileError);
+
+    // Enforce the daily import cap only once the request carries a valid file,
+    // so malformed uploads don't burn an attempt.
+    const allowance = await checkImportAllowance(supa, user.id);
+    if (!allowance.allowed) {
+      return ok({
+        error: `Daily document import limit reached (${allowance.limit ?? 20} per day). Your imports reset at midnight UTC.`,
+        code: "DAILY_LIMIT_REACHED",
+        used: allowance.used,
+        limit: allowance.limit
+      }, 429);
+    }
 
     const itemType = String(form.get("itemType") ?? "").toLowerCase();
     const isMultiItemMode = !itemType || itemType === "auto";

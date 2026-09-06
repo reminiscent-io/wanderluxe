@@ -1,0 +1,661 @@
+/* Print Studio document — editorial keepsake layout.
+ *
+ * All colors and families arrive as CSS custom properties set inline by
+ * PrintDocument from the AI design spec:
+ *   --pd-primary --pd-secondary --pd-bg --pd-surface --pd-ink --pd-muted
+ *   --pd-accent --pd-display --pd-body
+ *
+ * Structure is carried by typography and hairline rules, not background
+ * fills, so the page survives printers that drop background graphics.
+ */
+
+.print-doc {
+  background: var(--pd-bg);
+  color: var(--pd-ink);
+  font-family: var(--pd-body);
+  font-size: 14.5px;
+  line-height: 1.58;
+  -webkit-font-smoothing: antialiased;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+
+  /* One measure for every left-aligned text block, ~66 characters at this
+     size. Centered cover elements set their own narrower widths on purpose. */
+  --pd-measure: 33rem;
+
+  /* Itinerary content is user-supplied: booking URLs, long confirmation codes
+     and single-token addresses all turn up. Without this the document scrolls
+     sideways on a phone. */
+  overflow-wrap: break-word;
+}
+
+/* `anywhere` rather than `break-word` on the elements whose intrinsic width
+   sizes a track — grid columns and table columns only shrink for `anywhere`. */
+.pd-item-title,
+.pd-item-details,
+.pd-item-location,
+.pd-table th,
+.pd-table td,
+.pd-ledger-row > span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.print-doc *,
+.print-doc *::before,
+.print-doc *::after {
+  box-sizing: border-box;
+}
+
+.pd-page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3.5rem 3rem;
+}
+
+/* ---------- shared primitives ---------- */
+
+/* Scoped rather than Tailwind's .sr-only so this stylesheet stays the single
+   source of truth for how the document renders. */
+.pd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pd-eyebrow {
+  font-family: var(--pd-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
+}
+
+.pd-section-label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+  break-after: avoid-page;
+}
+
+.pd-section-label::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--pd-primary) 30%, transparent);
+}
+
+.pd-section-label span {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--pd-primary);
+}
+
+/* ---------- cover ---------- */
+
+.pd-cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 88vh;
+  text-align: center;
+}
+
+.pd-cover-band {
+  color: var(--pd-accent);
+  opacity: 0.85;
+  margin-bottom: 3.2rem;
+}
+
+.pd-cover-title {
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 3.9rem);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  color: var(--pd-primary);
+  margin: 1.1rem auto 0;
+  max-width: 34rem;
+  text-wrap: balance;
+}
+
+.pd-cover-tagline {
+  font-size: 1.05rem;
+  color: var(--pd-muted);
+  margin: 1.3rem auto 0;
+  max-width: 28rem;
+  text-wrap: balance;
+}
+
+.pd-cover-route {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin: 2.6rem 0 0;
+}
+
+.pd-cover-route::before,
+.pd-cover-route::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--pd-primary) 35%, transparent);
+}
+
+.pd-cover-route span {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+  max-width: 30rem;
+}
+
+.pd-cover-dates {
+  margin-top: 1.1rem;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--pd-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-cover-photo {
+  margin: 2.8rem auto 0;
+  width: 100%;
+  max-width: 34rem;
+  border: 1px solid color-mix(in srgb, var(--pd-primary) 25%, transparent);
+  padding: 0.45rem;
+  background: var(--pd-surface);
+}
+
+.pd-cover-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Paired with the print-only max-height below. On screen there is no page to
+     overflow, so the photo keeps its full height. */
+  object-fit: cover;
+}
+
+.pd-cover-foot {
+  margin-top: auto;
+  padding-top: 3rem;
+}
+
+.pd-theme-plate {
+  display: inline-block;
+  border-top: 1px solid color-mix(in srgb, var(--pd-accent) 60%, transparent);
+  padding-top: 0.9rem;
+}
+
+.pd-theme-plate strong {
+  display: block;
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: var(--pd-secondary);
+}
+
+.pd-theme-plate em {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--pd-muted);
+  margin-top: 0.35rem;
+  max-width: 26rem;
+}
+
+/* ---------- intro ---------- */
+
+.pd-intro p {
+  font-size: 1.02rem;
+  line-height: 1.75;
+  max-width: var(--pd-measure);
+  margin: 0;
+}
+
+.pd-intro p::first-letter {
+  font-family: var(--pd-display);
+  font-size: 2.6em;
+  line-height: 0.85;
+  float: left;
+  padding: 0.08em 0.12em 0 0;
+  color: var(--pd-primary);
+}
+
+.pd-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem 2.6rem;
+  border-block: 1px solid color-mix(in srgb, var(--pd-primary) 28%, transparent);
+  padding: 1rem 0;
+  margin-top: 2.4rem;
+  break-inside: avoid;
+}
+
+.pd-fact {
+  min-width: 4.5rem;
+}
+
+.pd-fact dt {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
+  margin: 0 0 0.3rem;
+}
+
+.pd-fact dd {
+  margin: 0;
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 1.45rem;
+  color: var(--pd-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- days ---------- */
+
+.pd-day {
+  break-inside: auto;
+  margin-top: 3rem;
+}
+
+.pd-day-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.1rem;
+  align-items: baseline;
+  break-inside: avoid;
+  break-after: avoid-page;
+  border-top: 2px solid var(--pd-primary);
+  padding-top: 0.9rem;
+}
+
+.pd-day-num {
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 2.35rem;
+  line-height: 1;
+  color: var(--pd-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-day-date {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+}
+
+.pd-day-title {
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 1.25rem;
+  color: var(--pd-ink);
+  margin-top: 0.15rem;
+}
+
+.pd-day-caption {
+  grid-column: 2;
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--pd-muted);
+  margin-top: 0.5rem;
+  max-width: var(--pd-measure);
+  text-wrap: pretty;
+}
+
+.pd-items {
+  margin-top: 1.3rem;
+  display: grid;
+  gap: 1.05rem;
+}
+
+.pd-item {
+  display: grid;
+  grid-template-columns: 1.6rem 5.2rem 1fr;
+  gap: 0.85rem;
+  break-inside: avoid;
+}
+
+.pd-item-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--pd-accent) 70%, transparent);
+  border-radius: 999px;
+  color: var(--pd-accent);
+  margin-top: 0.1rem;
+}
+
+.pd-item-icon svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.pd-item-time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pd-muted);
+  padding-top: 0.28rem;
+  letter-spacing: 0.02em;
+}
+
+.pd-item-body {
+  min-width: 0;
+}
+
+.pd-item-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  /* Matches the details measure below, so title, cost, details and location
+     all share a right edge instead of the cost drifting to the page margin. */
+  max-width: var(--pd-measure);
+}
+
+.pd-item-title {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--pd-ink);
+}
+
+.pd-item-cost {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pd-secondary);
+  white-space: nowrap;
+}
+
+.pd-item-details {
+  font-size: 13px;
+  color: var(--pd-muted);
+  margin-top: 0.2rem;
+  max-width: var(--pd-measure);
+}
+
+.pd-item-location {
+  font-size: 12px;
+  color: var(--pd-muted);
+  margin-top: 0.15rem;
+}
+
+.pd-day-empty {
+  margin-top: 1.2rem;
+  font-size: 13px;
+  color: var(--pd-muted);
+}
+
+.pd-day-desc {
+  margin: 1.1rem 0 0;
+  font-size: 13.5px;
+  color: var(--pd-ink);
+  max-width: var(--pd-measure);
+}
+
+/* ---------- particulars & ledger ---------- */
+
+.pd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* Stacked tables in The Particulars — replaces per-table inline margins. */
+.pd-table + .pd-table {
+  margin-top: 2rem;
+}
+
+.pd-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
+  border-bottom: 1px solid color-mix(in srgb, var(--pd-primary) 35%, transparent);
+  padding: 0 0.6rem 0.45rem 0;
+}
+
+.pd-table td {
+  vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--pd-ink) 12%, transparent);
+  padding: 0.55rem 0.6rem 0.55rem 0;
+  color: var(--pd-ink);
+}
+
+.pd-table td.pd-cell-muted {
+  color: var(--pd-muted);
+  font-size: 12.5px;
+}
+
+.pd-table td.pd-cell-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pd-confirmation {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--pd-secondary);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.pd-ledger-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.42rem 0;
+}
+
+.pd-ledger-row .pd-leader {
+  flex: 1;
+  border-bottom: 1px dotted color-mix(in srgb, var(--pd-ink) 35%, transparent);
+  transform: translateY(-0.28em);
+}
+
+.pd-ledger-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-ledger-total {
+  border-top: 1px solid var(--pd-primary);
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  font-weight: 600;
+}
+
+.pd-ledger-note {
+  margin-top: 0.8rem;
+  font-size: 12.5px;
+  color: var(--pd-muted);
+}
+
+/* ---------- closing ---------- */
+
+.pd-closing {
+  text-align: center;
+  margin-top: 5.5rem;
+  break-inside: avoid;
+}
+
+.pd-closing-mark {
+  color: var(--pd-accent);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.1rem;
+}
+
+.pd-closing-line {
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: var(--pd-primary);
+  text-wrap: balance;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.pd-credit {
+  margin-top: 1.6rem;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
+}
+
+/* ---------- sections ---------- */
+
+.pd-section {
+  margin-top: 3.4rem;
+}
+
+.pd-section.pd-break-before {
+  break-before: page;
+  margin-top: 0;
+  padding-top: 3.4rem;
+}
+
+/* ---------- narrow screens ---------- */
+
+/* The phone is a primary surface for this document: people open the edition
+   link from the trip long before they ever print it. */
+@media (max-width: 40rem) {
+  .pd-page {
+    padding: 2.25rem 1.25rem;
+  }
+
+  /* The fixed 5.2rem time column left roughly 150px for the title on a 390px
+     phone, so every item name broke over two or three lines. Below this width
+     the time sits above the title and the body gets the full measure. */
+  .pd-item {
+    grid-template-columns: 1.6rem 1fr;
+    column-gap: 0.75rem;
+    row-gap: 0.1rem;
+  }
+
+  .pd-item-time {
+    grid-column: 2;
+    padding-top: 0.15rem;
+  }
+
+  .pd-item-body {
+    grid-column: 2;
+  }
+
+  .pd-day-head {
+    gap: 0.85rem;
+  }
+
+  .pd-day-num {
+    font-size: 2rem;
+  }
+
+  /* At this width the head's numeral indent costs the caption a whole line,
+     so it drops below the numeral and takes the full measure. */
+  .pd-day-caption {
+    grid-column: 1 / -1;
+    font-size: 0.97rem;
+    margin-top: 0.65rem;
+  }
+
+  .pd-facts {
+    gap: 0.9rem 1.8rem;
+  }
+
+  .pd-cover-route {
+    gap: 0.8rem;
+  }
+
+  .pd-cover-photo {
+    margin-top: 2.2rem;
+  }
+}
+
+/* ---------- print ---------- */
+
+@media print {
+  /* Deliberately no root font-size override. Almost every element here sets an
+     absolute size, so shrinking the root only shrank inherited text while
+     times, details and table cells stayed put — an uneven scale that read as a
+     rendering fault. The document prints at the size it was designed at. */
+  .pd-page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .pd-cover {
+    /* vh resolves against the page box when printing, so this is one page. */
+    min-height: 100vh;
+    break-after: page;
+  }
+
+  .pd-cover-band {
+    margin-bottom: 2.4rem;
+  }
+
+  /* A tall cover photo would otherwise push the cover foot onto a second page,
+     leaving page 2 holding one line of type. Crop instead of overflowing. */
+  .pd-cover-photo img {
+    max-height: 84mm;
+  }
+
+  .pd-cover-foot {
+    padding-top: 2rem;
+  }
+
+  .pd-cover-title {
+    font-size: 3.1rem;
+  }
+
+  .pd-day,
+  .pd-section {
+    margin-top: 2.2rem;
+  }
+
+  /* Blocks that mean nothing when split across the fold. */
+  .pd-table tr,
+  .pd-ledger-row,
+  .pd-theme-plate,
+  .pd-fact {
+    break-inside: avoid;
+  }
+
+  /* A table continuing onto the next page keeps its column headings. */
+  .pd-table thead {
+    display: table-header-group;
+  }
+
+  .pd-ledger-total {
+    break-before: avoid;
+  }
+
+  .pd-intro p,
+  .pd-day-desc,
+  .pd-item-details,
+  .pd-ledger-note {
+    orphans: 2;
+    widows: 2;
+  }
+}
+
+@page {
+  margin: 15mm 16mm;
+}

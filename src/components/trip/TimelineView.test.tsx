@@ -30,6 +30,7 @@ vi.mock('@/hooks/useFirstRun', () => ({
   default: () => ({ isUnseen: false, dismiss: vi.fn() }),
 }));
 vi.mock('./ExportPdfButton', () => ({ default: () => null }));
+vi.mock('./print-studio/PrintStudioDialog', () => ({ default: (): null => null }));
 vi.mock('./calendar/CalendarSyncSheet', () => ({ default: () => null }));
 vi.mock('./calendar/TripCalendarView', () => ({
   default: () => <div data-testid="calendar-view" />,

@@ -535,7 +535,7 @@ router.get('/api/ai-imports/usage', async (req: Request, res: Response) => {
       // Return default if function doesn't exist yet or error
       return res.json({
         used: 0,
-        limit: 5,
+        limit: 20,
         tier: 'free',
         resetAt: new Date(new Date().setUTCDate(new Date().getUTCDate() + 1)).toISOString()
       });

@@ -41,10 +41,10 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 - **Database**: Supabase (PostgreSQL) with Row Level Security (RLS)
 - **Real-time**: Supabase real-time subscriptions via WebSocket
 - **Backend**: Express.js + Supabase Edge Functions (Deno)
-- **AI**: Google Gemini 2.5 Flash (hardcoded in Edge Function + Express; no env override)
+- **AI**: Google Gemini 2.5 Flash for chat + doc parsing (hardcoded in Edge Function + Express; no env override); OpenAI (default `gpt-4.1`, `OPENAI_MODEL` override) for Print Studio design generation
 - **Calendar**: FullCalendar (trip calendar view) + ical-generator (token-gated iCal feed)
 - **MCP**: built-in Model Context Protocol server (`server/routes/mcp.ts`, OAuth 2.1 via Supabase)
-- **Payments**: Stripe (Pro subscription, $3.99/mo — gates AI usage limits)
+- **Payments**: Stripe (Pro subscription, $3.99/mo — gates the Print Studio; AI chat is unlimited on every tier)
 - **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), SendGrid (share emails), Mailgun (trip reminders), Unsplash, ExchangeRate-API
 - **Analytics**: PostHog + Google Analytics/GTM, consent-gated via `ConsentContext`
 - **Testing**: Vitest
@@ -95,9 +95,11 @@ src/
 server/
 ├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving)
 ├── dev-server.ts         # Development server config
-├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary
+├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
+│                         #   printDesign (Print Studio OpenAI call + trip payload)
 └── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights,
-                          #   invite preview, share notification, account export/deletion)
+                          #   invite preview, share notification, account export/deletion,
+                          #   Print Studio design generation)
 
 supabase/
 ├── functions/            # Serverless Deno functions (14 functions + _shared)
@@ -166,7 +168,7 @@ PostgreSQL database
 - Structured outputs: ` ```create_items ` blocks add accommodations/transportation/activities/reservations to the itinerary; ` ```place_cards ` render rich cards with "Add to trip" and, for stays, "Book on Expedia" affiliate links
 - Document extraction: `parse-travel-doc` Edge Function (Gemini vision OCR, images/PDFs ≤15 MB, up to 10 items per document)
 - Data: `ai_chat_threads` + `ai_chat_messages` tables; `user_ai_usage` tracks usage
-- Limits: anonymous visitors get a 5-message trial on public trips (`/assistant/anon`); Free = 10 messages + 5 doc imports/day (429 `DAILY_LIMIT_REACHED`); Pro = unlimited (-1). Enforced via `increment_ai_usage`/`get_ai_usage` RPCs, surfaced by `UsageMeter` + `PaywallModal`
+- Limits: anonymous visitors get a 5-message trial on public trips (`/assistant/anon`). Signed-in chat is **unlimited on every tier** but rate-limited to **15 messages/minute** (429 `RATE_LIMITED` with `retryAfter`) as a human-pace guard; doc imports (OCR) are capped at **20/day for every tier** (429 `DAILY_LIMIT_REACHED`), enforced inside `parse-travel-doc` itself. Both enforced via the `increment_ai_usage`/`increment_ai_import_usage` RPCs (single source of truth; profile columns `ai_messages_limit`/`ai_imports_limit` remain per-user operator overrides — `-1` = unlimited, and a non-negative message limit re-enables a daily cap as a kill-switch). `PaywallModal` now pitches the Print Studio
 - Context: Includes trip details in system prompt for location-specific recommendations
 
 #### 6. **Component Patterns**
@@ -201,7 +203,7 @@ PostgreSQL database
 - **Layout is device-independent**: same output on mobile/desktop; Letter/A4 is a user option
 - **Tests**: `npx vitest run src/services/pdf` (snapshots + theme invariants); `PDF_PREVIEW=1 npx vitest run src/services/pdf/render.test.ts` writes `node_modules/.cache/wanderluxe-pdf-preview.pdf`
 
-#### 8. **Database Schema** (29 tables)
+#### 8. **Database Schema** (30 tables)
 Key tables:
 - `trips` - Trip records with dates, budget, destination, default timezone, calendar-feed token
 - `trip_days` - Days within a trip
@@ -213,7 +215,8 @@ Key tables:
 - `trip_invite_links` - Link-based invites (permission + optional expiry)
 - `profiles` - User profiles (auto-created on signup; holds `subscription_tier` + AI limits)
 - `ai_chat_threads` / `ai_chat_messages` - AI conversation history
-- `user_ai_usage` - AI usage tracking
+- `user_ai_usage` - AI usage tracking (daily message/import counts + per-minute rate-limit window)
+- `trip_print_designs` - Print Studio design specs (AI palette/fonts/motif/copy per trip; written only by the Express route)
 - `currencies` / `exchange_rates` - Multi-currency support
 - `weather_cache` - Cached weather data (6h TTL)
 - `timezone_cache` - place_id → IANA timezone (permanent)
@@ -276,7 +279,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 11. **Stripe Integration**
 - Pro subscription billing via `server/routes/stripe.ts` — checkout, webhook, billing portal, cancel-at-period-end + reactivate (UI in `Profile.tsx`)
-- **WanderLuxe Pro = $3.99/mo**; the webhook sets `profiles.subscription_tier` and AI caps (Pro: `ai_messages_limit=-1`, `ai_imports_limit=-1`; Free: 10 messages + 5 imports/day)
+- **WanderLuxe Pro = $3.99/mo** and gates the **Print Studio** (see §23). The webhook sets `profiles.subscription_tier`; AI limits are identical on both tiers (`ai_messages_limit=-1`, `ai_imports_limit=20`) — chat is free product-wide, the OCR cap is universal abuse protection
 - Stripe SDK v20+ in dependencies
 
 #### 12. **Admin Dashboard**
@@ -353,6 +356,14 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 - `src/components/discovery/DiscoverHint.tsx` + `useFirstRun` — a single dismissible line that appears once, in place, beside the feature it describes. Deliberately not a tour
 - Keys (`DiscoveryKey`): `map-view`, `calendar-sync`, `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
+#### 23. **Print Studio (Pro feature)**
+- The paid feature: an AI-art-directed printable keepsake itinerary. Entry: "Print Studio" button in the TimelineView toolbar → `PrintStudioDialog` (`src/components/trip/print-studio/`) — Pro members enter an optional theme and generate; free users see the upsell (checkout); anyone with trip access can open existing editions
+- **Division of labor is the design invariant**: the model (ChatGPT API) is creative director only — it returns a `PrintDesignSpec` (palette, font-pairing id, motif id, editorial copy incl. per-day captions) through a strict json_schema; the renderer draws **every itinerary item from the DB** via the same `fetchPdfTripData` module the PDF export uses, so model output can degrade style, never content
+- **Shared contract**: `src/lib/printDesign/spec.ts` (dependency-free; imported by both client and server) — registries (`FONT_PAIRINGS` → Google Fonts pairs, `MOTIFS`) + `sanitizePrintDesign`, which clamps model output: hex normalization, light-background + WCAG contrast enforcement (ink ≥ 4.5:1, muted/primary ≥ 3:1, falling back to `FALLBACK_PALETTE` members), registry-id fallbacks, copy length clamps, captions restricted to real trip dates
+- **Server**: `server/routes/print-design.ts` (`POST /api/trips/:tripId/print-design`) — JWT auth + trip access + `subscription_tier === 'pro'` + 10 generations/user/day (counted from `trip_print_designs`); `server/lib/printDesign.ts` serializes the full trip server-side (clamped: ≤40 days, ≤20 activities/day), calls OpenAI chat completions with `response_format: json_schema (strict)`, sanitizes, stores the row. User theme text is quoted and pinned as "styling preference only" (prompt-injection blast radius = copy text, which is length-clamped)
+- **Output page**: `/trip/:tripId/print/:designId` (`src/pages/PrintItinerary.tsx`, lazy) — loads the design row (RLS: `can_access_trip`) + trip data, injects the pairing's Google Fonts, renders `PrintDocument` (`print-studio/PrintDocument.tsx` + `printDocument.css`, stroke-based SVG `motifs.tsx`). Printing = native browser dialog (`window.print()`); **AppLayout deliberately renders no nav/footer on `/trip/*/print/*`** so app chrome never reaches the printed page. Layout carries structure in type + hairline rules, not background fills, so it survives printers that drop backgrounds
+- Rollout note: designs are stored, so an edition stays openable even if generation is later disabled; deleting is creator-only (RLS)
+
 ## Common Development Tasks
 
 ### Adding a New Trip Feature
@@ -406,6 +417,9 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 | `server/routes/stripe.ts` | Stripe payment routes |
 | `server/routes/mcp.ts` + `server/lib/mcpTools.ts` | MCP server & 20-tool registry |
 | `server/routes/calendar.ts` + `server/lib/icalFeed.ts` | Token-gated iCal feed |
+| `server/routes/print-design.ts` + `server/lib/printDesign.ts` | Print Studio generation (OpenAI, Pro-gated) |
+| `src/lib/printDesign/spec.ts` | Print Studio design-spec contract + sanitizer (shared client/server) |
+| `components/trip/print-studio/` | Print Studio dialog, document renderer, motifs |
 | `components/trip/calendar/` | FullCalendar view, sync sheet, calendar hooks |
 | `components/trip/map/` | Trip map view — stop model, route playback, geocoding |
 | `components/trip/day/components/timeline-utils.ts` | Pure timeline logic (periods, grouping, categories) |
@@ -449,6 +463,8 @@ Required in `.env`:
 - `VITE_ADMIN_EMAIL` - Admin user email
 - `VITE_PARSE_TRAVEL_DOC_URL` - Travel document parsing endpoint
 - `MCP_PUBLIC_BASE_URL` - Public base URL advertised by the MCP server (OAuth discovery)
+- `OPENAI_API_KEY` - (server) ChatGPT API key for Print Studio design generation (`server/routes/print-design.ts`); the route 503s without it
+- `OPENAI_MODEL` - (optional, server) overrides the Print Studio model (default `gpt-4.1`)
 - `VITE_GOOGLE_MAPS_MAP_ID` - (optional) Cloud map ID for the map view; `resolveMapId()` falls back to a demo ID. A Cloud map ID disables inline marker styles
 - `VITE_PLACE_PHOTO_CACHE_TTL_MS` - (optional) TTL for the client-side place-photo cache
 - `SITE_URL` - (server) canonical site URL used by sitemap/prerender/share links
