@@ -231,9 +231,10 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     return () => subscription.unsubscribe();
   }, [getAuthToken]);
 
-  // Chat messages are not auto-fetched — users opt in via `loadHistory`. The
-  // cache still backs optimistic adds and assistant streaming responses, so we
-  // keep the query wired up but disabled.
+  // The messages query itself never fetches (enabled: false) — it is the
+  // cache backing optimistic adds, streamed responses, and the pages that
+  // `loadHistory` / `loadMoreMessages` merge in. History restore happens via
+  // the auto-load effect below `loadHistory`, not through this queryFn.
   const {
     data: messagesData,
     isLoading: isLoadingMessages
@@ -248,7 +249,9 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
     staleTime: 30000
   });
 
-  // Load the most recent PAGE_SIZE messages when the user opts in.
+  // Load the most recent PAGE_SIZE messages. Auto-invoked on mount for
+  // signed-in users (see the effect below); also wired to the "Show older
+  // chats" control as a manual fallback when the automatic load failed.
   const loadHistory = useCallback(async (): Promise<void> => {
     if (historyLoaded || isLoadingMore || isAnonymous) return;
 
@@ -298,6 +301,26 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
       setIsLoadingMore(false);
     }
   }, [tripId, historyLoaded, isLoadingMore, isAnonymous, getAuthToken, queryClient]);
+
+  // Restore the persisted conversation as soon as the assistant mounts for a
+  // signed-in user. Mobile browsers routinely evict backgrounded tabs, so
+  // switching apps and returning remounts React with an empty in-memory
+  // cache even though every message is saved server-side — without this the
+  // chat looked wiped. One attempt per auth state: the ref stops a failed
+  // fetch from retry-looping (the "Show older chats" control stays visible
+  // as the manual fallback), and it resets when auth changes so a user who
+  // signs in mid-session still gets their history.
+  const historyAutoloadAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    historyAutoloadAttemptedRef.current = false;
+  }, [isAnonymous]);
+
+  useEffect(() => {
+    if (isAnonymous || historyLoaded || historyAutoloadAttemptedRef.current) return;
+    historyAutoloadAttemptedRef.current = true;
+    void loadHistory();
+  }, [isAnonymous, historyLoaded, loadHistory]);
 
   // Load older messages using cursor-based pagination anchored on the oldest
   // message currently in the cache. Stable across new messages being sent.
@@ -681,7 +704,13 @@ export function useAIAssistant({ tripId, onLimitReached, onItemsExtracted }: Use
 
   return {
     messages: messagesData?.messages || [],
-    isLoading: isLoadingMessages,
+    // The initial history restore (isLoadingMore before historyLoaded flips)
+    // presents as a full "Loading conversation…" state rather than a flash
+    // of the empty prompt — but only while nothing is on screen yet. When
+    // the cache is already warm (assistant re-opened in the same session)
+    // the refresh merges silently behind the visible messages.
+    isLoading: isLoadingMessages ||
+      (isLoadingMore && !historyLoaded && (messagesData?.messages?.length ?? 0) === 0),
     isStreaming,
     streamingContent,
     error,
