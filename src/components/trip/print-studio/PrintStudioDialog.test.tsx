@@ -108,6 +108,32 @@ describe('PrintStudioDialog — theme field', () => {
   });
 });
 
+describe('PrintStudioDialog — theme suggestions', () => {
+  it('fills the field from a chip and clears it when the same chip is tapped again', () => {
+    renderDialog();
+    const input = screen.getByLabelText(/theme/i) as HTMLInputElement;
+    const chip = screen.getByRole('button', { name: 'Art deco poster' });
+
+    fireEvent.click(chip);
+    expect(input.value).toBe('Art deco poster');
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(chip);
+    expect(input.value).toBe('');
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('leaves every chip unpressed once the theme is typed by hand', () => {
+    renderDialog();
+    fireEvent.change(screen.getByLabelText(/theme/i), { target: { value: 'Art deco' } });
+
+    screen
+      .getAllByRole('button', { pressed: false })
+      .forEach((b) => expect(b).toHaveAttribute('aria-pressed', 'false'));
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0);
+  });
+});
+
 describe('PrintStudioDialog — non-Pro', () => {
   it('shows the upsell but still opens editions the trip already has', async () => {
     tier = 'free';

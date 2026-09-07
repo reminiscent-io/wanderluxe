@@ -33,8 +33,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, onOpenAutoFocus, mobileSheet = false, ...props }, ref) => {
   const centered =
     "fixed left-[50%] top-[50%] z-[250] flex flex-col w-[95vw] max-w-[95vw] sm:max-w-[600px] max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-warm-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg";
+  // A sheet sits flush against the bottom edge, so unlike the centred variant
+  // (whose max-height already subtracts the safe-area insets) it has to pad
+  // for the home indicator itself, or the footer row lands under it on iOS.
   const sheet =
-    "fixed inset-x-0 bottom-0 top-auto z-[250] flex flex-col w-full max-w-full max-h-[92dvh] gap-4 border border-b-0 bg-background p-4 shadow-warm-lg duration-200 rounded-t-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95vw] sm:max-w-[600px] sm:p-6 sm:rounded-lg sm:border-b sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95";
+    "fixed inset-x-0 bottom-0 top-auto z-[250] flex flex-col w-full max-w-full max-h-[92dvh] gap-4 border border-b-0 bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-warm-lg duration-200 rounded-t-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[95vw] sm:max-w-[600px] sm:p-6 sm:pb-6 sm:rounded-lg sm:border-b sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95";
   return (
     <DialogPortal>
       <DialogOverlay />
