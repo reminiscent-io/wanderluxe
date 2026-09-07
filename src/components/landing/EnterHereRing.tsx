@@ -26,7 +26,7 @@ const EnterHereRing = () => {
   return (
     <div
       aria-hidden="true"
-      className="absolute left-1/2 top-1/2 aspect-square w-[calc(100%+3.5rem)] -translate-x-1/2 -translate-y-1/2 text-white/75 transition-colors duration-300 group-hover:text-white sm:w-[calc(100%+6rem)]"
+      className="absolute left-1/2 top-1/2 aspect-square w-[calc(100%+2.8rem)] -translate-x-1/2 -translate-y-1/2 text-white/75 transition-colors duration-300 group-hover:text-white sm:w-[calc(100%+4.8rem)]"
     >
       <svg
         viewBox="0 0 200 200"
