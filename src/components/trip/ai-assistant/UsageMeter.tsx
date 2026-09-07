@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Zap, Crown, UserPlus } from 'lucide-react';
+import { Zap, UserPlus } from 'lucide-react';
 import type { AIUsageInfo } from '@/types/ai-assistant';
 
 interface UsageMeterProps {
@@ -34,16 +34,8 @@ const UsageMeter: React.FC<UsageMeterProps> = ({ usage, onUpgradeClick }) => {
     }
   };
 
-  // Chat is unlimited for every signed-in account, so a meter row is noise
-  // for free users. Pro members keep their crown.
-  if (isPro) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-t border-amber-100">
-        <Crown className="w-4 h-4 text-amber-500" />
-        <span className="text-xs font-medium text-amber-700">Pro · unlimited messages</span>
-      </div>
-    );
-  }
+  // Chat is unlimited for every signed-in account, so a meter row is noise for
+  // free and Pro members alike. Tier is shown once, next to the name in the nav.
   if (isUnlimited && !isAnon) return null;
 
   // Anonymous trial meter - compact single row with inline progress
