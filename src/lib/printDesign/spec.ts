@@ -11,6 +11,8 @@
 // output before storing it) and the client renderer (registries → CSS). It
 // must stay dependency-free and DOM-free.
 
+import { findSlop, repairCopy, type SlopFinding } from './voice';
+
 export interface PrintPalette {
   /** Deep brand hue — headings, day numerals, section labels. */
   primary: string;
@@ -216,11 +218,30 @@ export const FALLBACK_PALETTE: PrintPalette = {
   accent: '#b0562e',
 };
 
-function cleanText(v: unknown, maxLen: number, fallback = ''): string {
+/**
+ * Which voice checks a copy field answers to.
+ *  - 'prose'  full sentences the reader reads as writing; house voice applies.
+ *  - 'names'  real place names the traveler chose (the cover route line).
+ *             Repaired but never rejected — "Foster City · Elevate Lounge" is
+ *             the itinerary, not the model's prose, and content never degrades.
+ */
+type CopyMode = 'prose' | 'names';
+
+/**
+ * Collapse, repair, judge, clamp. Prose that breaks the house voice
+ * (src/lib/printDesign/voice.ts) is dropped to its fallback rather than
+ * printed: the renderer omits an empty tagline, intro or caption entirely, and
+ * a page with one fewer line beats a page with "embark on an unforgettable
+ * journey" set in 24pt on paper someone paid for.
+ */
+function cleanCopy(v: unknown, maxLen: number, mode: CopyMode, fallback = ''): string {
   if (typeof v !== 'string') return fallback;
-  const t = v.replace(/\s+/g, ' ').trim();
-  if (!t) return fallback;
-  return t.length > maxLen ? `${t.slice(0, maxLen - 1).trimEnd()}…` : t;
+  const collapsed = v.replace(/\s+/g, ' ').trim();
+  if (!collapsed) return fallback;
+  const repaired = repairCopy(collapsed);
+  if (!repaired) return fallback;
+  if (mode === 'prose' && findSlop(repaired).length > 0) return fallback;
+  return repaired.length > maxLen ? `${repaired.slice(0, maxLen - 1).trimEnd()}…` : repaired;
 }
 
 function cleanHex(v: unknown, fallback: string): string {
@@ -241,6 +262,8 @@ function cleanHex(v: unknown, fallback: string): string {
  *    style, never legibility.
  *  - fontPairing and motif are known registry ids
  *  - all copy is single-line-ish, length-clamped, never empty for required slots
+ *  - prose copy clears the house voice: banned words, travel clichés and AI
+ *    sentence shapes are dropped to the field's fallback (see ./voice.ts)
  *  - dayCaptions only contains keys from `dayDates`
  */
 export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): PrintDesignSpec {
@@ -296,7 +319,7 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
   const dayCaptions: Record<string, string> = {};
   const addCaption = (date: unknown, caption: unknown) => {
     if (typeof date !== 'string' || !validDates.has(date)) return;
-    const text = cleanText(caption, 140);
+    const text = cleanCopy(caption, 140, 'prose');
     if (text) dayCaptions[date] = text;
   };
   if (Array.isArray(r.dayCaptions)) {
@@ -312,18 +335,69 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
   }
 
   return {
-    themeName: cleanText(r.themeName, 60, 'Traveler’s Edition'),
-    themeRationale: cleanText(r.themeRationale, 240),
+    themeName: cleanCopy(r.themeName, 60, 'prose', 'Traveler’s Edition'),
+    themeRationale: cleanCopy(r.themeRationale, 240, 'prose'),
     palette: { primary, secondary, background, surface, ink, muted, accent },
     fontPairing,
     motif,
     cover: {
-      title: cleanText(rawCover.title, 80, 'The Itinerary'),
-      subtitle: cleanText(rawCover.subtitle, 120),
-      tagline: cleanText(rawCover.tagline, 160),
+      title: cleanCopy(rawCover.title, 80, 'prose', 'The Itinerary'),
+      subtitle: cleanCopy(rawCover.subtitle, 120, 'names'),
+      tagline: cleanCopy(rawCover.tagline, 160, 'prose'),
     },
-    intro: cleanText(r.intro, 600),
+    intro: cleanCopy(r.intro, 600, 'prose'),
     dayCaptions,
-    closing: cleanText(r.closing, 200, 'Safe travels.'),
+    closing: cleanCopy(r.closing, 200, 'prose', 'Safe travels.'),
   };
+}
+
+/* =========================================================================
+   Copy audit — observability for what the voice gate dropped
+   ========================================================================= */
+
+/** One prose field the model wrote, paired with the rules it broke. */
+export interface CopyAudit {
+  /** Dotted path into the raw response, e.g. "cover.tagline". */
+  field: string;
+  findings: SlopFinding[];
+}
+
+/**
+ * Report which prose fields sanitizePrintDesign will drop, and why. Purely
+ * observational — the server logs this so a drift in model voice shows up as
+ * blank taglines with a reason attached, rather than as silence.
+ */
+export function auditPrintCopy(raw: unknown): CopyAudit[] {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const cover = (r.cover && typeof r.cover === 'object' ? r.cover : {}) as Record<string, unknown>;
+
+  const fields: Array<[string, unknown]> = [
+    ['themeName', r.themeName],
+    ['themeRationale', r.themeRationale],
+    ['cover.title', cover.title],
+    ['cover.tagline', cover.tagline],
+    ['intro', r.intro],
+    ['closing', r.closing],
+  ];
+
+  if (Array.isArray(r.dayCaptions)) {
+    for (const entry of r.dayCaptions) {
+      if (entry && typeof entry === 'object') {
+        const e = entry as Record<string, unknown>;
+        fields.push([`dayCaptions.${String(e.date ?? '?')}`, e.caption]);
+      }
+    }
+  } else if (r.dayCaptions && typeof r.dayCaptions === 'object') {
+    for (const [date, caption] of Object.entries(r.dayCaptions as Record<string, unknown>)) {
+      fields.push([`dayCaptions.${date}`, caption]);
+    }
+  }
+
+  const audits: CopyAudit[] = [];
+  for (const [field, value] of fields) {
+    if (typeof value !== 'string' || !value.trim()) continue;
+    const findings = findSlop(repairCopy(value.replace(/\s+/g, ' ').trim()));
+    if (findings.length > 0) audits.push({ field, findings });
+  }
+  return audits;
 }

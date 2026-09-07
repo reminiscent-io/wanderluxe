@@ -9,11 +9,13 @@
 // before anything is stored.
 
 import {
+  auditPrintCopy,
   FONT_PAIRINGS,
   MOTIFS,
   sanitizePrintDesign,
   type PrintDesignSpec,
 } from '../../src/lib/printDesign/spec';
+import { VOICE_RULES } from '../../src/lib/printDesign/voice';
 
 // ChatGPT API (OpenAI). Default model is pinned; OPENAI_MODEL overrides for
 // ops flexibility without a deploy.
@@ -137,7 +139,9 @@ export function buildDesignMessages(
     '- a font pairing id from this menu (nothing else):',
     FONT_MENU,
     '- a decorative motif from: ' + MOTIF_MENU,
-    '- editorial copy: a cover title (evocative, not just the destination name), a subtitle listing the places on the route separated by " · ", a one-line tagline, a warm 2–3 sentence intro, one short caption per day (each under 120 characters, specific to that day\'s plan — mention a real activity or place from that day), and a short closing line.',
+    '- editorial copy: a cover title (specific to this trip, not just the destination name), a subtitle listing the places on the route separated by " · ", a one-line tagline, a warm 2–3 sentence intro, one short caption per day (each under 120 characters, naming a real activity, place or time from that day\'s plan), and a short closing line.',
+    '',
+    VOICE_RULES,
     '',
     `Write one caption for each of these dates exactly: ${dayDates.join(', ') || '(no days yet)'}.`,
     'Respond only with the JSON the schema demands. All copy in English unless the trip data itself is in another language.',
@@ -284,6 +288,19 @@ export async function generatePrintDesign(
     parsed = JSON.parse(content);
   } catch {
     throw new PrintDesignError('The design service returned malformed JSON', 502);
+  }
+
+  // Log what the voice gate is about to drop. A blank tagline on a printed
+  // page is a quiet failure otherwise, and a run of these is the signal that
+  // the prompt or the model has drifted.
+  const audits = auditPrintCopy(parsed);
+  if (audits.length > 0) {
+    console.warn(
+      'print-design copy failed the house voice:',
+      audits
+        .map((a) => `${a.field} [${a.findings.map((f) => `${f.rule}: "${f.match}"`).join('; ')}]`)
+        .join(' | ')
+    );
   }
 
   return { design: sanitizePrintDesign(parsed, dayDates), model: OPENAI_MODEL };

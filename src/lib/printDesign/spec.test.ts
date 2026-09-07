@@ -7,6 +7,7 @@ import {
   isHexColor,
   relativeLuminance,
   sanitizePrintDesign,
+  auditPrintCopy,
 } from './spec';
 
 const DATES = ['2026-06-01', '2026-06-02', '2026-06-03'];
@@ -199,6 +200,71 @@ describe('sanitizePrintDesign', () => {
     expect(spec.themeName.length).toBeLessThanOrEqual(60);
     expect(spec.themeName.endsWith('…')).toBe(true);
     expect(spec.intro).toBe('line one two');
+  });
+});
+
+describe('house voice', () => {
+  const withCopy = (copy: Record<string, unknown>) =>
+    sanitizePrintDesign({ ...VALID_RAW, ...copy }, DATES);
+
+  it('drops a sloppy tagline rather than printing it', () => {
+    const out = withCopy({ cover: { ...VALID_RAW.cover, tagline: 'An unforgettable tapestry of vibrant island life.' } });
+    expect(out.cover.tagline).toBe('');
+    // The rest of the design is untouched — one bad line is not a bad design.
+    expect(out.cover.title).toBe('Ten Days in the Aegean');
+    expect(out.palette.primary).toBe('#1d3557');
+  });
+
+  it('falls back on required copy slots instead of blanking them', () => {
+    const out = withCopy({
+      cover: { ...VALID_RAW.cover, title: 'Embark on a Transformative Escape' },
+      closing: 'Ultimately, a journey of a lifetime.',
+      themeName: 'Meticulous Realm',
+    });
+    expect(out.cover.title).toBe('The Itinerary');
+    expect(out.closing).toBe('Safe travels.');
+    expect(out.themeName).toBe('Traveler’s Edition');
+  });
+
+  it('drops only the captions that break the rules', () => {
+    const out = sanitizePrintDesign(
+      {
+        ...VALID_RAW,
+        dayCaptions: {
+          '2026-06-01': 'Late lunch at Kiki’s, then the 6pm ferry.',
+          '2026-06-02': 'A breathtaking day showcasing the island’s charm.',
+        },
+      },
+      DATES
+    );
+    expect(out.dayCaptions['2026-06-01']).toBe('Late lunch at Kiki’s, then the 6pm ferry.');
+    expect(out.dayCaptions['2026-06-02']).toBeUndefined();
+  });
+
+  it('never rejects the route line, which is the traveler’s own place names', () => {
+    const out = withCopy({
+      cover: { ...VALID_RAW.cover, subtitle: 'Foster City · The Beacon · Vibrant Coffee' },
+    });
+    expect(out.cover.subtitle).toBe('Foster City · The Beacon · Vibrant Coffee');
+  });
+
+  it('repairs em dashes instead of dropping the line', () => {
+    const out = withCopy({ cover: { ...VALID_RAW.cover, tagline: 'Salt air — white stone — long lunches' } });
+    expect(out.cover.tagline).toBe('Salt air, white stone, long lunches');
+  });
+
+  it('audits the raw response for logging without changing it', () => {
+    const audit = auditPrintCopy({
+      ...VALID_RAW,
+      intro: 'A vibrant escape.',
+      dayCaptions: { '2026-06-01': 'A testament to slow mornings.' },
+    });
+    expect(audit.map((a) => a.field)).toEqual(['intro', 'dayCaptions.2026-06-01']);
+    expect(audit[0].findings[0]).toEqual({ rule: 'banned word', match: 'vibrant' });
+  });
+
+  it('reports nothing for copy that is already clean', () => {
+    expect(auditPrintCopy(VALID_RAW)).toEqual([]);
   });
 });
 
