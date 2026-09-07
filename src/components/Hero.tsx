@@ -190,7 +190,7 @@ const Hero = () => {
               whileHover={{ scale: 1.03, transition: { duration: 0.25 } }}
               onClick={() => navigate(enterDestination)}
               aria-label={enterLabel}
-              className="group relative w-[min(88vw,calc(var(--app-height,1vh)*72),600px)] cursor-pointer rounded-lg border-none bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
+              className="group relative w-[min(70.4vw,calc(var(--app-height,1vh)*57.6),480px)] cursor-pointer rounded-lg border-none bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
             >
               {/* Spinning "ENTER HERE" ring — sized from this button's width
                   (capped by viewport height above) so it always clears both
