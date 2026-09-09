@@ -21,7 +21,7 @@
 
 Planning extraordinary travel shouldn't feel like work. WanderLuxe is built for the **group organizer** — the person collecting flight confirmations in their inbox, juggling everyone's preferences, and keeping a shared trip from devolving into a thread of *"wait, where are we staying again?"*
 
-WanderLuxe collapses that coordination tax into a single, beautiful, shared picture. Every booking, reservation, and activity finds its place on a timeline the whole group can see and contribute to in real time. AI does the grunt work — paste a confirmation and get a timeline event; ask the assistant for a restaurant and watch it appear on the right day. The core planner is free; a Pro subscription unlocks unlimited AI.
+WanderLuxe collapses that coordination tax into a single, beautiful, shared picture. Every booking, reservation, and activity finds its place on a timeline the whole group can see and contribute to in real time. AI does the grunt work — paste a confirmation and get a timeline event; ask the assistant for a restaurant and watch it appear on the right day. Planning, sharing, exporting, and AI chat are free on as many trips as you like; **Pro ($3.99/mo)** unlocks the **Print Studio**, an AI-art-directed keepsake edition of your itinerary.
 
 ## ✨ What Makes WanderLuxe Special
 
@@ -50,7 +50,7 @@ Powered by Google Gemini 2.5 Flash and grounded in your trip's context:
 - **Chat-to-itinerary** — the assistant can create accommodations, transportation, activities, and reservations directly on your timeline
 - **Document extraction** — upload a confirmation screenshot or PDF and Gemini vision turns it into structured itinerary items (up to 10 per document), ready to review and import
 - **Streaming UX** — buffered SSE responses in a docked desktop panel (collapsible to a floating button) or a full-screen mobile drawer
-- **Try before signing up** — anonymous visitors get a 5-message trial on public trips; free accounts get 10 messages + 5 document imports per day; **Pro ($3.99/mo via Stripe) is unlimited**
+- **Free for everyone** — anonymous visitors get a 5-message trial on public trips. Once you sign in, chat is **unlimited on every tier**, with a 15-messages-per-minute pace guard; document imports (OCR) are capped at 20/day for all accounts as abuse protection
 
 ### 🛎️ **Book Without Leaving**
 The trip's **Book** tab embeds an Expedia Group affiliate search widget for stays and flights, AI hotel cards deep-link to Expedia searches, and a human travel advisor (Fora Travel) is one click away for white-glove planning.
@@ -73,7 +73,10 @@ Travel planning is better together:
 - **Trip reminders** — every traveler automatically gets an email 3 days before departure
 
 ### 📄 **Professional PDF Exports**
-Transform your itinerary into a beautifully formatted, print-ready PDF with one click — with toggles for pictures and prices, Letter/A4 paper sizes, timezone-labeled times, and identical output from mobile or desktop.
+Transform your itinerary into a beautifully formatted, print-ready PDF with one click — with toggles for pictures and prices, Letter/A4 paper sizes, timezone-labeled times, and identical output from mobile or desktop. Free on every account, entirely client-side.
+
+### 🖋️ **Print Studio** *(Pro)*
+The paid feature. Give it an optional theme (“winter, quiet, lots of white space”) and a model art-directs a keepsake edition of your trip: a palette, a font pairing, a motif, and editorial copy down to a caption for each day. The division of labor is the point — the model is creative director only, and every itinerary item is drawn from your database by the same data layer the PDF export uses, so a bad generation can degrade the styling but never the facts. Output opens at its own route and prints through the browser, with app chrome deliberately absent from the page. Editions are stored, so one stays openable after it's made.
 
 ### 💰 **Smart Budget Tracking**
 Track expenses across accommodations, transportation, activities, dining, and everything else — with paid/unpaid status, multi-currency support, and exchange rates refreshed automatically.
@@ -115,7 +118,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 </table>
 
 ### 🌐 External APIs & Integrations
-**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **SendGrid** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
+**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** (chat + OCR) • **OpenAI** (Print Studio design) • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **SendGrid** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
 
 ---
 
@@ -143,6 +146,9 @@ The map view projects the same five data sources the calendar reads through a pu
 
 ### PDF Generation 📄
 Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
+
+### AI as Art Director, Not Author 🖋️
+The Print Studio splits generation cleanly: the model returns only a design spec (palette, font-pairing id, motif id, editorial copy) through a strict `json_schema`, and `sanitizePrintDesign` clamps it before anything renders — hex normalization, WCAG contrast enforcement (ink ≥ 4.5:1, accents ≥ 3:1, falling back to a known-good palette), registry-id fallbacks, and copy-length caps. Itinerary content is drawn from the database by the same module the PDF export uses. The user's theme text is quoted and pinned as a styling preference, so the blast radius of a prompt injection is length-clamped copy.
 
 ### Model Context Protocol 🔌
 A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 20 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses.
@@ -205,6 +211,10 @@ GEMINI_API_KEY=your-gemini-api-key
 STRIPE_SECRET_KEY=sk_your-stripe-secret-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 
+# OpenAI (Required for the Print Studio — the route 503s without it)
+OPENAI_API_KEY=sk-your-openai-api-key
+# OPENAI_MODEL=gpt-4.1                            # Optional override; defaults to gpt-4.1
+
 # Optional
 VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key # Trip imagery (placeholders used if missing)
 VITE_ADMIN_EMAIL=you@example.com                  # Grants admin dashboard access
@@ -238,6 +248,7 @@ CRON_SECRET=...               # auth for scheduled functions (reminders, exchang
 - **Google Gemini**: Get your API key from [Google AI Studio](https://aistudio.google.com/apikey)
 - **OpenWeatherMap**: Free tier at [openweathermap.org/api](https://openweathermap.org/api)
 - **Stripe**: Get your keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+- **OpenAI**: Create a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys) (Print Studio design generation)
 - **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
 - **Mailgun**: Create an account at [mailgun.com](https://www.mailgun.com)
 - **Serper**: Sign up at [serper.dev](https://serper.dev)
@@ -260,6 +271,7 @@ wanderluxe/
 │   │   │   ├── calendar/      # FullCalendar view + iCal sync sheet
 │   │   │   ├── day/           # Day card, timeline rows, event detail dialog
 │   │   │   ├── map/           # Trip map: stops, routes, playback, geocoding
+│   │   │   ├── print-studio/  # Print Studio dialog, document renderer, motifs
 │   │   │   ├── timeline/      # Day navigation, trip dates, summary panels
 │   │   │   ├── transportation/# Flights (AeroDataBox lookup), trains, cars
 │   │   │   ├── weather/       # Forecast badges & detail modal
@@ -276,8 +288,9 @@ wanderluxe/
 │   └── types/                # TypeScript definitions
 ├── ⚙️ server/
 │   ├── index.ts             # Express server (CSP, canonical redirects, static serving)
-│   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), account (GDPR),
-│                            # admin-insights, invite-preview, share-notification
+│   ├── lib/                 # icalFeed, mcpTools, tripWrites, printDesign (OpenAI call)
+│   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), print-design,
+│                            # account (GDPR), admin-insights, invite-preview, share-notification
 ├── 🗄️ supabase/
 │   ├── functions/           # 14 Edge Functions (Deno runtime)
 │   │   ├── ai-chat/         # Gemini chat + find_place/search_web tools

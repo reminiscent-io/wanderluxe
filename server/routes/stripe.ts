@@ -267,7 +267,7 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
             currency: PRO_PRICE_CURRENCY,
             product_data: {
               name: 'WanderLuxe Pro',
-              description: 'Unlimited AI assistant messages and document imports',
+              description: 'Print Studio: AI-designed keepsake itineraries for every trip',
             },
             unit_amount: PRO_PRICE_AMOUNT,
             recurring: {

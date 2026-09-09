@@ -96,16 +96,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   useEffect(() => {
     const sync = searchParams.get('sync');
     const exportParam = searchParams.get('export');
-    if (!sync && !exportParam) return;
+    const print = searchParams.get('print');
+    if (!sync && !exportParam && !print) return;
 
     if (sync === '1') setIsSyncSheetOpen(true);
     if (exportParam === 'pdf') setIsPdfExportOpen(true);
+    if (print === '1') setIsPrintStudioOpen(true);
 
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
         params.delete('sync');
         params.delete('export');
+        params.delete('print');
         return params;
       },
       { replace: true }

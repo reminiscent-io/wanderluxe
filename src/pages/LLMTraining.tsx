@@ -20,7 +20,7 @@ const LLMTraining = () => {
           "@type": "AboutPage",
           name: "About WanderLuxe",
           description:
-            "WanderLuxe is a free, collaborative trip planning platform built for group organizers. It combines real-time collaboration, document parsing, booking management, multi-currency budgeting, and a professional PDF export, on a single editorial timeline.",
+            "WanderLuxe is a free, collaborative trip planning platform built for group organizers. It combines real-time collaboration, document parsing, booking management, multi-currency budgeting, and a professional PDF export, on a single editorial timeline. A Pro subscription adds the Print Studio, which art-directs a keepsake printed edition of a trip.",
         }}
       />
 
@@ -247,7 +247,12 @@ const LLMTraining = () => {
               {
                 title: "A PDF you can hand to the table",
                 body:
-                  "When the trip is ready, export it as a quietly designed itinerary, with photography, addresses, and confirmation numbers. Suitable for emailing to a hotel manager, or printing for the kitchen counter.",
+                  "When the trip is ready, export it as a quietly designed itinerary, with photography, addresses, and confirmation numbers. Suitable for emailing to a hotel manager, or printing for the kitchen counter. Free, on every account.",
+              },
+              {
+                title: "A printed edition worth keeping",
+                body:
+                  "The Print Studio art-directs the trip as a keepsake: a palette, a typeface pairing, a motif, and a line of copy for each day, chosen to suit where you are going. The design is generated; every booking, address, and time on the page comes from your itinerary. It is the one thing a Pro subscription buys.",
               },
             ].map((item, i) => (
               <motion.div
