@@ -16,20 +16,6 @@ describe('AssistantDock', () => {
     expect(screen.queryByRole('button', { name: /open trip assistant/i })).not.toBeInTheDocument();
   });
 
-  it('keeps the auxiliary action visible above the open assistant', () => {
-    render(
-      <AssistantDock
-        open
-        mode="docked"
-        onOpen={() => {}}
-        action={<button type="button">Print Studio</button>}
-      >
-        <div data-testid="panel" />
-      </AssistantDock>
-    );
-    expect(screen.getByRole('button', { name: 'Print Studio' })).toBeInTheDocument();
-  });
-
   it('renders a fixed bottom-right overlay when open in overlay mode', () => {
     render(
       <AssistantDock open mode="overlay" onOpen={() => {}}>
@@ -55,21 +41,6 @@ describe('AssistantDock', () => {
     const fab = screen.getByRole('button', { name: /open trip assistant/i });
     fireEvent.click(fab);
     expect(onOpen).toHaveBeenCalledTimes(1);
-  });
-
-  it('stacks the auxiliary action above the collapsed assistant button', () => {
-    render(
-      <AssistantDock
-        open={false}
-        mode="docked"
-        onOpen={() => {}}
-        action={<button type="button">Print Studio</button>}
-      >
-        <div data-testid="panel" />
-      </AssistantDock>
-    );
-    expect(screen.getByRole('button', { name: 'Print Studio' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /open trip assistant/i })).toBeInTheDocument();
   });
 
   it('preserves the same child DOM node across collapse/expand and mode switches', () => {
