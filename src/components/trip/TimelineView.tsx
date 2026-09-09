@@ -353,7 +353,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <Button
               variant="outline"
               size="sm"
-              className="hidden sm:inline-flex"
+              className={`hidden sm:inline-flex ${itineraryView === 'timeline' ? 'lg:hidden' : ''}`}
               onClick={() => setIsPrintStudioOpen(true)}
             >
               <Palette className="mr-2 h-4 w-4" />
@@ -462,6 +462,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         open={assistantOpen}
         mode={itineraryView === 'timeline' ? 'docked' : 'overlay'}
         onOpen={() => setAssistantOpen(true)}
+        action={
+          itineraryView === 'timeline' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-background shadow-warm-sm"
+              onClick={() => setIsPrintStudioOpen(true)}
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Print Studio
+            </Button>
+          ) : undefined
+        }
       >
         <AIAssistantPanel tripId={tripId} onCollapse={() => setAssistantOpen(false)} />
       </AssistantDock>
