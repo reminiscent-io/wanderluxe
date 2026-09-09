@@ -14,6 +14,7 @@ import {
   Map as MapIcon,
   MessageCircle,
   Plug,
+  Printer,
   ScanLine,
   Users,
 } from 'lucide-react';
@@ -143,6 +144,13 @@ const SECTIONS: Section[] = [
         body: 'A proper typeset itinerary you can print, email, or keep on your phone for the flight when there is no signal. Same layout whether you make it on a phone or a laptop.',
         to: (p) => (p ? `${p}/timeline?export=pdf` : null),
         actionLabel: 'Make one',
+      },
+      {
+        icon: Printer,
+        title: 'Make a keepsake edition (Pro)',
+        body: 'The Print Studio designs your trip as something worth keeping. Give it a theme, or none at all, and it picks a palette, a typeface pairing and a motif to suit the trip, then writes a short piece of copy for each day. Every booking and time comes from your itinerary, so only the styling is invented. Print it or save it; the edition stays where you left it.',
+        to: (p) => (p ? `${p}/timeline?print=1` : null),
+        actionLabel: 'Open the Print Studio',
       },
       {
         icon: Compass,

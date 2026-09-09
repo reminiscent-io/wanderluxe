@@ -35,6 +35,24 @@ Success: the organizer feels like the trip is theirs, the group treats
 the itinerary as the trip's home base, and the planning effort feels
 like a fraction of what it would have taken in spreadsheets and threads.
 
+## What We Charge For
+
+The work of planning is free, in full: unlimited trips, unlimited AI
+chat, sharing, every view, PDF export, calendar sync. Metering the
+assistant would have taxed the exact behaviour the product is built
+around, so we do not. The only rate limits are pace guards against
+abuse, and they apply to paying members too.
+
+Pro ($3.99/mo) buys one thing: the **Print Studio**, a keepsake edition
+of the trip, art-directed for that trip. It is the right thing to
+charge for because it is the one output the organizer makes *after* the
+work is done — the artifact, not the labor. Paying for it is a choice
+to make the trip an object, and nobody is blocked from planning by
+declining.
+
+The corollary: we never gate a planning capability to create pressure
+to upgrade, and the paywall never appears mid-task.
+
 ## Brand Personality
 
 Warm, editorial, intentional.

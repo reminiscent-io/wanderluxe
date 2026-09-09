@@ -1,88 +1,115 @@
 # WanderLuxe - Travel Planning Application
 
 ## Overview
-WanderLuxe is a comprehensive web application for creating, managing, and sharing detailed travel itineraries. It aims to simplify travel planning with features for accommodation booking, activity planning, expense tracking, and AI-powered assistance. The platform offers personalized travel experiences, fosters collaboration, and streamlines the entire planning process.
+WanderLuxe is an AI-powered travel planning platform for the group organizer — the person collecting flight confirmations, juggling everyone's preferences, and keeping a shared trip coherent. It combines real-time collaboration, booking management, AI-assisted recommendations and document parsing, three itinerary views, calendar sync, a built-in MCP server, and print/PDF output on a single editorial timeline.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Business Model
+- **Free** — unlimited trips, unlimited AI chat, sharing, all three itinerary views, PDF export, and calendar sync. Chat is rate-limited to 15 messages/minute as a human-pace guard, and document imports (OCR) are capped at 20/day. Both limits apply to every tier.
+- **Pro ($3.99/mo via Stripe)** — unlocks the **Print Studio** only. AI limits are identical on both tiers; the subscription does not buy more AI.
+
 ## System Architecture
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **UI Library**: Shadcn/ui (built on Radix UI)
-- **Styling**: Tailwind CSS with a sand/earth color palette
-- **State Management**: TanStack Query (React Query)
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite 8
+- **UI Library**: Shadcn/ui (built on Radix UI, ~55 primitives)
+- **Styling**: Tailwind CSS with a warm sand/earth/sunset editorial palette; `darkMode: 'class'`
+- **State Management**: TanStack Query (server state) + React Context (auth, consent) + hooks (UI state)
 - **Routing**: React Router
 - **Forms**: React Hook Form with Zod validation
+- **PWA**: service worker + manifest, with build-time version stamping
 
 ### Backend
-- **Database**: PostgreSQL via Supabase
+- **Database**: PostgreSQL via Supabase (30 tables, RLS on all user-facing tables)
 - **Authentication**: Supabase Auth (supports Google OAuth)
-- **Real-time**: Supabase real-time subscriptions
-- **API**: Express server with custom routes (`server/index.ts`)
-- **Payments**: Stripe integration for Pro subscriptions
-- **File Storage**: Supabase Storage
+- **Real-time**: Supabase real-time subscriptions over WebSocket
+- **API**: Express server with custom routes (`server/index.ts` → `server/routes/`)
+- **Edge Functions**: 14 Deno functions in `supabase/functions/`
+- **Payments**: Stripe for the Pro subscription
+- **AI**: Google Gemini 2.5 Flash for chat and document OCR (hardcoded, no env override); OpenAI (default `gpt-4.1`) for Print Studio design generation only
 
 ### Development Setup
-- **Combined Server**: Run `./start-dev.sh` or `bun run server/dev-server.ts` to start both Express backend and Vite frontend in a single process on port 5000
-- **Separate Servers**: Alternatively, run `bun run server/index.ts` (port 5000) and `vite` (port 8080) - Vite proxies `/api/*` requests to the backend
-- **Production**: Run `bun run start` to serve the built frontend and API from port 5000
+- **Package manager**: npm (Node 18+, Node 24 on Replit). `.npmrc` sets `legacy-peer-deps=true`.
+- **Combined**: `npm run dev` runs Vite (port 8080) and the Express server concurrently; Vite proxies `/api/*` to the backend
+- **Separate**: `npm run dev:frontend` (Vite only) or `npm run dev:server` (Express only)
+- **Replit workflow**: `PORT=5000 NODE_ENV=development npx tsx server/index.ts`
+- **Production**: `npm run build` then `npm run start` → `node dist/server/index.js`. Cloud Run injects `PORT`; the local fallback is 5001.
+- **Note**: `dev.sh` and `start-dev.sh` are legacy Bun-based scripts and are not the supported path.
 
 ### API Endpoints (Express Server)
-- `/api/health` - Health check
-- `/api/stripe/create-checkout` - Create Stripe checkout session (requires auth)
-- `/api/stripe/webhook` - Stripe webhook handler
-- `/api/stripe/create-portal` - Create Stripe billing portal session (requires auth)
-- `/api/ai-chat` - AI assistant chat endpoint
-- `/api/share-notification` - Email notifications for trip sharing
-- `/api/trip-pdf` - Generate trip PDF exports
+- `/api/health` — health check
+- `/api/stripe/create-checkout`, `/api/stripe/webhook`, `/api/stripe/create-portal`, `/api/stripe/subscription`, `/api/stripe/cancel-subscription`, `/api/stripe/reactivate-subscription`
+- `/api/trips/:tripId/assistant` — AI chat (streaming SSE), plus `/anon`, `/messages`, `/usage`
+- `/api/ai-imports/usage` — document import usage
+- `/api/trips/:tripId/calendar.ics` — token-gated iCal feed
+- `/api/trips/:tripId/print-design` — Print Studio design generation (Pro-gated)
+- `/api/admin/insights` — admin dashboard AI insights
+- `/api/account`, `/api/account/export` — GDPR-style export and account deletion
+- `/api/send-share-notification` — trip share emails
+- `/mcp` + `/.well-known/oauth-protected-resource` — MCP server and OAuth 2.1 discovery
+- `/invite/:code` — invite link preview
+
+> PDF export is **fully client-side** via pdfmake (`src/services/pdf/`). There is no PDF endpoint.
 
 ### Database Design
-The schema is normalized PostgreSQL, including entities for `trips`, `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`, `trip_shares`, and `profiles`.
+Normalized PostgreSQL. Core entities: `trips`, `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`, plus `*_travelers` join tables. Sharing via `trip_shares` and `trip_invite_links`. Supporting tables include `profiles`, `ai_chat_threads`/`ai_chat_messages`, `user_ai_usage`, `trip_print_designs`, `currencies`/`exchange_rates`, and caches for weather, timezones, place coordinates, and flight status.
 
 ### Key Features
-- **Trip Management**: Creation, sharing (with granular permissions), and day-by-day timeline management.
-- **Activity Planning**: Time-based scheduling for activities, accommodations, transportation, and dining.
-- **AI Integration**: Conversational AI assistant, content generation (descriptions, recommendations), and cover image generation.
-- **Sharing & Collaboration**: Permission-based sharing with real-time updates and email notifications.
-- **Budgeting**: Comprehensive expense tracking, categorization, and visualization with interactive elements and filtering.
+- **Trip Management** — creation, sharing with granular permissions, day-by-day timeline
+- **Three itinerary views** — Timeline, FullCalendar time grid, and an interactive Google Map with route playback, switched via a `?view=` query param
+- **Timezone-aware** — times are floating wall-clock values, never converted; per-item IANA overrides inherit a trip default, with zone badges across timeline, calendar, map, PDF, and iCal
+- **AI Integration** — conversational assistant with Google Places and web-search tool calling, chat-to-itinerary creation, and travel-document OCR
+- **Calendar Sync** — token-gated iCal feed for Google/Apple/Outlook, with rotate and disable
+- **MCP Server** — 20 read/write tools exposing trips to Claude and other MCP clients over OAuth 2.1
+- **Print Studio (Pro)** — a model art-directs a keepsake printed edition (palette, font pairing, motif, per-day copy) while every itinerary item is drawn from the database, so generation can degrade styling but never content
+- **Sharing & Collaboration** — permission-based sharing, live updates, presence avatars, reminder emails
+- **Budgeting** — multi-currency expense tracking, categorization, and visualization
 
 ### System Design Choices
-- **Real-time Updates**: Comprehensive real-time subscriptions for all data types (activities, accommodations, transportation, dining) with query invalidation for immediate UI updates.
-- **Unified Dialogs**: Consolidated component architecture for adding/editing various trip elements (activities, accommodations, etc.) to reduce code duplication and ensure consistent UX.
-- **Luxury Date Pickers**: Integration of premium, responsive `LuxuryDateTimeRangePicker` for consistent and polished date selection across the application.
-- **Standardized Dialogs**: Uniform styling, responsive width settings, scroll functionality, and consistent interaction patterns across all dialog types.
-- **Timeline Redesign**: Streamlined, compact day cards replacing image-based designs, featuring a unified chronological timeline view of all timed events, quick-add buttons, and direct edit functionality.
-- **Time Period Grouping**: Daily activities grouped by time periods (Early Morning 🌅, Morning ☀️, Afternoon 🌤️, Evening 🌆, Night 🌙) with emoji headers for visual clarity.
-- **Daily Cost Summary**: Enhanced day cards with cost breakdown by category (Activities, Accommodations, Transportation, Dining) displayed as a quick-reference card.
-- **Smart Day Expansion**: Past days auto-collapse in timeline view while future and current days remain expanded, improving visual focus and reducing clutter.
-- **Mobile Responsiveness**: Designed for seamless experience across mobile, tablet, and desktop, including responsive date pickers, dialogs, and layout adjustments.
-- **Error Handling & Validation**: Robust form validation using Zod and React Hook Form, with double-click prevention on submissions.
-- **Currency Formatting**: Timeline costs display with currency symbols ($#,###) for clarity, matching international formatting standards.
+- **Real-time Updates**: subscriptions for all entity types, updating the React Query cache directly. `useRealtimeSubscription` dedupes by channel key, so two views must not share a key.
+- **Unified Dialogs**: consolidated add/edit components across trip element types to reduce duplication and keep UX consistent.
+- **Click = read, not edit**: clicking a timeline event opens a read-only detail dialog with an explicit Edit button.
+- **Time Period Grouping**: activities grouped into Early Morning / Morning / Afternoon / Evening / Night sections.
+- **Daily Cost Summary**: per-day cost breakdown by category on the day card.
+- **Smart Day Expansion**: past days auto-collapse; current and future days stay open.
+- **AI as art director, not author**: the Print Studio model returns only a design spec through a strict JSON schema, sanitized for contrast and length before render.
+- **Mobile Responsiveness**: mobile-first throughout — responsive date pickers, dialogs, drawers, and layouts.
+- **Error Handling & Validation**: Zod + React Hook Form, with double-click prevention on submissions.
 
 ### UI/UX Decisions
-- **Color Scheme**: Consistent sand/earth color palette across the application.
-- **Navigation**: Fixed, collapsible left-hand sidebar for trip-specific navigation on desktop, with a mobile sheet drawer. Includes primary and secondary sidebar panels.
-- **Component Design**: Emphasis on consistent interaction patterns, such as clickable list items to open edit dialogs, and uniform delete functionality.
-- **Date Pickers**: Calendar components are centrally positioned in dialogs and themed.
-- **Form Validation**: Robust validation and double-click prevention for form submissions.
-- **Budget Page Design**: Sophisticated interface matching "My Trips" aesthetics, with gradient background, tabbed navigation (Overview, Expenses, Categories, Analytics), interactive expense cards with animations, category-based color coding, search/filter, currency selector, progress visualizations, and skeleton/empty states.
+- **Color Scheme**: warm sand/earth neutrals with a sunset accent scale; brown-tinted shadows. `DESIGN.md` / `DESIGN.json` are the spec.
+- **Typography**: DM Serif Display for headings, DM Sans for body and UI.
+- **Navigation**: fixed collapsible sidebar on desktop, sheet drawer on mobile.
+- **Component Design**: consistent interaction patterns — clickable list items, uniform delete affordances.
+- **Accessibility**: WCAG 2.1 AA as the baseline; `prefers-reduced-motion` respected in map playback and animations.
 
 ## External Dependencies
 
 ### Core Services
-- **Supabase**: Database, authentication, real-time capabilities, storage, edge functions.
-- **Google Places API**: Location search and geocoding (accessed via proxy).
-- **OpenAI API**: AI chat assistant and content generation.
-- **Perplexity AI**: Enhanced search and travel recommendations.
-- **SendGrid**: Email notifications.
-- **Unsplash API**: Stock photography for trip imagery.
+- **Supabase** — database, authentication, real-time, storage, edge functions
+- **Google Gemini 2.5 Flash** — AI chat assistant and travel-document OCR
+- **OpenAI** — Print Studio design generation only
+- **Google Places / Time Zone / Maps** — location search, timezone resolution, map view (accessed via proxies)
+- **OpenWeatherMap** — per-day forecasts
+- **AeroDataBox** — flight-number lookup
+- **Serper** — web search for bookable recommendations
+- **Stripe** — Pro subscription billing
+- **Expedia Group Affiliate** — in-trip booking widget and hotel deep links
+- **SendGrid / Mailgun** — share notifications and trip reminder emails
+- **ExchangeRate-API** — multi-currency budgets
+- **Unsplash** — stock photography for trip imagery
+- **PostHog + Google Analytics** — consent-gated analytics
 
 ### UI Components & Utilities
-- **Radix UI**: Accessible component primitives.
-- **Lucide React**: Icon library.
-- **Framer Motion**: Animation library.
-- **React Hook Form**: Form state management.
-- **Date-fns**: Date manipulation utilities.
+- **Radix UI** — accessible component primitives
+- **Lucide React** — icon library
+- **Framer Motion** — animation library
+- **FullCalendar** — calendar time grid
+- **@vis.gl/react-google-maps** — map view
+- **pdfmake** — client-side PDF generation
+- **ical-generator** — iCal feed
+- **React Hook Form** — form state management
+- **Date-fns** — date manipulation utilities

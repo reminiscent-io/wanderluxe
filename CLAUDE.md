@@ -181,6 +181,7 @@ PostgreSQL database
 **Trip Details Page**
 - Wrapper component routes to top-level tabs: Timeline, Budget, Booking (Expedia affiliate widget), Chat
 - The Timeline tab carries its own three-way **Timeline ⇄ Calendar ⇄ Map** switch, persisted in the `?view=` query param (`timeline` is the absent state, so old bookmarks keep working)
+- `TimelineView` also consumes one-shot deep-link params from the Guide page and strips them after opening: `?sync=1` (calendar sync sheet), `?export=pdf` (PDF export), `?print=1` (Print Studio)
 - Each view fetches its own data via React Query
 - Real-time subscriptions keep data fresh
 - Shared trip permissions checked via `useTripPermissions()`
