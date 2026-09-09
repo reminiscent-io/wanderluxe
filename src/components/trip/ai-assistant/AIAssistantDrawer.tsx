@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, Component, ReactNode } from 'react';
 import { FullScreenModal } from '@/components/ui/fullscreen-modal';
 import { useVisualViewport } from '@/hooks/useVisualViewport';
-import { Sparkles, ChevronDown, AlertCircle } from 'lucide-react';
+import { TreePalm, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -294,7 +294,7 @@ const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center shrink-0">
-                <Sparkles className="w-3.5 h-3.5 text-background" />
+                <TreePalm className="w-4 h-4 text-background" />
               </div>
               <div className="min-w-0">
                 <h2 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h2>

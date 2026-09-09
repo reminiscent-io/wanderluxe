@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import ChatMessage from "./ChatMessage";
 import { stripCreateItemsForDisplay } from "./chatContentSanitizer";
-import { Loader2, Sparkles, ChevronUp } from "lucide-react";
+import { Loader2, TreePalm, ChevronUp } from "lucide-react";
 import type {
   AIChatMessage,
   ExtractedItem,
@@ -281,7 +281,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-6 gap-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="w-12 h-12 rounded-full bg-sand-100 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-earth-500" />
+              <TreePalm className="w-5 h-5 text-earth-500" />
             </div>
             <div className="space-y-2 max-w-[300px]">
               <h2 className="font-display text-2xl text-foreground leading-[1.15] tracking-tight">
@@ -373,7 +373,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       {isStreaming && !visibleStreamingContent && (
         <div className="flex gap-3 py-3">
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sand-100 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-earth-600" />
+            <TreePalm className="w-4 h-4 text-earth-600" />
           </div>
           <div className="bg-sand-50 border border-border rounded-2xl rounded-tl-sm px-4 py-3">
             <div className="flex gap-1">

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { Components } from 'react-markdown';
 import { cn } from '@/lib/utils';
-import { Copy, Check, Sparkles, FileText } from 'lucide-react';
+import { Copy, Check, TreePalm, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -216,7 +216,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </Avatar>
       ) : (
         <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-sand-100">
-          <Sparkles className="w-4 h-4 text-earth-600" />
+          <TreePalm className="w-4 h-4 text-earth-600" />
         </div>
       )}
 

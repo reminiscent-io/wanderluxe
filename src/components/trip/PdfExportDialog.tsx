@@ -59,9 +59,14 @@ const PdfExportDialog: React.FC<PdfExportDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={className}>
-          <FileDown className="mr-2 h-4 w-4" />
-          Export PDF
+        <Button
+          variant="outline"
+          size="sm"
+          className={className}
+          title="Export this itinerary as a PDF"
+        >
+          <FileDown className="h-4 w-4" />
+          PDF
         </Button>
       </DialogTrigger>
       
