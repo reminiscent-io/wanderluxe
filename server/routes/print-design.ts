@@ -4,14 +4,24 @@
 //   → 200 { id, design, model }        design: sanitized PrintDesignSpec
 //   → 401/403/404/429/502/503 with { code, message }
 //
-// Authorization: valid Supabase JWT + trip access (owner/shared/public) +
-// subscription_tier === 'pro'. Generations are capped per user per day
-// (counted from trip_print_designs, which this route alone writes).
+// POST /api/trips/:tripId/print-design/:designId/finalize  { finalize?: bool }
+//   → 200 { id, finalized_at, finalized_by }
+//   → 400/401/403/404 with { code, message }
+//
+// Authorization: generating needs a valid Supabase JWT + trip access
+// (owner/shared/public) + subscription_tier === 'pro'. Generations are capped
+// per user per day (counted from trip_print_designs, which this route alone
+// writes).
+//
+// Finalizing needs trip *edit* permission and no Pro check: the edition
+// already exists, and the person proofreading a shared trip is often not the
+// member who paid to generate it.
 
 import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import rateLimit from 'express-rate-limit';
 import { generatePrintDesign, PrintDesignError, type PrintTripRows } from '../lib/printDesign';
+import { fetchTripSnapshot } from '../lib/printSnapshot';
 
 const router = Router();
 
@@ -81,6 +91,41 @@ async function canAccessTrip(supabase: ReturnType<typeof createClient>, userId: 
     .maybeSingle();
 
   return !!publicTrip;
+}
+
+
+/**
+ * Mirrors the can_edit_trip() SQL function the RLS policies use, so the
+ * finalize route and the copy-edit policy agree on who may change an edition.
+ * Public visibility grants reading, never writing.
+ */
+async function canEditTrip(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  tripId: string,
+  userEmail?: string
+): Promise<boolean> {
+  const { data: ownedTrip } = await supabase
+    .from('trips')
+    .select('trip_id')
+    .eq('trip_id', tripId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (ownedTrip) return true;
+
+  if (!userEmail) return false;
+
+  const { data: editShare } = await supabase
+    .from('trip_shares')
+    .select('id')
+    .eq('trip_id', tripId)
+    .ilike('shared_with_email', userEmail.toLowerCase())
+    .eq('share_status', 'accepted')
+    .eq('permission_level', 'edit')
+    .maybeSingle();
+
+  return !!editShare;
 }
 
 // Belt-and-suspenders IP limiter on top of the per-user daily DB cap.
@@ -209,5 +254,113 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
     return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
   }
 });
+
+// Freezing costs one round of reads, so it gets its own, looser limiter.
+const finalizeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again shortly.' },
+});
+
+/**
+ * Finalize an edition (freeze the itinerary into it), or reopen it to live.
+ *
+ * Finalizing is what makes a Print Studio edition a keepsake rather than a
+ * view: until it happens the page re-renders from current trip data, so a
+ * document generated while planning keeps up with the plan. Once frozen the
+ * RLS policy also stops accepting copy edits, so reopening runs through here
+ * under the service role.
+ */
+router.post(
+  '/api/trips/:tripId/print-design/:designId/finalize',
+  finalizeLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { tripId, designId } = req.params;
+      if (!isValidUUID(tripId) || !isValidUUID(designId)) {
+        return res.status(400).json({ code: 'BAD_REQUEST', message: 'Invalid trip or edition ID' });
+      }
+
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return res.status(503).json({ code: 'CONFIG_ERROR', message: 'Print Studio is not configured on this server' });
+      }
+
+      const user = await getUserFromToken(req.headers.authorization || '');
+      if (!user) {
+        return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in' });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+      if (!(await canEditTrip(supabase, user.id, tripId, user.email))) {
+        return res.status(403).json({ code: 'FORBIDDEN', message: 'You need edit access to this trip' });
+      }
+
+      const { data: design } = await supabase
+        .from('trip_print_designs')
+        .select('id, finalized_at')
+        .eq('id', designId)
+        .eq('trip_id', tripId)
+        .maybeSingle();
+
+      if (!design) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Edition not found' });
+      }
+
+      // Absent means finalize; only an explicit false reopens.
+      const finalize = (req.body || {}).finalize !== false;
+
+      if (!finalize) {
+        const { data: reopened, error: reopenErr } = await supabase
+          .from('trip_print_designs')
+          .update({ content_snapshot: null, finalized_at: null, finalized_by: null })
+          .eq('id', designId)
+          .select('id, finalized_at, finalized_by')
+          .single();
+
+        if (reopenErr || !reopened) {
+          console.error('Failed to reopen print edition:', reopenErr);
+          return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to reopen this edition' });
+        }
+        return res.json(reopened);
+      }
+
+      // Re-finalizing an already-frozen edition would silently swap its
+      // contents for a later version of the trip, which is the one thing
+      // finalizing promises not to do.
+      if (design.finalized_at) {
+        return res.json({ id: design.id, finalized_at: design.finalized_at, already: true });
+      }
+
+      const snapshot = await fetchTripSnapshot(supabase, tripId);
+      if (!snapshot) {
+        return res.status(404).json({ code: 'NOT_FOUND', message: 'Trip not found' });
+      }
+
+      const { data: finalized, error: finalizeErr } = await supabase
+        .from('trip_print_designs')
+        .update({
+          content_snapshot: snapshot,
+          finalized_at: new Date().toISOString(),
+          finalized_by: user.id,
+        })
+        .eq('id', designId)
+        .select('id, finalized_at, finalized_by')
+        .single();
+
+      if (finalizeErr || !finalized) {
+        console.error('Failed to finalize print edition:', finalizeErr);
+        return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to finalize this edition' });
+      }
+
+      return res.json(finalized);
+    } catch (error) {
+      console.error('Print finalize error:', error);
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
+    }
+  }
+);
 
 export default router;

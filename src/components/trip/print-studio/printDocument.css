@@ -656,6 +656,153 @@
   }
 }
 
+/* =========================================================================
+   Editing in place
+   -------------------------------------------------------------------------
+   The editor has to be invisible as layout and obvious as an affordance. Every
+   rule here either inherits from the slot it sits in (so the copy stays set in
+   its real face, size and colour while you type) or paints a hairline that
+   exists only on screen. Nothing in this block may change metrics: if a field
+   shifts the line it is editing, you are no longer editing what you see.
+   ========================================================================= */
+
+.pd-edit {
+  display: inline;
+  position: relative;
+}
+
+/* The textarea and a hidden copy of its text share one grid cell, so the box
+   is always exactly as tall as the copy — no scrollbars, no JS measuring. */
+.pd-edit-sizer {
+  display: inline-grid;
+  vertical-align: top;
+  width: 100%;
+}
+
+.pd-edit-sizer::after,
+.pd-edit-input {
+  grid-area: 1 / 1;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-transform: inherit;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Trailing space keeps the box from collapsing on a line that ends in one. */
+.pd-edit-sizer::after {
+  content: attr(data-value) ' ';
+  visibility: hidden;
+}
+
+.pd-edit-input {
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  border-radius: 2px;
+  /* The affordance: a hairline in the edition's own accent, under the words. */
+  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, var(--pd-accent) 55%, transparent);
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.pd-edit-input::placeholder {
+  color: var(--pd-muted);
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.pd-edit-input:hover {
+  background: color-mix(in srgb, var(--pd-accent) 7%, transparent);
+}
+
+.pd-edit-input:focus {
+  outline: none;
+  background: color-mix(in srgb, var(--pd-accent) 10%, transparent);
+  box-shadow: inset 0 -2px 0 0 var(--pd-accent);
+}
+
+/* An edited slot keeps a quiet mark so you can see what you have touched
+   without diffing against memory. */
+.pd-edit[data-edited] .pd-edit-input {
+  box-shadow: inset 0 -1px 0 0 var(--pd-accent);
+}
+
+.pd-edit-tools {
+  position: absolute;
+  top: 50%;
+  right: -1.85rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  /* Never inherits the slot's display type — a 42pt cover title would
+     otherwise hand its metrics to a 10px counter. */
+  font: 500 10px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--pd-muted);
+}
+
+.pd-edit-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.pd-edit-revert {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pd-muted);
+  cursor: pointer;
+}
+
+.pd-edit-revert:hover {
+  background: color-mix(in srgb, var(--pd-accent) 15%, transparent);
+  color: var(--pd-primary);
+}
+
+.pd-edit-revert svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* On a narrow screen there is no margin to hang the tools in, so they tuck
+   back under the field rather than pushing the measure around. */
+@media (max-width: 640px) {
+  .pd-edit-tools {
+    right: 0;
+    top: auto;
+    bottom: -1.1rem;
+    transform: none;
+  }
+}
+
+/* Editing is a screen state. If a print somehow starts mid-edit, the words
+   still print as words — no boxes, no hairlines, no counters. */
+@media print {
+  .pd-edit-input {
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .pd-edit-tools {
+    display: none;
+  }
+}
+
 @page {
   margin: 15mm 16mm;
 }

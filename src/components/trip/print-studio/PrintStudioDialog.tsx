@@ -30,6 +30,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics';
 import { FALLBACK_PALETTE, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import {
+  countCopyEdits,
+  sanitizeCopyOverrides,
+  type PrintCopyOverrides,
+} from '@/lib/printDesign/edits';
 
 interface PrintStudioDialogProps {
   tripId: string;
@@ -41,7 +46,22 @@ interface DesignListRow {
   id: string;
   theme_prompt: string | null;
   design: PrintDesignSpec;
+  copy_overrides: PrintCopyOverrides | null;
+  finalized_at: string | null;
   created_at: string;
+}
+
+
+/**
+ * What has happened to an edition since it was generated, in the fewest words
+ * that still distinguish the two states that matter: whether its itinerary is
+ * still moving, and whether the words are the model's or the traveler's.
+ */
+function editionState(d: DesignListRow): string {
+  if (d.finalized_at) return 'finalized';
+  const edits = d.design ? countCopyEdits(d.design, sanitizeCopyOverrides(d.copy_overrides)) : 0;
+  if (edits > 0) return edits === 1 ? '1 line rewritten' : `${edits} lines rewritten`;
+  return '';
 }
 
 /** Named so the wait reads as work being done, not a spinner being spun. */
@@ -120,7 +140,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
     queryFn: async (): Promise<DesignListRow[]> => {
       const { data, error } = await supabase
         .from('trip_print_designs')
-        .select('id, theme_prompt, design, created_at')
+        .select('id, theme_prompt, design, copy_overrides, finalized_at, created_at')
         .eq('trip_id', tripId)
         .order('created_at', { ascending: false })
         .limit(12);
@@ -258,6 +278,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
                     {format(new Date(d.created_at), 'MMM d, yyyy')}
+                    {editionState(d) ? ` · ${editionState(d)}` : ''}
                     {d.theme_prompt ? ` · “${d.theme_prompt}”` : ''}
                   </span>
                 </span>

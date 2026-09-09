@@ -43,11 +43,77 @@ function withTzSuffix(formatted: string, entityTz: string | null | undefined, tr
 }
 
 /* =========================================================================
+   Raw rows
+   ========================================================================= */
+
+/**
+ * Every row the printed document is built from, exactly as the tables hold
+ * them.
+ *
+ * Fetching is split from projecting so a finalized Print Studio edition can
+ * replay a stored snapshot through the same projection a live document uses.
+ * Snapshotting the projected output instead would fork the renderer in two,
+ * and snapshotting a rendered file would freeze the words along with the
+ * layout. Raw rows keep one code path and stay small: no data URIs, no
+ * formatting, just what was booked.
+ */
+export interface PdfTripRows {
+  trip: Pick<
+    TripRow,
+    'destination' | 'arrival_date' | 'departure_date' | 'cover_image_url' | 'budget' | 'timezone'
+  > | null;
+  days: TripDayRow[];
+  stays: AccommodationRow[];
+  trans: TransportationRow[];
+  acts: DayActivityRow[];
+  dine: ReservationRow[];
+  otherExpenses: OtherExpenseRow[];
+}
+
+/** Read one trip's itinerary rows. The only Supabase round trip in this file. */
+export async function fetchTripRows(tripId: string): Promise<PdfTripRows> {
+  const [
+    { data: trip, error: tripErr },
+    { data: days, error: daysErr },
+    { data: stays },
+    { data: trans },
+    { data: acts },
+    { data: dine },
+    { data: otherExpenses },
+  ] = await Promise.all([
+    supabase
+      .from(TABLES.trip)
+      .select('destination,arrival_date,departure_date,cover_image_url,budget,timezone')
+      .eq('trip_id', tripId)
+      .single(),
+    supabase.from(TABLES.days).select('day_id,date,title,description').eq('trip_id', tripId).order('date'),
+    supabase.from(TABLES.stays).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.transport).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.dining).select('*').eq('trip_id', tripId),
+    supabase.from(TABLES.otherExpenses).select('*').eq('trip_id', tripId),
+  ]);
+
+  if (tripErr || !trip) throw tripErr ?? new Error('Trip not found');
+  if (daysErr) throw daysErr;
+
+  return {
+    trip: trip as PdfTripRows['trip'],
+    days: (days ?? []) as TripDayRow[],
+    stays: (stays ?? []) as AccommodationRow[],
+    trans: (trans ?? []) as TransportationRow[],
+    acts: (acts ?? []) as DayActivityRow[],
+    dine: (dine ?? []) as ReservationRow[],
+    otherExpenses: (otherExpenses ?? []) as OtherExpenseRow[],
+  };
+}
+
+/* =========================================================================
    Data build (Supabase)
    ========================================================================= */
 
 async function buildDays(
-  tripId: string,
+  rows: PdfTripRows,
   o: PdfExportOptions
 ): Promise<{
   days: Day[];
@@ -56,25 +122,7 @@ async function buildDays(
   diningRefs: DiningRef[];
   budgetData: BudgetData;
 }> {
-  const [
-    { data: days, error: daysErr },
-    { data: stays },
-    { data: trans },
-    { data: acts },
-    { data: dine },
-    { data: otherExpenses },
-    { data: tripRow },
-  ] = await Promise.all([
-    supabase.from(TABLES.days).select('day_id,date,title,description').eq('trip_id', tripId).order('date'),
-    supabase.from(TABLES.stays).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.transport).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.dining).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.otherExpenses).select('*').eq('trip_id', tripId),
-    supabase.from(TABLES.trip).select('budget, timezone').eq('trip_id', tripId).single(),
-  ]);
-
-  if (daysErr) throw daysErr;
+  const { days, stays, trans, acts, dine, otherExpenses, trip: tripRow } = rows;
 
   const tripTz: string | null = (tripRow?.timezone as string | null) ?? null;
 
@@ -286,20 +334,18 @@ async function buildDays(
    Public fetch wrapper
    ========================================================================= */
 
-export async function fetchPdfTripData(
-  tripId: string,
+/**
+ * Project fetched rows into the document model. Pure with respect to the
+ * database — hand it snapshot rows and it renders the trip as it stood when
+ * the snapshot was taken.
+ */
+export async function buildPdfTripData(
+  rows: PdfTripRows,
   o: PdfExportOptions,
   contentWidth: number
 ): Promise<PdfTripData> {
-  const { data: trip, error } = await supabase
-    .from(TABLES.trip)
-    .select('destination,arrival_date,departure_date,cover_image_url,budget')
-    .eq('trip_id', tripId)
-    .single();
-
-  if (error || !trip) {
-    throw error ?? new Error('Trip not found');
-  }
+  const trip = rows.trip;
+  if (!trip) throw new Error('Trip not found');
 
   const sameTripDay =
     trip.arrival_date && trip.departure_date
@@ -315,7 +361,7 @@ export async function fetchPdfTripData(
     ? (singleDayRange ?? multiDayRange ?? '')
     : '';
 
-  const { days, stays, transports, diningRefs, budgetData } = await buildDays(tripId, o);
+  const { days, stays, transports, diningRefs, budgetData } = await buildDays(rows, o);
 
   const coverImageRequested = Boolean(o.showImages && trip.cover_image_url);
   const coverImageDataUri = coverImageRequested
@@ -338,4 +384,13 @@ export async function fetchPdfTripData(
     diningRefs,
     budgetData,
   };
+}
+
+/** Fetch a trip's current rows and project them. The live-document path. */
+export async function fetchPdfTripData(
+  tripId: string,
+  o: PdfExportOptions,
+  contentWidth: number
+): Promise<PdfTripData> {
+  return buildPdfTripData(await fetchTripRows(tripId), o, contentWidth);
 }

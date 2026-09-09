@@ -29,9 +29,22 @@ const ITEM_TYPE_LABELS: Record<Item['type'], string> = {
   dining: 'Reservation',
 };
 
+/**
+ * Wraps one editable copy slot. Defaults to plain text, so the printed path
+ * and the read-only path stay exactly what they were — editing is something
+ * the page opts into, not something the document knows about.
+ */
+export type CopyRenderer = (key: string, value: string) => React.ReactNode;
+
 interface PrintDocumentProps {
   design: PrintDesignSpec;
   data: PdfTripData;
+  renderCopy?: CopyRenderer;
+  /**
+   * Reveal optional slots that are currently empty. Without this an edition
+   * whose tagline the model left blank would have nowhere to type one.
+   */
+  isEditing?: boolean;
 }
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -40,7 +53,8 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </h2>
 );
 
-const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
+const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy, isEditing }) => {
+  const copy: CopyRenderer = renderCopy ?? ((_key, value) => value);
   const pairing = getFontPairing(design.fontPairing);
   const { palette } = design;
 
@@ -77,11 +91,13 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
         <header className="pd-cover">
           <MotifBand motif={design.motif} height={16} className="pd-cover-band" />
           <p className="pd-eyebrow">WanderLuxe · Print Studio Edition</p>
-          <h1 className="pd-cover-title">{design.cover.title}</h1>
-          {design.cover.tagline && <p className="pd-cover-tagline">{design.cover.tagline}</p>}
-          {design.cover.subtitle && (
+          <h1 className="pd-cover-title">{copy('cover.title', design.cover.title)}</h1>
+          {(design.cover.tagline || isEditing) && (
+            <p className="pd-cover-tagline">{copy('cover.tagline', design.cover.tagline)}</p>
+          )}
+          {(design.cover.subtitle || isEditing) && (
             <div className="pd-cover-route">
-              <span>{design.cover.subtitle}</span>
+              <span>{copy('cover.subtitle', design.cover.subtitle)}</span>
             </div>
           )}
           {data.dateRange && <p className="pd-cover-dates">{data.dateRange}</p>}
@@ -95,17 +111,19 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
           )}
           <div className="pd-cover-foot">
             <div className="pd-theme-plate">
-              <strong>The {design.themeName} Edition</strong>
-              {design.themeRationale && <em>{design.themeRationale}</em>}
+              <strong>The {copy('themeName', design.themeName)} Edition</strong>
+              {(design.themeRationale || isEditing) && (
+                <em>{copy('themeRationale', design.themeRationale)}</em>
+              )}
             </div>
           </div>
         </header>
 
         {/* ------------------------------------------------ intro */}
-        {design.intro && (
+        {(design.intro || isEditing) && (
           <section className="pd-section pd-intro">
             <SectionLabel>Welcome</SectionLabel>
-            <p>{design.intro}</p>
+            <p>{copy('intro', design.intro)}</p>
             {facts.length > 1 && (
               <dl className="pd-facts">
                 {facts.map((f) => (
@@ -132,7 +150,9 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
                     <p className="pd-day-date">{fmtDate(day.date, 'EEEE · MMMM d')}</p>
                     {day.title && <p className="pd-day-title">{day.title}</p>}
                   </div>
-                  {caption && <p className="pd-day-caption">{caption}</p>}
+                  {(caption || isEditing) && (
+                    <p className="pd-day-caption">{copy(`day.${day.date}`, caption ?? '')}</p>
+                  )}
                 </header>
                 {day.description && <p className="pd-day-desc">{day.description}</p>}
                 {day.items.length > 0 ? (
@@ -266,7 +286,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data }) => {
           <div className="pd-closing-mark">
             <MotifMark motif={design.motif} size={44} />
           </div>
-          <p className="pd-closing-line">{design.closing}</p>
+          <p className="pd-closing-line">{copy('closing', design.closing)}</p>
           <p className="pd-credit">Made with WanderLuxe · wanderluxe.io</p>
         </footer>
       </div>
