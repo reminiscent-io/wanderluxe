@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Sparkles, ChevronDown } from 'lucide-react';
+import { TreePalm, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -290,7 +290,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-sand-50/60">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-background" />
+              <TreePalm className="w-4 h-4 text-background" />
             </div>
             <div>
               <h3 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h3>

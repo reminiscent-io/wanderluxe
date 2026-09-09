@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Download, Edit3, Loader2, Check, AlertCircle } from 'lucide-react';
+import { TreePalm, Download, Edit3, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ExtractedItemCard from './ExtractedItemCard';
 import type { ExtractedItem } from '@/types/ai-assistant';
@@ -130,7 +130,7 @@ const ExtractionResultMessage: React.FC<ExtractionResultMessageProps> = ({
       <div className="px-4 py-3 border-b border-border bg-background">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex-shrink-0 w-7 h-7 rounded-full bg-earth-500 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-background" />
+            <TreePalm className="w-4 h-4 text-background" />
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
             <p className="text-sm font-medium text-foreground truncate tabular-nums">

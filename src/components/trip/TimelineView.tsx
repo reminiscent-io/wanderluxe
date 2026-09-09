@@ -304,7 +304,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             </h2>
             <ViewingStatusAvatars tripId={tripId} />
           </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             <fieldset className="grid flex-1 min-w-0 grid-cols-3 rounded-md border border-border bg-card p-0.5 sm:inline-flex sm:flex-none">
               <legend className="sr-only">Itinerary view</legend>
               <button
@@ -332,16 +332,22 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
                 <MapIcon className="h-3.5 w-3.5" />Map
               </button>
             </fieldset>
-            {/* Desktop: rare actions stay as labeled buttons. */}
+            {/* Desktop: rare actions stay labelled, but abbreviated — at the
+                58% width the timeline gets when the assistant is docked, full
+                phrases pushed this row past the column and under the dock.
+                The icon carries the meaning; `title` carries the full phrase
+                (as an accessible description, so the visible text stays the
+                accessible name). */}
             {canEdit && (
               <Button
                 variant="outline"
                 size="sm"
                 className="hidden sm:inline-flex"
+                title="Add this trip to your calendar"
                 onClick={() => setIsSyncSheetOpen(true)}
               >
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Add to calendar
+                <CalendarPlus className="h-4 w-4" />
+                + Cal
               </Button>
             )}
             <ExportPdfButton
@@ -354,41 +360,48 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               variant="outline"
               size="sm"
               className="hidden sm:inline-flex"
+              title="Print Studio — a keepsake edition of this trip"
               onClick={() => setIsPrintStudioOpen(true)}
             >
-              <Palette className="mr-2 h-4 w-4" />
-              Print Studio
+              <Palette className="h-4 w-4" />
+              Studio
             </Button>
           </div>
 
           {/* Mobile: the same actions as labelled buttons rather than an
-              unlabelled overflow icon — nobody taps a menu they can't read. */}
-          <div className="grid w-full grid-cols-2 gap-2 sm:hidden">
+              unlabelled overflow icon — nobody taps a menu they can't read.
+              Same short labels as the desktop row: one action, one name.
+              `flex-1` rather than a grid so two buttons (no edit rights)
+              split the row as evenly as three do. */}
+          <div className="flex w-full gap-2 sm:hidden">
             {canEdit && (
               <Button
                 variant="outline"
-                className="h-11"
+                className="h-11 flex-1"
+                title="Add this trip to your calendar"
                 onClick={() => setIsSyncSheetOpen(true)}
               >
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Add to calendar
+                <CalendarPlus className="h-4 w-4" />
+                + Cal
               </Button>
             )}
             <Button
               variant="outline"
-              className={`h-11 ${canEdit ? '' : 'col-span-2'}`}
+              className="h-11 flex-1"
+              title="Export this itinerary as a PDF"
               onClick={() => setIsPdfExportOpen(true)}
             >
-              <FileDown className="mr-2 h-4 w-4" />
-              Export PDF
+              <FileDown className="h-4 w-4" />
+              PDF
             </Button>
             <Button
               variant="outline"
-              className="col-span-2 h-11"
+              className="h-11 flex-1"
+              title="Print Studio — a keepsake edition of this trip"
               onClick={() => setIsPrintStudioOpen(true)}
             >
-              <Palette className="mr-2 h-4 w-4" />
-              Print Studio
+              <Palette className="h-4 w-4" />
+              Studio
             </Button>
           </div>
         </header>
