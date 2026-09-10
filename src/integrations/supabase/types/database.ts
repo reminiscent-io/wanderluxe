@@ -1122,31 +1122,46 @@ export type Database = {
       }
       trip_print_designs: {
         Row: {
+          content_snapshot: Json | null
+          copy_overrides: Json
           created_at: string
           created_by: string
           design: Json
+          finalized_at: string | null
+          finalized_by: string | null
           id: string
           model: string | null
           theme_prompt: string | null
           trip_id: string
+          updated_at: string
         }
         Insert: {
+          content_snapshot?: Json | null
+          copy_overrides?: Json
           created_at?: string
           created_by: string
           design: Json
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           model?: string | null
           theme_prompt?: string | null
           trip_id: string
+          updated_at?: string
         }
         Update: {
+          content_snapshot?: Json | null
+          copy_overrides?: Json
           created_at?: string
           created_by?: string
           design?: Json
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           model?: string | null
           theme_prompt?: string | null
           trip_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
