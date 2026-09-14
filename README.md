@@ -66,8 +66,8 @@ WanderLuxe ships a built-in **Model Context Protocol** server, so Claude and oth
 
 ### 👥 **Real-Time Collaboration**
 Travel planning is better together:
-- **Share by email** with view or edit permissions, delivered with notification emails
-- **Invite links** with per-link permissions and optional expiry — plus rich link previews when pasted into chats
+- **Share by email** with view or edit permissions — the email carries a 30-day invite link, so the recipient gets in with whichever address they sign up with
+- **Invite links** with per-link permissions and optional expiry, managed by anyone with edit access — plus rich link previews when pasted into chats
 - **Live sync** over WebSockets: when one person adds an activity, everyone sees it instantly
 - **Presence** — avatars show who's viewing the trip right now
 - **Trip reminders** — every traveler automatically gets an email 3 days before departure
@@ -76,13 +76,13 @@ Travel planning is better together:
 Transform your itinerary into a beautifully formatted, print-ready PDF with one click — with toggles for pictures and prices, Letter/A4 paper sizes, timezone-labeled times, and identical output from mobile or desktop. Free on every account, entirely client-side.
 
 ### 🖋️ **Print Studio** *(Pro)*
-The paid feature. Give it an optional theme (“winter, quiet, lots of white space”) and a model art-directs a keepsake edition of your trip: a palette, a font pairing, a motif, and editorial copy down to a caption for each day. The division of labor is the point — the model is creative director only, and every itinerary item is drawn from your database by the same data layer the PDF export uses, so a bad generation can degrade the styling but never the facts. Output opens at its own route and prints through the browser, with app chrome deliberately absent from the page. Editions are stored, so one stays openable after it's made.
+The paid feature. Give it an optional theme (“winter, quiet, lots of white space”) and a model art-directs a keepsake edition of your trip: a palette, a font pairing, a motif, and editorial copy down to a caption for each day. The division of labor is the point — the model is creative director only, and every itinerary item is drawn from your database by the same data layer the PDF export uses, so a bad generation can degrade the styling but never the facts. Output opens at its own route and prints through the browser, with app chrome deliberately absent from the page. The words stay yours: rewrite any line of AI copy right on the page, set in the face and colour it will print in, and revert a field to the model's version anytime. An edition keeps up with the plan until someone finalizes it, which freezes the itinerary as it stands. Editions are stored, so one stays openable after it's made.
 
 ### 💰 **Smart Budget Tracking**
 Track expenses across accommodations, transportation, activities, dining, and everything else — with paid/unpaid status, multi-currency support, and exchange rates refreshed automatically.
 
 ### 🧭 **Explore**
-A public, SEO-friendly showcase gallery of real trips — currently traveling, on the horizon, and past adventures — each with a shareable prerendered itinerary page. Found one you like? Copy the whole itinerary into your own account in one click and make it yours.
+A public, SEO-friendly index of showcase itineraries grouped by region — Europe, Asia & Pacific, the Americas, Africa & Middle East — each with a shareable prerendered page titled "N Days in X" and a "More itineraries" rail at the foot, so no page is a dead end. Found one you like? Copy the whole itinerary into your own account in one click and make it yours.
 
 ## 🏗️ Built With Excellence
 
@@ -108,17 +108,17 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 - 🗄️ **Supabase** — PostgreSQL database + Auth + Realtime
 - 🚂 **Express** — Node server (API routes, MCP server, iCal feed)
 - 🔒 **Row Level Security** — Database-level access control
-- ⚡ **Edge Functions** — 14 serverless Deno functions
+- ⚡ **Edge Functions** — 13 serverless Deno functions
 - 🔌 **WebSocket Subscriptions** — Live collaboration magic
 - 💳 **Stripe** — Pro subscription billing
-- 📧 **SendGrid + Mailgun** — Share notifications & trip reminder emails
+- 📧 **Mailgun** — Share notifications & trip reminder emails
 
 </td>
 </tr>
 </table>
 
 ### 🌐 External APIs & Integrations
-**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** (chat + OCR) • **OpenAI** (Print Studio design) • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **SendGrid** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
+**Google Places** • **Google Time Zone** • **Google Gemini 2.5 Flash** (chat + OCR) • **OpenAI** (Print Studio design) • **OpenWeatherMap** (weather) • **AeroDataBox** (flight status) • **Expedia Group Affiliate** (booking) • **Serper** (web search) • **Stripe** • **Mailgun** • **Unsplash** • **ExchangeRate-API** • **PostHog + Google Analytics** (consent-gated) • **Model Context Protocol**
 
 ---
 
@@ -148,13 +148,13 @@ The map view projects the same five data sources the calendar reads through a pu
 Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
 
 ### AI as Art Director, Not Author 🖋️
-The Print Studio splits generation cleanly: the model returns only a design spec (palette, font-pairing id, motif id, editorial copy) through a strict `json_schema`, and `sanitizePrintDesign` clamps it before anything renders — hex normalization, WCAG contrast enforcement (ink ≥ 4.5:1, accents ≥ 3:1, falling back to a known-good palette), registry-id fallbacks, and copy-length caps. Itinerary content is drawn from the database by the same module the PDF export uses. The user's theme text is quoted and pinned as a styling preference, so the blast radius of a prompt injection is length-clamped copy.
+The Print Studio splits generation cleanly: the model returns only a design spec (palette, font-pairing id, motif id, editorial copy) through a strict `json_schema`, and `sanitizePrintDesign` clamps it before anything renders — hex normalization, WCAG contrast enforcement (ink ≥ 4.5:1, accents ≥ 3:1, falling back to a known-good palette), registry-id fallbacks, and copy-length caps. Itinerary content is drawn from the database by the same module the PDF export uses. The user's theme text is quoted and pinned as a styling preference, so the blast radius of a prompt injection is length-clamped copy. Prose that breaks the house voice (banned words, travel clichés, puffery) is dropped to its fallback rather than printed. Human edits live in a separate override layer over the model's design, so per-field revert is free, and the voice gate deliberately never runs on them.
 
 ### Model Context Protocol 🔌
 A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 20 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses.
 
 ### SEO & Prerendering 🔍
-The build pipeline generates a sitemap covering every public trip, prerenders marketing and showcase pages with Puppeteer, emits JSON-LD structured data (Organization, TouristTrip, breadcrumbs), and 301-redirects legacy UUID URLs to canonical slugs.
+The build pipeline generates a sitemap covering every public trip, prerenders marketing and showcase pages with Puppeteer, emits JSON-LD structured data (Organization, TouristTrip, breadcrumbs), and 301-redirects legacy UUID URLs and renamed slugs to the canonical one.
 
 ### Database Security 🔐
 Row Level Security (RLS) policies enforce access control at the PostgreSQL level. Users physically cannot query data they don't own—even with direct database access.
@@ -233,11 +233,12 @@ GOOGLE_PLACES_API_KEY=...     # google-places-proxy, timezone-proxy, place-coord
 OPENWEATHERMAP_API_KEY=...    # weather-proxy (5-day forecasts)
 AERODATABOX_API_KEY=...       # flight-status-proxy (flight-number lookup; free tier: 600 calls/mo)
 SERPER_API_KEY=...            # ai-chat web search (bookable restaurant links)
-SENDGRID_API_KEY=...          # share notification emails
-MAILGUN_API_KEY=...           # trip reminder emails
-MAILGUN_DOMAIN=...
+MAILGUN_API_KEY=...           # send-email + send-trip-reminders (share & reminder emails)
+MAILGUN_DOMAIN=...            # defaults to mail.wanderluxe.io
 EXCHANGE_RATE_API=...         # update-exchange-rates (multi-currency budgets)
+UNSPLASH_ACCESS_KEY=...       # generate-image + fetch-unsplash-metadata (trip photos)
 CRON_SECRET=...               # auth for scheduled functions (reminders, exchange rates)
+ALLOWED_ORIGIN=...            # CORS origin for Edge Functions (defaults to https://wanderluxe.io)
 ```
 
 <details>
@@ -249,7 +250,6 @@ CRON_SECRET=...               # auth for scheduled functions (reminders, exchang
 - **OpenWeatherMap**: Free tier at [openweathermap.org/api](https://openweathermap.org/api)
 - **Stripe**: Get your keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
 - **OpenAI**: Create a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys) (Print Studio design generation)
-- **SendGrid**: Create a free account at [sendgrid.com](https://sendgrid.com)
 - **Mailgun**: Create an account at [mailgun.com](https://www.mailgun.com)
 - **Serper**: Sign up at [serper.dev](https://serper.dev)
 - **AeroDataBox**: Subscribe via [RapidAPI](https://rapidapi.com/aedbx-aedbx/api/aerodatabox) (free tier: 600 calls/mo)
@@ -288,11 +288,12 @@ wanderluxe/
 │   └── types/                # TypeScript definitions
 ├── ⚙️ server/
 │   ├── index.ts             # Express server (CSP, canonical redirects, static serving)
-│   ├── lib/                 # icalFeed, mcpTools, tripWrites, printDesign (OpenAI call)
+│   ├── lib/                 # icalFeed, mcpTools, tripWrites, printDesign (OpenAI call),
+│   │                        # printSnapshot (finalized editions), sitemap
 │   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), print-design,
 │                            # account (GDPR), admin-insights, invite-preview, sitemap
 ├── 🗄️ supabase/
-│   ├── functions/           # 14 Edge Functions (Deno runtime)
+│   ├── functions/           # 13 Edge Functions (Deno runtime)
 │   │   ├── ai-chat/         # Gemini chat + find_place/search_web tools
 │   │   ├── parse-travel-doc/# AI-powered document parsing
 │   │   ├── google-places-proxy/  # Autocomplete, details, photo proxy
@@ -356,10 +357,12 @@ npm run preview          # Preview production build (port 8080)
 npm run test             # Run tests (Vitest)
 npm run test:watch       # Watch mode
 npm run test:coverage    # Coverage report
+npm run test:ui          # Vitest browser UI
 
 # 📊 Evals (on-demand only, never CI)
 npm run evals:seed       # Seed eval-user fixtures (run first)
 npm run evals            # Full eval harness (chat + parsing + MCP)
+npm run evals:chat       # One suite at a time: evals:chat | evals:parsing | evals:mcp
 ```
 
 ## 📱 User Experience Highlights
@@ -428,7 +431,7 @@ We welcome contributions from developers who share our passion for elegant trave
 - Update documentation as needed
 
 **Found a bug?** Open an issue with reproduction steps.
-**Have an idea?** Start a discussion in GitHub Discussions.
+**Have an idea?** Open an issue describing it.
 
 ## 📄 License
 
@@ -439,7 +442,7 @@ This is proprietary software; the source is available for reference and contribu
 ## 💬 Support & Community
 
 - 🐛 **Bug Reports** — [Open an issue](https://github.com/reminiscent-io/wanderluxe/issues)
-- 💡 **Feature Requests** — [Start a discussion](https://github.com/reminiscent-io/wanderluxe/discussions)
+- 💡 **Feature Requests** — [Open an issue](https://github.com/reminiscent-io/wanderluxe/issues)
 - 📧 **Contact** — Reach out to the maintainers
 - 🌟 **Star** this repo if WanderLuxe helps you plan better trips!
 

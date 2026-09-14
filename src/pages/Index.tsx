@@ -1,3 +1,4 @@
+import { MotionConfig } from "framer-motion";
 import Hero from "../components/Hero";
 import WhySignUp from "../components/landing/WhySignUp";
 import FeaturedDestinations from "../components/landing/FeaturedDestinations";
@@ -47,9 +48,14 @@ const Index = () => {
         canonicalPath="/"
         jsonLd={jsonLd}
       />
-      <Hero />
-      <FeaturedDestinations />
-      <WhySignUp />
+      {/* Framer ignores prefers-reduced-motion unless told to: without this
+          every scroll reveal below still slides in and the hero chevron bobs
+          forever. "user" drops the transforms and keeps the fades. */}
+      <MotionConfig reducedMotion="user">
+        <Hero />
+        <FeaturedDestinations />
+        <WhySignUp />
+      </MotionConfig>
     </main>
   );
 };

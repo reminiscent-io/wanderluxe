@@ -21,6 +21,20 @@ const proFeatures = [
   "Cancel anytime",
 ];
 
+// Both tiers wear the same quiet treatment. This section is a comparison whose
+// point is that planning costs nothing; the sunset button belongs to the
+// closing call to action just below, not to an upsell here.
+const FeatureList = ({ features }: { features: string[] }) => (
+  <ul className="mt-8 space-y-4 list-none ml-0">
+    {features.map((f) => (
+      <li key={f} className="flex items-start gap-3">
+        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+        <span className="text-earth-500 text-sm">{f}</span>
+      </li>
+    ))}
+  </ul>
+);
+
 const PricingClarity = () => {
   return (
     <section className="relative bg-sand-50 overflow-hidden">
@@ -33,13 +47,13 @@ const PricingClarity = () => {
           transition={{ duration: 0.6 }}
           viewport={{ once: true, margin: "-80px" }}
         >
-          <h2 className="font-display text-3xl md:text-4xl text-earth-600">
+          <h2 className="font-display text-3xl md:text-4xl text-earth-600 [text-wrap:balance]">
             Free for the parts that should be free
           </h2>
-          <p className="font-sans text-lg text-earth-400 mt-4 max-w-xl mx-auto leading-relaxed">
+          <p className="font-sans text-lg text-earth-500 mt-4 max-w-xl mx-auto leading-relaxed [text-wrap:pretty]">
             Planning, sharing, exporting, and AI chat cost nothing, on as many
-            trips as you like. The $3.99 unlocks the Print Studio — a keepsake
-            itinerary designed by AI around your trip.
+            trips as you like. The $3.99 a month buys the Print Studio: a keepsake
+            itinerary, designed by AI around your trip.
           </p>
         </motion.div>
 
@@ -52,28 +66,21 @@ const PricingClarity = () => {
             viewport={{ once: true }}
           >
             <Card className="p-8 h-full border-earth-100">
-              <p className="text-sm font-semibold uppercase tracking-wider text-earth-400">
+              <p className="text-sm font-semibold uppercase tracking-wider text-earth-500">
                 Free
               </p>
               <div className="mt-2 flex items-baseline gap-1">
                 <span className="font-display text-4xl text-earth-600">$0</span>
-                <span className="text-earth-400 text-sm">forever</span>
+                <span className="text-earth-500 text-sm">forever</span>
               </div>
-              <ul className="mt-8 space-y-4 list-none ml-0">
-                {freeFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-sunset-500 mt-0.5 shrink-0" />
-                    <span className="text-earth-500 text-sm">{f}</span>
-                  </li>
-                ))}
-              </ul>
+              <FeatureList features={freeFeatures} />
               <Button
                 variant="outline"
                 size="lg"
                 className="w-full mt-8"
                 asChild
               >
-                <Link to="/auth">Sign Up Free</Link>
+                <Link to="/auth?mode=signup">Start planning, free</Link>
               </Button>
             </Card>
           </motion.div>
@@ -85,34 +92,24 @@ const PricingClarity = () => {
             transition={{ duration: 0.5, delay: 0.35 }}
             viewport={{ once: true }}
           >
-            <Card className="p-8 h-full border-sunset-200 shadow-warm-lg relative">
-              <div className="absolute -top-3 right-6 bg-sunset-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Print Studio
-              </div>
-              <p className="text-sm font-semibold uppercase tracking-wider text-sunset-600">
+            <Card className="p-8 h-full border-earth-200">
+              <p className="text-sm font-semibold uppercase tracking-wider text-earth-500">
                 Pro
               </p>
               <div className="mt-2 flex items-baseline gap-1">
                 <span className="font-display text-4xl text-earth-600">
                   $3.99
                 </span>
-                <span className="text-earth-400 text-sm">/month</span>
+                <span className="text-earth-500 text-sm">/month</span>
               </div>
-              <ul className="mt-8 space-y-4 list-none ml-0">
-                {proFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-sunset-500 mt-0.5 shrink-0" />
-                    <span className="text-earth-500 text-sm">{f}</span>
-                  </li>
-                ))}
-              </ul>
+              <FeatureList features={proFeatures} />
               <Button
-                variant="sunset"
+                variant="outline"
                 size="lg"
                 className="w-full mt-8"
                 asChild
               >
-                <Link to="/auth">Get Started</Link>
+                <Link to="/auth?mode=signup">Start free, upgrade later</Link>
               </Button>
             </Card>
           </motion.div>

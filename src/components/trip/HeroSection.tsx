@@ -215,14 +215,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <>
-      {/* Fixed hero background — purely visual, no interaction. It spans the
-          content column: full width on phones, beside the 280px desktop
-          sidebar (TripDetails' md:pl-[280px]) from md up. Static CSS, not a
-          JS measurement, so its first paint is already its final position. */}
+      {/* Fixed hero background — purely visual, no interaction */}
       <div
-        className="fixed left-0 md:left-[280px] overflow-hidden w-full md:w-[calc(100%-280px)] z-0 pointer-events-none bg-grain"
+        className="fixed overflow-hidden w-full z-0 pointer-events-none bg-grain"
         style={{
           top: 'var(--app-nav-h, 56px)',
+          left: 'var(--hero-left, 0)',
+          width: 'var(--hero-width, 100%)',
           height: 'calc(100dvh - var(--app-nav-h, 56px) - 80px)',
           maxHeight: '70vh',
           minHeight: '280px',

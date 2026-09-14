@@ -76,6 +76,13 @@ async function prerenderRoute(browser: Browser, origin: string, route: string) {
   // Allow helmet/async renders to settle
   await new Promise((r) => setTimeout(r, 500));
 
+  // The app writes measured layout variables (--app-height, --app-nav-h, the
+  // trip hero bounds) inline on <html>. Snapshotting them would hand every
+  // visitor this 1280x800 browser's numbers on first paint, 8px too tall a
+  // header on a phone. The stylesheet defaults are right at every width, and
+  // the app re-measures on boot.
+  await page.evaluate(() => document.documentElement.removeAttribute('style'));
+
   const html = await page.content();
   await page.close();
 

@@ -447,7 +447,7 @@ const Budget = () => {
                   Add expenses to any trip to see your spending patterns here.
                 </p>
                 <a href="/my-trips">
-                  <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-sunset-400 to-sunset-500 text-white font-medium shadow-warm-sm hover:shadow-warm transition-shadow">
+                  <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-sunset-700 to-sunset-800 text-white font-medium shadow-warm-sm hover:shadow-warm transition-shadow">
                     <MapPin className="w-4 h-4" />
                     View your trips
                   </button>

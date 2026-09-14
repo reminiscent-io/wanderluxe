@@ -100,36 +100,48 @@ describe('InviteRedeem page', () => {
     expect(screen.getByText(/alice invited you to join/i)).toBeInTheDocument();
     expect(screen.getByText(/Jun 1, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/Jun 10, 2026/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in to join trip/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /join this trip, free/i })).toBeInTheDocument();
   });
 
-  it('shows sign-in fallback (not a dead-end) when preview fetch fails for unauthenticated user', async () => {
+  it('shows join fallback (not a dead-end) when preview fetch fails for unauthenticated user', async () => {
     mockGetInviteLinkPreview.mockRejectedValue(new Error('Link not found'));
     renderInviteRedeem();
 
     await waitFor(() => {
-      expect(screen.getByText(/sign in to join this trip/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /join this trip, free/i })).toBeInTheDocument();
     });
     // Should still offer a path forward
-    expect(screen.getByRole('button', { name: /sign in to join trip/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /join the trip/i })).toBeInTheDocument();
   });
 
-  it('shows sign-in fallback when invite code is invalid/expired (preview returns null)', async () => {
+  it('shows join fallback when invite code is invalid/expired (preview returns null)', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(null);
     renderInviteRedeem();
 
     await waitFor(() => {
-      expect(screen.getByText(/sign in to join this trip/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /join this trip, free/i })).toBeInTheDocument();
     });
+    expect(screen.getByRole('button', { name: /join the trip/i })).toBeInTheDocument();
   });
 
-  // ─── Sign In button stores pendingInviteCode ──────────────────────────────
-  it('"Sign In to Join Trip" stores code in sessionStorage and navigates to /auth', async () => {
+  // ─── Join buttons store pendingInviteCode ─────────────────────────────────
+  it('"Join this trip, free" stores code in sessionStorage and navigates to /auth', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(MOCK_PREVIEW);
     renderInviteRedeem();
 
-    await waitFor(() => screen.getByRole('button', { name: /sign in to join trip/i }));
-    await userEvent.click(screen.getByRole('button', { name: /sign in to join trip/i }));
+    await waitFor(() => screen.getByRole('button', { name: /join this trip, free/i }));
+    await userEvent.click(screen.getByRole('button', { name: /join this trip, free/i }));
+
+    expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
+    expect(mockNavigate).toHaveBeenCalledWith('/auth');
+  });
+
+  it('"Join the trip" on the fallback card also stores code and navigates to /auth', async () => {
+    mockGetInviteLinkPreview.mockResolvedValue(null);
+    renderInviteRedeem();
+
+    await waitFor(() => screen.getByRole('button', { name: /join the trip/i }));
+    await userEvent.click(screen.getByRole('button', { name: /join the trip/i }));
 
     expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
     expect(mockNavigate).toHaveBeenCalledWith('/auth');
@@ -174,7 +186,7 @@ describe('InviteRedeem page', () => {
     expect(screen.getByText(/contact the trip owner/i)).toBeInTheDocument();
   });
 
-  it('does not offer "Sign In" when an authenticated user hits an error', async () => {
+  it('does not offer a join/sign-in button when an authenticated user hits an error', async () => {
     mockUser = { id: 'user-123' };
     mockRedeemInviteLink.mockRejectedValue(new Error('Link is disabled'));
     renderInviteRedeem();
@@ -182,8 +194,8 @@ describe('InviteRedeem page', () => {
     await waitFor(() => {
       expect(screen.getByText(/unable to join/i)).toBeInTheDocument();
     });
-    // No sign-in button — user IS authenticated, the link itself is the problem
-    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
+    // No join/sign-in button — user IS authenticated, the link itself is the problem
+    expect(screen.queryByRole('button', { name: /sign in|join/i })).not.toBeInTheDocument();
   });
 
   // ─── Race condition: auth context hydrates after preview loads ────────────

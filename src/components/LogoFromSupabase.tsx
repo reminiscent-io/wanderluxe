@@ -9,10 +9,10 @@ interface LogoFromSupabaseProps {
   fallbackClassName?: string;
 }
 
-// Logos with a known storage URL, and each PNG's pixel size. The size becomes
-// the <img>'s aspect-ratio so its box is reserved before the file arrives:
-// without it the logo lays out at zero height, and its full height (300px in
-// the landing hero) lands as a layout shift once the image loads.
+// Known logos, with each PNG's pixel size. They render on the first pass with
+// their aspect ratio reserved, so the box has its final size before the image
+// decodes. Without it the header logo grew from 0 to 190px wide and slid the
+// nav links across, and the hero wordmark pushed the headline up by 150px.
 const DIRECT_LOGOS: Record<string, { url: string; width: number; height: number }> = {
   "Black Full": { url: "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Black%20Full_v2.png", width: 1563, height: 1563 },
   "Black Simple": { url: "https://arnengxblsfnezrqcsxw.supabase.co/storage/v1/object/public/logos/Black%20Simple.png", width: 1418, height: 237 },
@@ -32,26 +32,25 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
   const [isLoading, setIsLoading] = useState(!direct);
 
   useEffect(() => {
-    // Known logos render on the first pass below; only other names are looked up.
     if (DIRECT_LOGOS[logoName]) return;
 
     const loadLogo = async () => {
       try {
         const logos = await fetchLogosFromSupabase();
         console.log("Available logos:", logos.map(l => l.name)); // Debugging
-        
+
         // Try exact match with dashes, then partial match
-        const exactMatch = logos.find(l => 
+        const exactMatch = logos.find(l =>
           l.name.toLowerCase() === `wanderluxe-${logoName.toLowerCase()}.png` ||
           l.name.toLowerCase() === `${logoName.toLowerCase()}.png`
         );
-        
-        const partialMatch = logos.find(l => 
+
+        const partialMatch = logos.find(l =>
           l.name.toLowerCase().includes(logoName.toLowerCase())
         );
-        
+
         setLogoUrl(exactMatch?.url || partialMatch?.url || null);
-        
+
         if (!exactMatch && !partialMatch) {
           console.warn(`No logo found matching "${logoName}"`);
         }
@@ -85,9 +84,9 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
   }
 
   return (
-    <img 
-      src={logoUrl} 
-      alt="WanderLuxe Logo" 
+    <img
+      src={logoUrl}
+      alt="WanderLuxe Logo"
       className={className}
     />
   );
