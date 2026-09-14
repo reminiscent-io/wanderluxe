@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, type CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
-import LandingNav from "./landing/LandingNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,14 +30,32 @@ const HERO_IMAGES = [
   { url: "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874", photographer: "Victor He", username: "victorhwn725" },
 ];
 
+const LOGO_CLASS =
+  "h-auto w-[min(60vw,300px)] drop-shadow-[0_2px_12px_rgba(33,31,27,0.45)]";
+
 /**
  * Landing hero.
  *
- * The photograph and the wordmark stay; the copy is now visible. A visitor
- * from search used to see a slideshow, a logo and a spinning "Enter here"
- * ring, and had to scroll to learn what the product was. The H1 and the
- * primary button now sit over the photo, with an escape hatch to the
- * showcase itineraries for anyone who wants proof before signing up.
+ * Two layouts, chosen by CSS alone so the prerendered HTML is identical at
+ * every width:
+ *
+ * - Phones (under `md`): a split. The slideshow fills the top half of the
+ *   screen with the wordmark over it; the headline, the lede and the button
+ *   sit on cream paper beneath, where they read without a scrim and the
+ *   button lands in thumb reach. On most phones the section ends short of the
+ *   fold, so the featured itineraries peek in and say "keep going" better
+ *   than a bouncing chevron did.
+ * - `md` and up: the photograph fills the viewport below the fixed header and
+ *   the copy sits over it. Wide screens have the room for that. (A plain
+ *   100vh here put the last 64px, chevron included, under the fold.)
+ *
+ * The split is fixed from first paint rather than collapsing on a timer once
+ * the slideshow advances. A layout that moves on its own counts as layout
+ * shift, moves the button while someone is reaching for it, and most phone
+ * visitors have scrolled before the first crossfade anyway.
+ *
+ * The global header already carries Sign In / My Trips, so the hero no longer
+ * floats a second copy of that button over the photo.
  */
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
@@ -66,7 +83,9 @@ const Hero = () => {
 
   const [index, setIndex] = useState(0);
 
-  // Subtle parallax on scroll
+  // Subtle parallax on scroll. The wrapper only ever moves down by less than
+  // the page has scrolled, so the strip it uncovers at the top of the frame
+  // is always already off-screen, at either hero height.
   useEffect(() => {
     if (prefersReducedMotion) return;
     const handleScroll = () => {
@@ -98,102 +117,124 @@ const Hero = () => {
   const current = images[index];
 
   return (
-    <div
-      className="relative w-full overflow-hidden"
-      style={{ height: "calc(var(--app-height, 1vh) * 100)" }}
+    <section
+      className="relative w-full overflow-hidden md:h-[var(--hero-h)]"
+      style={
+        {
+          "--hero-h":
+            "calc(var(--app-height, 1vh) * 100 - var(--app-nav-h, 64px))",
+        } as CSSProperties
+      }
     >
-      <LandingNav />
-
-      {/* Background stack with elegant crossfade + Ken Burns */}
-      <div
-        ref={parallaxRef}
-        className="absolute inset-0"
-        style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
-      >
-        <AnimatePresence>
-          <motion.div
-            key={current.src}
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={
-              prefersReducedMotion
-                ? { duration: 0.2 }
-                : { duration: FADE_MS / 1000, ease: "easeInOut" }
-            }
-            style={{ willChange: "opacity, transform" }}
-          >
+      {/*
+        The photograph. Half the screen on a phone (svh, so it holds still while
+        the browser chrome collapses on scroll; plain vh for browsers without
+        it), the whole viewport on md+.
+      */}
+      <div className="relative h-[50vh] min-h-[300px] overflow-hidden supports-[height:1svh]:h-[50svh] md:absolute md:inset-0 md:h-auto md:min-h-0">
+        <div ref={parallaxRef} className="absolute inset-0">
+          <AnimatePresence>
             <motion.div
+              key={current.src}
               className="absolute inset-0"
-              initial={prefersReducedMotion ? { scale: 1 } : { scale: 1.02 }}
-              animate={prefersReducedMotion ? { scale: 1 } : { scale: 1.08 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={
                 prefersReducedMotion
-                  ? { duration: 0.01 }
-                  : { duration: (SLIDE_MS + FADE_MS) / 1000, ease: "easeOut" }
+                  ? { duration: 0.2 }
+                  : { duration: FADE_MS / 1000, ease: "easeInOut" }
               }
-              style={{ willChange: "transform" }}
+              style={{ willChange: "opacity, transform" }}
             >
-              <UnsplashImage
-                src={current.src}
-                className="w-full h-full object-cover pointer-events-none select-none"
-                style={{ minHeight: "calc(var(--app-height, 1vh) * 100)" }}
-                objectPosition="center center"
-                alt={`Travel destination photographed by ${current.photographer} on Unsplash`}
-                showAttribution={false}
-                draggable={false}
-              />
+              <motion.div
+                className="absolute inset-0"
+                initial={prefersReducedMotion ? { scale: 1 } : { scale: 1.02 }}
+                animate={prefersReducedMotion ? { scale: 1 } : { scale: 1.08 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0.01 }
+                    : { duration: (SLIDE_MS + FADE_MS) / 1000, ease: "easeOut" }
+                }
+                style={{ willChange: "transform" }}
+              >
+                <UnsplashImage
+                  src={current.src}
+                  className="w-full h-full object-cover pointer-events-none select-none"
+                  objectPosition="center center"
+                  alt={`Travel destination photographed by ${current.photographer} on Unsplash`}
+                  showAttribution={false}
+                />
+              </motion.div>
+
+              {/* Scrim. On a phone only the wordmark sits on the photo, so it
+                  stays light; on md+ there is a headline to read over it. */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/25 to-black/45 md:from-black/30 md:via-black/40 md:to-black/60" />
+
+              {/* Unsplash attribution — above the gradient scrim */}
+              <div className="absolute bottom-4 right-4 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
+                <a
+                  href={`https://unsplash.com/@${current.username}?utm_source=wanderluxe&utm_medium=referral`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  {current.photographer}
+                </a>
+                {' / '}
+                <a
+                  href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Unsplash
+                </a>
+              </div>
             </motion.div>
+          </AnimatePresence>
+        </div>
 
-            {/* Scrim for legibility: heavier than before because there is now
-                real copy to read over the photograph. */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60" />
-
-            {/* Unsplash attribution — above the gradient scrim */}
-            <div className="absolute bottom-4 right-4 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
-              <a
-                href={`https://unsplash.com/@${current.username}?utm_source=wanderluxe&utm_medium=referral`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                {current.photographer}
-              </a>
-              {' / '}
-              <a
-                href="https://unsplash.com?utm_source=wanderluxe&utm_medium=referral"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Unsplash
-              </a>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        {/* Phone: the wordmark is the photograph's caption. pointer-events-none
+            keeps the attribution link under it clickable. */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="pointer-events-none relative z-10 flex h-full items-center justify-center md:hidden"
+        >
+          <LogoFromSupabase
+            logoName="White Full"
+            className={LOGO_CLASS}
+            fallbackClassName="font-display text-3xl text-white"
+            fallbackText="WanderLuxe"
+          />
+        </motion.div>
       </div>
 
-      {/* Foreground content */}
+      {/* Copy: on paper under the photograph on a phone, over it on md+ */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative flex h-full items-center justify-center text-center"
+        className="relative z-10 bg-background px-6 pb-10 pt-8 text-center md:absolute md:inset-0 md:flex md:items-center md:justify-center md:bg-transparent md:p-0"
       >
-        <div className="flex w-full max-w-3xl flex-col items-center gap-7 px-6 sm:gap-8">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 sm:gap-7 md:gap-8 md:px-6">
+          {/* md+: the wordmark leads the copy, as before */}
           <LogoFromSupabase
             logoName="White Full"
-            className="w-[min(60vw,300px)] h-auto drop-shadow-[0_2px_12px_rgba(33,31,27,0.45)]"
-            fallbackClassName="font-display text-3xl text-white sm:text-4xl"
+            className={`hidden md:block ${LOGO_CLASS}`}
+            fallbackClassName="hidden md:inline font-display text-4xl text-white"
             fallbackText="WanderLuxe"
           />
 
-          <div className="space-y-4">
-            <h1 className="font-display text-4xl leading-[1.05] text-white [text-wrap:balance] drop-shadow-[0_2px_16px_rgba(33,31,27,0.55)] sm:text-5xl md:text-6xl">
+          <div className="space-y-3 md:space-y-4">
+            <h1 className="font-display text-4xl leading-[1.05] text-earth-600 [text-wrap:balance] sm:text-5xl md:text-6xl md:text-white md:drop-shadow-[0_2px_16px_rgba(33,31,27,0.55)]">
               Plan the trip together.
             </h1>
-            <p className="mx-auto max-w-xl font-sans text-base leading-relaxed text-white/85 drop-shadow-[0_1px_8px_rgba(33,31,27,0.5)] sm:text-lg">
+            {/* earth-500 on cream clears AA at 16px (≈5.8:1); the page's usual
+                earth-400 body tone does not (≈3.8:1). */}
+            <p className="mx-auto max-w-xl font-sans text-base leading-relaxed text-earth-500 sm:text-lg md:text-white/85 md:drop-shadow-[0_1px_8px_rgba(33,31,27,0.5)]">
               Flights, hotels, dinners and days on one itinerary everyone can see and edit.
               Paste a confirmation and it lands on the right day. Free, no limits.
             </p>
@@ -203,19 +244,19 @@ const Hero = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
+            className="flex w-full flex-col items-center gap-4 sm:w-auto sm:flex-row sm:gap-6"
           >
             <Button
               variant="sunset"
               size="lg"
-              className="h-12 px-8 text-base shadow-warm-lg"
+              className="h-12 w-full px-8 text-base shadow-warm-lg sm:w-auto"
               onClick={() => navigate(primaryDestination)}
             >
               {primaryLabel}
             </Button>
             <Link
               to="/explore"
-              className="text-sm font-medium text-white/90 underline-offset-4 hover:text-white hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+              className="rounded-sm text-sm font-medium text-earth-500 underline underline-offset-4 hover:text-earth-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-500 focus-visible:ring-offset-2 md:text-white/90 md:no-underline md:hover:text-white md:hover:underline md:focus-visible:ring-white/70 md:focus-visible:ring-offset-transparent"
             >
               See an example itinerary
             </Link>
@@ -223,11 +264,11 @@ const Hero = () => {
         </div>
       </motion.div>
 
-      {/* Scroll-down hint */}
+      {/* Scroll-down hint, md+ only: on a phone the next section peeks in. */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1, y: [0, 8, 0] }}
+        className="absolute bottom-8 left-1/2 z-10 hidden md:block"
+        initial={{ opacity: 0, x: "-50%" }}
+        animate={{ opacity: 1, x: "-50%", y: [0, 8, 0] }}
         transition={{
           opacity: { delay: 3, duration: 1 },
           y: { delay: 3, duration: 2, repeat: Infinity, ease: "easeInOut" },
@@ -235,7 +276,7 @@ const Hero = () => {
       >
         <ChevronDown className="h-8 w-8 text-white/60" />
       </motion.div>
-    </div>
+    </section>
   );
 };
 
