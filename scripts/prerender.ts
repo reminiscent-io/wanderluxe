@@ -12,7 +12,13 @@ const DIST_DIR = path.resolve(process.cwd(), 'dist');
 const PORT = Number(process.env.PRERENDER_PORT || 4173);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-async function fetchPublicTrips(): Promise<Array<{ trip_id: string; slug: string }>> {
+interface PublicTripRoute {
+  trip_id: string;
+  slug: string;
+  previous_slugs: string[];
+}
+
+async function fetchPublicTrips(): Promise<PublicTripRoute[]> {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) {
@@ -20,9 +26,11 @@ async function fetchPublicTrips(): Promise<Array<{ trip_id: string; slug: string
     return [];
   }
   const supabase = createClient(url, key);
+  // `*` so a build that runs before the `previous_slugs` migration still
+  // prerenders every page; the column just reads as undefined.
   const { data, error } = await supabase
     .from('trips')
-    .select('trip_id, slug')
+    .select('*')
     .eq('is_public', true)
     .not('slug', 'is', null);
   if (error) {
@@ -30,9 +38,16 @@ async function fetchPublicTrips(): Promise<Array<{ trip_id: string; slug: string
     return [];
   }
   return (data ?? [])
-    .filter((r): r is { trip_id: string; slug: string } =>
-      typeof r.slug === 'string' && SLUG_PATTERN.test(r.slug)
-    );
+    .filter((r): r is typeof r & { slug: string } =>
+      typeof r.slug === 'string' && SLUG_PATTERN.test(r.slug) && r.hidden !== true,
+    )
+    .map((r) => ({
+      trip_id: r.trip_id,
+      slug: r.slug,
+      previous_slugs: Array.isArray(r.previous_slugs)
+        ? r.previous_slugs.filter((s: unknown): s is string => typeof s === 'string' && SLUG_PATTERN.test(s))
+        : [],
+    }));
 }
 
 // Strict route guard: static routes are hardcoded, and dynamic /explore/{slug}
@@ -93,6 +108,23 @@ async function main() {
     'utf8',
   );
   console.log(`[prerender] Wrote redirects.json with ${Object.keys(redirects).length} entries.`);
+
+  // Old slug → current slug, so a renamed itinerary keeps the URL Google
+  // already indexed (server/index.ts turns these into 301s). A slug that is
+  // live for another trip is never a redirect source.
+  const liveSlugs = new Set(publicTrips.map((t) => t.slug));
+  const slugRedirects: Record<string, string> = {};
+  for (const trip of publicTrips) {
+    for (const old of trip.previous_slugs) {
+      if (old !== trip.slug && !liveSlugs.has(old)) slugRedirects[old] = trip.slug;
+    }
+  }
+  fs.writeFileSync(
+    path.join(DIST_DIR, 'slug-redirects.json'),
+    JSON.stringify(slugRedirects, null, 2),
+    'utf8',
+  );
+  console.log(`[prerender] Wrote slug-redirects.json with ${Object.keys(slugRedirects).length} entries.`);
 
   // Use Vite's programmatic preview server to serve dist/ — safer than a
   // hand-rolled static server and avoids user-input-to-path expressions.

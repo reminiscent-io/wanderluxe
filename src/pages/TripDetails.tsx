@@ -5,7 +5,7 @@ import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import QuickAddSheet from "@/components/layout/QuickAddSheet";
 import { useTripQuery, useTripIdBySlug } from '@/hooks/useTripQuery';
-import { buildOgImageUrl } from '@/utils/tripUrl';
+import { buildOgImageUrl, tripTitle } from '@/utils/tripUrl';
 import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import { useTripAccessGate } from '@/components/trip/details/useTripAccessGate';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
@@ -217,9 +217,15 @@ const TripDetails = () => {
       )
     : null;
 
-  const seoTitle = isPublicTrip && nights
-    ? `${displayData.destination} — ${nights}-Night Itinerary`
-    : `${displayData.destination} itinerary`;
+  // "6 Days in Tokyo" for showcase trips, the destination for everything else.
+  const displayTitle = tripTitle(displayData);
+  const seoTitle = isPublicTrip
+    ? displayData.title
+      ? `${displayTitle} Itinerary`
+      : nights
+        ? `${displayTitle} — ${nights}-Night Itinerary`
+        : `${displayTitle} Itinerary`
+    : `${displayTitle} itinerary`;
   const seoDescription = displaySummary
     || `Explore a curated itinerary for ${displayData.destination} on WanderLuxe — accommodations, activities, dining, and transportation in one place.`;
 
@@ -244,7 +250,7 @@ const TripDetails = () => {
           ...(displayData.primary_destination && {
             itinerary: {
               "@type": "ItemList",
-              name: `${displayData.destination} itinerary`,
+              name: `${displayTitle} itinerary`,
               itemListElement: [
                 {
                   "@type": "ListItem",
@@ -264,7 +270,7 @@ const TripDetails = () => {
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
             { "@type": "ListItem", position: 2, name: "Explore", item: `${SITE_URL}/explore` },
-            { "@type": "ListItem", position: 3, name: displayData.destination, item: canonicalUrl },
+            { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
           ],
         },
       ]
@@ -288,7 +294,7 @@ const TripDetails = () => {
           {/* Hero — renders fixed background + spacer */}
           <HeroSection
             tripId={tripId}
-            title={displayData.destination}
+            title={displayTitle}
             imageUrl={displayData.cover_image_url || DEFAULT_TRIP_IMAGE}
             arrivalDate={displayData.arrival_date}
             departureDate={displayData.departure_date}
@@ -326,7 +332,7 @@ const TripDetails = () => {
                   </li>
                   <li aria-hidden="true">/</li>
                   <li className="text-earth-700 font-medium" aria-current="page">
-                    {displayData.destination}
+                    {displayTitle}
                   </li>
                 </ol>
               </nav>

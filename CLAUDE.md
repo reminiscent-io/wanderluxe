@@ -154,7 +154,7 @@ PostgreSQL database
 ```
 
 #### 4. **Trip Architecture**
-- Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.)
+- Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.). Public showcase trips also carry `title` ("N Days in X", N = nights at that place; `tripTitle()` in `utils/tripUrl.ts` falls back to `destination`) and `previous_slugs` (old slugs that `scripts/prerender.ts` turns into `dist/slug-redirects.json` and the server 301s)
 - Sub-entities: `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`
 - Relationships: `*_travelers` tables link users to bookings
 - Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`). An email share also mints a 30-day invite link (owner-only under RLS) and the `send-email` button points at it, so a logged-out recipient sees the invite preview and gets in whichever email they sign up with

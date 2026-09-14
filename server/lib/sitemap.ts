@@ -35,6 +35,8 @@ export const STATIC_ROUTES: SitemapEntry[] = [
 export interface PublicTripRow {
   slug: string | null;
   destination: string;
+  /** "N Days in X" for showcase trips; falls back to destination when null. */
+  title?: string | null;
   summary?: string | null;
   arrival_date?: string | null;
   departure_date?: string | null;
@@ -114,7 +116,8 @@ export function renderLlmsTxt(rows: PublicTripRow[], siteUrl = SITE_URL_DEFAULT)
     if (trip.hotels && trip.hotels.length > 0) facts.push(trip.hotels.join(', '));
     const description = trip.summary?.trim() || facts.join(' · ') || 'Day-by-day itinerary.';
     const prefix = facts.length && trip.summary ? `${facts.join(' · ')}. ` : '';
-    return `- [${trip.destination}](${siteUrl}/explore/${trip.slug}): ${prefix}${description}`;
+    const name = trip.title?.trim() || trip.destination;
+    return `- [${name}](${siteUrl}/explore/${trip.slug}): ${prefix}${description}`;
   });
 
   return `# WanderLuxe

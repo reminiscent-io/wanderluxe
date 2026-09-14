@@ -67,14 +67,20 @@ Generate a single `DO $$` PL/pgSQL block that inserts everything in one transact
 **Database schema reference:**
 
 ```sql
--- trips (required: user_id, destination, arrival_date, departure_date, is_public, hidden, slug, summary)
--- slug: kebab-case URL identifier, format `{destination}-{nights}-nights` (e.g. 'tokyo-japan-6-nights')
+-- trips (required: user_id, destination, arrival_date, departure_date, is_public, hidden, slug, title, summary)
+-- destination: the place, "City, Country" (e.g. 'Tokyo, Japan'). Weather, the map and Expedia links read it.
+-- title: "N Days in X", where N is the number of NIGHTS at that place (hotel_checkout - hotel_checkin),
+--   not the trip span. A trip with two hotels lists both legs: '3 Days in Sabi Sands, 5 Days in Cape Town'.
+--   Cards, the <h1>, the <title> tag and JSON-LD show it; destination becomes the subline.
+-- slug: the title in kebab-case, e.g. '6-days-in-tokyo', '3-days-in-sabi-sands-5-days-in-cape-town'.
 --   - A BEFORE-INSERT trigger auto-appends `-2`, `-3`, … if the slug collides with another public trip.
 --   - After insert, SELECT slug FROM trips WHERE trip_id = v_trip_id and surface the final value.
+--   - Never reuse a slug listed in any trip's previous_slugs (those 301 to their current page).
 -- summary: 140-160 char meta description, keyword-rich, no boilerplate. Powers /explore/{slug} SEO and JSON-LD.
-INSERT INTO trips (user_id, destination, arrival_date, departure_date, is_public, hidden, slug, summary)
-VALUES (v_user_id, 'Destination Name', 'YYYY-MM-DD', 'YYYY-MM-DD', true, false,
-  'destination-N-nights',
+INSERT INTO trips (user_id, destination, arrival_date, departure_date, is_public, hidden, slug, title, summary)
+VALUES (v_user_id, 'City, Country', 'YYYY-MM-DD', 'YYYY-MM-DD', true, false,
+  'n-days-in-city',
+  'N Days in City',
   'A keyword-rich 140-160 character description of the trip, leading with the destination and one unique angle.')
 RETURNING trip_id INTO v_trip_id;
 
@@ -150,6 +156,7 @@ END $$;
 - All times use `'HH:MM'` format
 - Costs should be in the local currency for the destination (EUR, JPY, ZAR, MAD, etc.) except international flights which use USD
 - The `is_public = true` flag is what makes trips visible on the Explore page
+- `title` is the page's name ("N Days in X", N = nights at that place from the hotel stay). Renaming an existing public trip goes through `rename_public_trip(old_slug, new_slug, title)` so the old slug lands in `previous_slugs` and keeps redirecting.
 - `slug` powers the SEO-friendly URL `/explore/{slug}`. The BEFORE-INSERT trigger `ensure_unique_public_slug` will auto-disambiguate collisions by appending `-2`, `-3`, … — after INSERT, read the trip back to surface the final slug to the user.
 - `summary` is the authored meta description used in `<meta name="description">`, OG/Twitter, and JSON-LD. Keep it 140–160 characters, lead with the destination and one specific angle (hotel, season, defining experience).
 

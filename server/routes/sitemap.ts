@@ -57,7 +57,9 @@ async function fetchPublicTrips(): Promise<PublicTripRow[]> {
 
   const { data: trips, error } = await sb
     .from('trips')
-    .select('trip_id, slug, destination, summary, arrival_date, departure_date, created_at, hidden')
+    // `*` rather than a column list so a build or server that runs ahead of a
+    // migration (e.g. the `title` column) still gets a sitemap.
+    .select('*')
     .eq('is_public', true)
     .not('slug', 'is', null)
     .order('arrival_date', { ascending: true });

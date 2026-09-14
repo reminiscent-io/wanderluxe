@@ -74,6 +74,7 @@ const Explore = () => {
     return publicTrips.filter(trip => {
       if (!trip || !trip.destination) return false;
       const haystack: string[] = [
+        trip.title ?? '',
         trip.destination ?? '',
         (trip as Trip & { primary_destination?: string }).primary_destination ?? '',
       ];

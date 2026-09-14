@@ -163,7 +163,23 @@ try {
   console.warn('[server] Failed to load redirects.json:', err);
 }
 
+// Old slug → current slug, also emitted by scripts/prerender.ts. Lets a
+// renamed showcase itinerary keep the URL search engines already indexed.
+let slugRedirects: Record<string, string> = {};
+try {
+  const slugRedirectsPath = path.join(distPath, 'slug-redirects.json');
+  if (fs.existsSync(slugRedirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(slugRedirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      slugRedirects = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load slug-redirects.json:', err);
+}
+
 const UUID_TRIP_PATH = /^\/trip\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/.*)?$/i;
+const OLD_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)(\/.*)?$/;
 const EXPLORE_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)$/;
 
 function prerenderedFileFor(normalizedPath: string): string | null {
@@ -222,6 +238,18 @@ if (fs.existsSync(distPath)) {
     if (!slug) return next();
     const suffix = match[2] ?? '';
     return res.redirect(301, `/explore/${slug}${suffix}`);
+  });
+
+  // 301-redirect a renamed itinerary's old slug to its current one. A slug
+  // that is live (prerendered) always wins over a stale redirect entry.
+  app.get(/^\/explore\/[a-z0-9-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = OLD_SLUG_PATH.exec(req.path);
+    if (!match) return next();
+    const [, oldSlug, suffix = ''] = match;
+    if (exploreSlugs.has(oldSlug)) return next();
+    const target = slugRedirects[oldSlug];
+    if (!target || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(target)) return next();
+    return res.redirect(301, `/explore/${target}${suffix}`);
   });
 
   // Handle SPA routing - prefer prerendered HTML for known public routes,

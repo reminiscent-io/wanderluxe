@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
-import { buildTripPath } from '@/utils/tripUrl';
+import { buildTripPath, tripTitle } from '@/utils/tripUrl';
 
 async function resolveSupabaseSignedUrl(src: string): Promise<string | null> {
   const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
@@ -188,7 +188,11 @@ const TripCard = ({
           ),
         )
       : null;
-  const linkLabel = `${trip.destination}${nights ? ` — ${nights} ${nights === 1 ? 'night' : 'nights'}` : ''}`;
+  // Showcase trips are titled "6 Days in Tokyo"; the place then moves to the
+  // subline, where the raw Google address string used to sit.
+  const heading = tripTitle(trip);
+  const subline = trip.title ? trip.destination : trip.primary_destination;
+  const linkLabel = `${heading}${nights ? ` — ${nights} ${nights === 1 ? 'night' : 'nights'}` : ''}`;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent navigation if the hide button is clicked
@@ -270,12 +274,12 @@ const TripCard = ({
             <div className="flex items-end justify-between">
               <div className="flex-1">
                 <h3 className="font-display text-3xl md:text-4xl font-normal tracking-tight text-white leading-tight mb-1 drop-shadow-md">
-                  {trip.destination}
+                  {heading}
                 </h3>
-                {trip.primary_destination && (
+                {subline && (
                   <div className="flex items-center text-white/80 text-sm font-medium mb-1">
                     <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                    {trip.primary_destination}
+                    {subline}
                   </div>
                 )}
                 <div className="flex items-center text-white/90 text-sm font-medium">
