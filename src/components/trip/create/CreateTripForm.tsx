@@ -1,38 +1,44 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageSection, { ImageMetadata } from "./ImageSection";
 import TimingSection from "./TimingSection";
-import DestinationInput from "./DestinationInput";
 import PrimaryDestinationInput from "./PrimaryDestinationInput";
 import { supabase } from '@/integrations/supabase/client';
+import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { generateDateArray } from '../../../utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { addOwnerToTripShares } from '@/services/travelers';
 import { track } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, MapPin, Pen, CalendarDays, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MapPin, CalendarDays, Camera, Loader2 } from 'lucide-react';
 
 interface CreateTripFormProps {
   onSubmit: (tripId: string) => void;
   onCancel: () => void;
 }
 
-const TOTAL_STEPS = 4;
+// Destination, dates, photo. The trip is named after its destination and can
+// be renamed later; asking for a name up front was a step with a placeholder
+// that already held the right answer.
+const TOTAL_STEPS = 3;
 
 const stepConfig = [
   { icon: MapPin, label: 'Destination' },
-  { icon: Pen, label: 'Name' },
   { icon: CalendarDays, label: 'Dates' },
   { icon: Camera, label: 'Photo' },
 ];
+
+/** "Paris, France" → "Paris"; the trip name people would have typed anyway. */
+function defaultTripName(destination: string): string {
+  return destination.split(',')[0]?.trim() || destination.trim();
+}
 
 const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) => {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = back
 
   // Form state
-  const [tripName, setTripName] = useState('');
   const [primaryDestination, setPrimaryDestination] = useState('');
   const [primaryDestinationPlaceId, setPrimaryDestinationPlaceId] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -42,13 +48,48 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
   const [photographerName, setPhotographerName] = useState('');
   const [photographerUsername, setPhotographerUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // True once the user picked or searched a photo themselves, so the
+  // destination autofill never overwrites a deliberate choice.
+  const [coverChosenByUser, setCoverChosenByUser] = useState(false);
+
+  // Resolve the timezone in the background from the chosen place. Soft-fails
+  // to null; useTripTimezone self-heals later if it is missing.
+  const { timeZoneId } = useResolveTimezone(primaryDestinationPlaceId || null);
 
   const handlePrimaryDestinationChange = useCallback((destination: string, placeId: string) => {
     setPrimaryDestination(destination);
     setPrimaryDestinationPlaceId(placeId);
   }, []);
 
+  // Fetch a cover photo for the place as soon as it is chosen, so the photo
+  // step opens already filled and can simply be skipped.
+  useEffect(() => {
+    const city = defaultTripName(primaryDestination);
+    if (!city || coverChosenByUser) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-image', {
+          body: { keywords: city },
+        });
+        if (error || cancelled) return;
+        const hit = data?.images?.[0] as { url?: string; photographer?: string; username?: string; id?: string } | undefined;
+        if (!hit?.url) return;
+        setCoverImageUrl(hit.url);
+        setPhotographerName(hit.photographer || '');
+        setPhotographerUsername(hit.username || '');
+        if (hit.id) void supabase.functions.invoke('fetch-unsplash-metadata', { body: { photoId: hit.id } });
+      } catch {
+        /* a missing cover is not worth interrupting the flow */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [primaryDestination, coverChosenByUser]);
+
   const handleImageChange = useCallback((url: string, metadata?: ImageMetadata) => {
+    setCoverChosenByUser(true);
     setCoverImageUrl(url);
     setPhotographerName(metadata?.photographer || '');
     setPhotographerUsername(metadata?.username || '');
@@ -57,9 +98,9 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
   const canProceed = (): boolean => {
     switch (step) {
       case 0: return primaryDestination.trim().length > 0;
-      case 1: return tripName.trim().length > 0;
-      case 2: return !!startDate && !!endDate && new Date(startDate) < new Date(endDate);
-      case 3: return true; // Photo is optional
+      // A day trip is a trip: same-day start and end is allowed.
+      case 1: return !!startDate && !!endDate && new Date(startDate) <= new Date(endDate);
+      case 2: return true; // Photo is optional
       default: return false;
     }
   };
@@ -101,7 +142,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
         .from('trips')
         .insert([{
           user_id: user.id,
-          destination: tripName,
+          destination: defaultTripName(primaryDestination),
           arrival_date: startDate,
           departure_date: endDate,
           cover_image_url: coverImageUrl || null,
@@ -111,6 +152,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
           is_public: false,
           primary_destination: primaryDestination || null,
           primary_destination_place_id: primaryDestinationPlaceId || null,
+          timezone: timeZoneId || null,
         }])
         .select('trip_id')
         .single();
@@ -216,27 +258,6 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
               <div className="space-y-6">
                 <div className="text-center">
                   <h2 className="text-2xl md:text-3xl font-display text-earth-900 mb-2">
-                    Name your trip
-                  </h2>
-                  <p className="text-earth-500 text-sm">
-                    Give it a name you'll remember
-                  </p>
-                </div>
-                <DestinationInput
-                  destination={tripName}
-                  setDestination={setTripName}
-                  hideLabel
-                  autoFocus
-                  placeholder={`e.g., Summer in ${primaryDestination.split(',')[0] || 'Paris'}`}
-                  inputClassName="text-center text-lg py-4"
-                />
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h2 className="text-2xl md:text-3xl font-display text-earth-900 mb-2">
                     When are you traveling?
                   </h2>
                   <p className="text-earth-500 text-sm">
@@ -252,14 +273,16 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
               </div>
             )}
 
-            {step === 3 && (
+            {step === 2 && (
               <div className="space-y-6">
                 <div className="text-center">
                   <h2 className="text-2xl md:text-3xl font-display text-earth-900 mb-2">
-                    Add a cover photo
+                    {coverImageUrl && !coverChosenByUser ? 'Your cover photo' : 'Add a cover photo'}
                   </h2>
                   <p className="text-earth-500 text-sm">
-                    Optional — you can always add one later
+                    {coverImageUrl && !coverChosenByUser
+                      ? `Picked for ${defaultTripName(primaryDestination)}. Keep it, or choose your own.`
+                      : 'Optional — you can always add one later'}
                   </p>
                 </div>
                 <ImageSection

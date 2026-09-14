@@ -411,6 +411,7 @@ const TripDetails = () => {
                     tripDestination={displayData.destination}
                     primaryDestination={displayData.primary_destination}
                     canEdit={canEdit}
+                    onInvite={() => sidebarRef.current?.openTravelersPanel()}
                   />
                 </ErrorBoundary>
               )}

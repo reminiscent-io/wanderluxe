@@ -1,7 +1,7 @@
 {
   "name": "WanderLuxe",
   "short_name": "WanderLuxe",
-  "description": "Travel planning made easy with luxury experiences",
+  "description": "Plan trips together. One shared itinerary of flights, hotels, dinners and days, edited in real time.",
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
@@ -42,16 +42,32 @@
   ],
   "screenshots": [
     {
-      "src": "/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "src": "/images/app-timeline.jpg",
+      "sizes": "620x1200",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Timeline: an arrival day in Tokyo with a flight, hotel check-in and afternoon plans"
     },
     {
-      "src": "/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "form_factor": "wide"
+      "src": "/images/app-trip.jpg",
+      "sizes": "620x1200",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Trip page with cover photo, destination and dates"
+    },
+    {
+      "src": "/images/app-map.jpg",
+      "sizes": "620x1200",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Map view with a day's stops and route"
+    },
+    {
+      "src": "/images/app-calendar.jpg",
+      "sizes": "620x1200",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Calendar view, three days at a glance"
     }
   ],
   "shortcuts": [
@@ -60,15 +76,30 @@
       "short_name": "Create",
       "description": "Start planning a new trip",
       "url": "/create-trip",
-      "icons": [{ "src": "/icon-144x144.png", "sizes": "144x144", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icon-144x144.png",
+          "sizes": "144x144",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "My Trips",
       "short_name": "Trips",
       "description": "View your trips",
       "url": "/my-trips",
-      "icons": [{ "src": "/icon-144x144.png", "sizes": "144x144", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icon-144x144.png",
+          "sizes": "144x144",
+          "type": "image/png"
+        }
+      ]
     }
   ],
-  "categories": ["travel", "productivity"]
+  "categories": [
+    "travel",
+    "productivity"
+  ]
 }

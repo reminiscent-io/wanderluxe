@@ -70,6 +70,8 @@ export interface CompactDayCardProps {
   weatherLocation?: string;
   allForecasts?: DailyForecast[];
   tripTimezone?: string | null;
+  /** Render an empty day as a single line (the trip-level banner carries the guidance). */
+  quietEmpty?: boolean;
 }
 
 /** Map TimelineItem type to the Supabase table name */
@@ -98,6 +100,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
   weatherLocation,
   allForecasts,
   tripTimezone,
+  quietEmpty = false,
 }) => {
   // Check if day is in the past for auto-collapse (parse as local date to avoid UTC offset issues)
   const [year, month, day_] = (date.split('T')[0]).split('-').map(Number);
@@ -482,6 +485,16 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
                       </div>
                     </SortableContext>
                   </DndContext>
+                ) : quietEmpty ? (
+                  <div className="flex items-center justify-between gap-3 px-2 py-3">
+                    <p className="text-sm text-muted-foreground">Nothing here yet.</p>
+                    {canEdit && (
+                      <Button variant="ghost" size="sm" onClick={addActivityForThisDay} className="h-9 font-normal text-earth-600">
+                        <Star className="h-3.5 w-3.5 mr-1.5" strokeWidth={1.5} />
+                        Plan this day
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}

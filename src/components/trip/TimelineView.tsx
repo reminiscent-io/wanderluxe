@@ -6,7 +6,7 @@ import TimelineContent from './timeline/TimelineContent';
 import ExportPdfButton from './ExportPdfButton';
 import { Button } from '@/components/ui/button';
 // Aliased: a bare `Map` import shadows the global Map constructor used below.
-import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon, Palette } from 'lucide-react';
+import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon, Palette, UserPlus, Sparkles, ClipboardPaste, PenLine } from 'lucide-react';
 import PrintStudioDialog from './print-studio/PrintStudioDialog';
 import { useSearchParams } from 'react-router-dom';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
@@ -37,9 +37,11 @@ interface TimelineViewProps {
   tripDestination?: string;
   primaryDestination?: string | null;
   canEdit?: boolean;
+  /** Opens the Travelers panel (invite links live there). Shown as "Invite" in the header. */
+  onInvite?: () => void;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, primaryDestination, canEdit = true }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialTripDates, tripDestination, primaryDestination, canEdit = true, onInvite }) => {
   // Keep the session alive while working on the timeline
   useSessionKeepAlive(10 * 60 * 1000); // 10 minutes - increased to prevent frequent refreshes
 
@@ -142,7 +144,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     const newDeparture = initialTripDates?.departure_date;
     if (newArrival && newDeparture) {
       if (newArrival !== localTripDates.arrival_date || newDeparture !== localTripDates.departure_date) {
-        console.log('Updating trip dates from props:', { newArrival, newDeparture });
         setLocalTripDates({
           arrival_date: newArrival,
           departure_date: newDeparture,
@@ -153,7 +154,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
   useEffect(() => {
     if (!localTripDates.arrival_date || !localTripDates.departure_date) {
-      console.log('Trip dates missing on mount, fetching fresh data');
       fetchTripData();
     }
     // Run once on mount to backfill dates if absent.
@@ -172,13 +172,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
       if (!error && data) {
         if (data.arrival_date && data.departure_date) {
-          console.log('Setting trip dates from refresh:', data);
           setLocalTripDates({
             arrival_date: data.arrival_date,
             departure_date: data.departure_date,
           });
-        } else {
-          console.log('Skipping trip dates update - missing dates in data:', data);
         }
       }
     } catch (error) {
@@ -191,7 +188,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
   const fetchTripData = async () => {
     if (!tripId) return;
-    console.log('Fetching trip data for ID:', tripId);
     try {
       const { data, error } = await supabase
         .from('trips')
@@ -199,18 +195,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         .eq('trip_id', tripId)
         .single();
       if (error) throw error;
-      console.log('Trip data fetched successfully:', data);
       if (data.arrival_date && data.departure_date) {
-        console.log('Setting valid dates from DB:', {
-          arrival: data.arrival_date,
-          departure: data.departure_date,
-        });
         setLocalTripDates({
           arrival_date: data.arrival_date,
           departure_date: data.departure_date,
         });
-      } else {
-        console.log('DB returned incomplete date data, not updating state');
       }
     } catch (error) {
       console.error('Error fetching trip details:', error);
@@ -271,17 +260,26 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   // Pick the first hint that is both relevant and still unseen, so dismissing
   // one lets the next take its place rather than silencing the whole chain.
   const onTimeline = itineraryView === 'timeline';
+  // A brand-new trip: every day is blank and there is nothing to attach the
+  // other hints to. The banner below carries the three ways to start; once
+  // the first item lands it goes away for good.
+  const tripIsEmpty = (days?.length ?? 0) > 0 && itemCount === 0;
+  const firstTripHint = useFirstRun('first-trip', onTimeline && canEdit && tripIsEmpty);
   const mapHint = useFirstRun('map-view', onTimeline && itemCount >= 3);
   const calendarHint = useFirstRun('calendar-sync', onTimeline && canEdit && hasTransportation);
+  // Fires once a trip has taken shape but nobody else is on it yet.
+  const shareHint = useFirstRun('share-trip', onTimeline && canEdit && itemCount >= 3 && !isSharedTrip && Boolean(onInvite));
   const collabHint = useFirstRun('live-collab', onTimeline && isSharedTrip);
 
   const activeHint = mapHint.isUnseen
     ? 'map-view'
     : calendarHint.isUnseen
       ? 'calendar-sync'
-      : collabHint.isUnseen
-        ? 'live-collab'
-        : null;
+      : shareHint.isUnseen
+        ? 'share-trip'
+        : collabHint.isUnseen
+          ? 'live-collab'
+          : null;
 
   return (
     <div className="relative lg:flex lg:gap-6">
@@ -338,6 +336,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
                 The icon carries the meaning; `title` carries the full phrase
                 (as an accessible description, so the visible text stays the
                 accessible name). */}
+            {canEdit && onInvite && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+                title="Invite people to this trip"
+                onClick={onInvite}
+              >
+                <UserPlus className="h-4 w-4" />
+                Invite
+              </Button>
+            )}
             {canEdit && (
               <Button
                 variant="outline"
@@ -374,6 +384,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
               `flex-1` rather than a grid so two buttons (no edit rights)
               split the row as evenly as three do. */}
           <div className="flex w-full gap-2 sm:hidden">
+            {canEdit && onInvite && (
+              <Button
+                variant="outline"
+                className="h-11 flex-1"
+                title="Invite people to this trip"
+                onClick={onInvite}
+              >
+                <UserPlus className="h-4 w-4" />
+                Invite
+              </Button>
+            )}
             {canEdit && (
               <Button
                 variant="outline"
@@ -405,6 +426,59 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             </Button>
           </div>
         </header>
+
+        {firstTripHint.isUnseen && (
+          <section
+            aria-labelledby="first-trip-heading"
+            className="rounded-card border border-sunset-200 bg-sunset-50 p-5 sm:p-6"
+          >
+            <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-2">
+              Nothing planned yet
+            </p>
+            <h3 id="first-trip-heading" className="font-display text-xl text-foreground leading-snug">
+              Three ways to fill the first day
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground max-w-prose">
+              Paste a booking confirmation and it lands on the right day. Ask the assistant for a hotel
+              or a dinner and add what it finds. Or write the day in by hand.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Button
+                variant="outline"
+                className="h-11 justify-start sm:h-10"
+                onClick={() => setAssistantOpen(true)}
+              >
+                <ClipboardPaste className="h-4 w-4" />
+                Paste a confirmation
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11 justify-start sm:h-10"
+                onClick={() => setAssistantOpen(true)}
+              >
+                <Sparkles className="h-4 w-4" />
+                Ask the assistant
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11 justify-start sm:h-10"
+                onClick={() => {
+                  firstTripHint.dismiss();
+                  document.getElementById('day-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              >
+                <PenLine className="h-4 w-4" />
+                Add by hand
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {activeHint === 'share-trip' && onInvite && (
+          <DiscoverHint hint="share-trip" actionLabel="Invite someone" onAction={onInvite}>
+            The trip is taking shape. Invite the people going and they can see and edit it as it changes.
+          </DiscoverHint>
+        )}
 
         {activeHint === 'map-view' && (
           <DiscoverHint
@@ -467,6 +541,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             canEdit={canEdit}
             weather={weather}
             tripDestination={tripDestination}
+            quietEmptyDays={tripIsEmpty}
           />
         )}
       </div>

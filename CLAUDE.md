@@ -157,7 +157,7 @@ PostgreSQL database
 - Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.). Public showcase trips also carry `title` ("N Days in X", N = nights at that place; `tripTitle()` in `utils/tripUrl.ts` falls back to `destination`) and `previous_slugs` (old slugs that `scripts/prerender.ts` turns into `dist/slug-redirects.json` and the server 301s)
 - Sub-entities: `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`
 - Relationships: `*_travelers` tables link users to bookings
-- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`). An email share also mints a 30-day invite link (owner-only under RLS) and the `send-email` button points at it, so a logged-out recipient sees the invite preview and gets in whichever email they sign up with
+- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`). An email share also mints a 30-day invite link (RLS: `can_edit_trip`, so editors can manage links too; the timeline header's Invite button opens the Travelers panel where they live) and the `send-email` button points at it, so a logged-out recipient sees the invite preview and gets in whichever email they sign up with
 - Timezones: all times are floating wall-clock values, never converted between zones. Items carry nullable `timezone` columns (transportation: `departure_timezone`/`arrival_timezone`); NULL inherits the trip default (see §17)
 - Security: RLS policies enforce trip ownership and share permissions
 
@@ -256,7 +256,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useVisualViewport()` - Mobile viewport handling
 - `useRealtimeSubscription()` - Generic real-time subscription helper (**dedupes by `channelKey` in a module-level Set** — two views sharing a key means the second one gets no events)
 - `useTripMapData()` / `usePlaceCoordinates()` / `usePlayback()` / `useMapRealtime()` - Map view data, geocoding, route playback, realtime (live in `components/trip/map/`)
-- `useFirstRun()` - One-time discovery hints (`map-view`, `calendar-sync`, `doc-import`, `live-collab`)
+- `useFirstRun()` - One-time discovery hints (`first-trip`, `map-view`, `calendar-sync`, `share-trip`, `doc-import`, `live-collab`)
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
@@ -354,7 +354,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 
 #### 22. **First-Run Discovery Hints**
 - `src/components/discovery/DiscoverHint.tsx` + `useFirstRun` — a single dismissible line that appears once, in place, beside the feature it describes. Deliberately not a tour
-- Keys (`DiscoveryKey`): `map-view`, `calendar-sync`, `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
+- Keys (`DiscoveryKey`): `first-trip` (a trip with days but no items; renders the three-way "Nothing planned yet" banner in `TimelineView`, and blank days collapse to one line via `quietEmptyDays` until the first item lands), `map-view`, `calendar-sync`, `share-trip` (3+ items, nobody else on the trip), `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
 #### 23. **Print Studio (Pro feature)**
 - The paid feature: an AI-art-directed printable keepsake itinerary. Entry: "Print Studio" button in the TimelineView toolbar → `PrintStudioDialog` (`src/components/trip/print-studio/`) — Pro members enter an optional theme and generate; free users see the upsell (checkout); anyone with trip access can open existing editions

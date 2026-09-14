@@ -12,8 +12,10 @@ import { useAuth } from '@/contexts/AuthContext';
  * for the information to attach to.
  */
 export type DiscoveryKey =
+  | 'first-trip'
   | 'map-view'
   | 'calendar-sync'
+  | 'share-trip'
   | 'doc-import'
   | 'live-collab';
 
