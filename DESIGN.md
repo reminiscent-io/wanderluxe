@@ -223,8 +223,13 @@ buttons on the same screen is a bug. Three is a marketing email.
 
 ## 3. Typography
 
-**Display Font:** DM Serif Display (with Georgia, serif fallback)
-**Body Font:** DM Sans (with system-ui, sans-serif fallback)
+**Display Font:** DM Serif Display (then DM Serif Display Fallback, Georgia, serif)
+**Body Font:** DM Sans (then DM Sans Fallback, system-ui, sans-serif)
+**Swap fallbacks:** DM Serif Display Fallback and DM Sans Fallback are not
+extra typefaces. They are local Georgia and Arial with `size-adjust` and
+ascent/descent overrides (`src/index.css`), so the page sets at the web
+fonts' widths and line heights before they arrive and nothing moves when
+they swap in.
 **Mono Font:** ui-monospace, SFMono-Regular, Menlo, Consolas
 
 **Character:** A high-contrast magazine pairing. DM Serif Display is the
