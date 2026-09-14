@@ -4,7 +4,7 @@ import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@
 import { TimelineItem, TimelineType, formatTimeCompact, getEventCategory, getTimelineIcon, CATEGORY_ICON_CLASS, CATEGORY_ROW_CLASS } from './timeline-utils';
 import { cn } from '@/lib/utils';
 import TravelerAvatars from '../../timeline/TravelerAvatars';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type Props = {
   items: TimelineItem[];
@@ -37,7 +37,6 @@ const GroupedEventCard: React.FC<Props> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const panelId = useId();
   const titleId = useId();
-  const prefersReducedMotion = useReducedMotion();
 
   const handleEventClick = (item: TimelineItem) => {
     if (item.type === 'activity' && onActivityClick && item.data) {
@@ -134,7 +133,7 @@ const GroupedEventCard: React.FC<Props> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
             {items.map((item, childIdx) => (

@@ -149,13 +149,11 @@ const Hero = () => {
             >
               <motion.div
                 className="absolute inset-0"
-                initial={prefersReducedMotion ? { scale: 1 } : { scale: 1.02 }}
-                animate={prefersReducedMotion ? { scale: 1 } : { scale: 1.08 }}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0.01 }
-                    : { duration: (SLIDE_MS + FADE_MS) / 1000, ease: "easeOut" }
-                }
+                // The root MotionConfig would snap this zoom straight to 1.08;
+                // hold the photo at its natural crop instead.
+                initial={{ scale: prefersReducedMotion ? 1 : 1.02 }}
+                animate={{ scale: prefersReducedMotion ? 1 : 1.08 }}
+                transition={{ duration: (SLIDE_MS + FADE_MS) / 1000, ease: "easeOut" }}
                 style={{ willChange: "transform" }}
               >
                 <UnsplashImage

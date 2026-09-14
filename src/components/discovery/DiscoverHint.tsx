@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Lightbulb, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirstRun, type DiscoveryKey } from '@/hooks/useFirstRun';
@@ -32,7 +32,6 @@ export function DiscoverHint({
   className,
 }: DiscoverHintProps) {
   const { isUnseen, dismiss } = useFirstRun(hint, when);
-  const prefersReducedMotion = useReducedMotion();
 
   if (!isUnseen) return null;
 
@@ -44,7 +43,7 @@ export function DiscoverHint({
   return (
     <motion.div
       role="status"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: -4 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
