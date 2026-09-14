@@ -478,8 +478,21 @@ When chrome sits on top of imagery (hero cards, photo overlays):
 
 ### Motion Caveats
 
-- Framer Motion respects `prefers-reduced-motion` by default for
-  opacity/transform on `motion.*` elements; don't fight it.
+- Framer Motion does not honor `prefers-reduced-motion` on its own:
+  `MotionConfig`'s `reducedMotion` defaults to `"never"`. `App.tsx` wraps
+  the whole app in `<MotionConfig reducedMotion="user">`, so when the OS
+  asks for less motion framer snaps transforms (`x`, `y`, `scale`,
+  `rotate`) and box values (`width`, `height`, `top`, `left`) to their end
+  state and still runs opacity and color transitions. A scroll reveal
+  becomes a fade in place; an accordion opens at full height and fades in.
+- Don't branch `motion.*` props on `useReducedMotion()` to switch
+  transforms off; the root config already does. Use the hook for motion
+  framer can't see: scroll handlers that write `style.transform` (hero
+  parallax), `scrollTo` behavior, map camera tweens, or a transform whose
+  end state shouldn't stick (the hero's slow zoom).
+- The root config covers framer only. CSS animations (Radix dialogs and
+  sheets via `tailwindcss-animate`, `animate-*` and `transition-*`
+  utilities) ignore it and need their own `motion-reduce:` handling.
 - Don't animate layout properties (`width`, `height`, `top`, `padding`,
   `margin`) — animate `transform` and `opacity` only. This rule applies
   doubly on mobile, where the GPU is doing more for less.
