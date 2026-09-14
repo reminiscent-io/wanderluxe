@@ -16,6 +16,8 @@ import BookingView from "../components/trip/BookingView";
 import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
 import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
 import CopyTripButton from "@/components/trip/CopyTripButton";
+import RelatedItineraries from "@/components/trip/RelatedItineraries";
+import { track } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { Card } from "@/components/ui/card";
@@ -131,6 +133,16 @@ const TripDetails = () => {
         break;
     }
   };
+
+  // Showcase pages are the acquisition surface; count each view once per
+  // trip so their value can be read next to copy_trip_* in PostHog. Sits
+  // above the early returns because hooks must run on every render.
+  const viewedTrip = (trip || previousTrip) as { is_public?: boolean | null; slug?: string | null } | null | undefined;
+  const viewedPublicSlug = viewedTrip?.is_public ? viewedTrip.slug ?? undefined : undefined;
+  useEffect(() => {
+    if (!viewedPublicSlug || !tripId) return;
+    track('public_trip_viewed', { trip_id: tripId, slug: viewedPublicSlug, signed_in: Boolean(session) });
+  }, [viewedPublicSlug, tripId, session]);
 
   if (slug && slugLookupLoading) return <TripDetailsSkeleton />;
   if (slug && !slugLookupLoading && !tripIdFromSlug) {
@@ -410,6 +422,10 @@ const TripDetails = () => {
               )}
               {activeTab === 'budget' && <BudgetView tripId={tripId} canEdit={canEdit} />}
               {activeTab === 'booking' && <BookingView tripId={tripId} canEdit={canEdit} />}
+
+              {isPublicTrip && (
+                <RelatedItineraries currentTripId={tripId} currentDestination={displayData.destination} />
+              )}
             </div>
           </div>
         </div>

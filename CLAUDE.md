@@ -243,7 +243,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
 - `useTripSubscription()` - Trip-wide realtime for detail views (lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
-- `usePublicTrips()` - Explore showcase trips (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`)
+- `usePublicTrips()` - Explore showcase trips, grouped by region on `/explore` via `lib/regions.ts` and cross-linked by `RelatedItineraries` at the foot of every public trip page (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`). Showcase dates are kept evergreen by the operator-only `roll_public_trip_dates()` SQL function (run each January)
 - `useIsAdmin()` - Admin role checking
 - `usePWAInstall()` - PWA install prompt
 - `useWeather()` - Weather data fetching

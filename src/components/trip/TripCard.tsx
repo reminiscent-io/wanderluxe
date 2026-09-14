@@ -171,7 +171,15 @@ const TripCard = ({
     return ''; // Return empty string if no dates available
   };
 
-  const tripStatus = computeTripStatus(trip.arrival_date, trip.departure_date);
+  // Showcase cards are evergreen: no countdown badge, and the date line reads
+  // "6 nights · September" rather than a specific year that will age out.
+  const tripStatus = isExample ? null : computeTripStatus(trip.arrival_date, trip.departure_date);
+  const showcaseDateLine = (() => {
+    if (!isExample || !trip.arrival_date || !trip.departure_date) return null;
+    const arrival = parseISO(trip.arrival_date);
+    const n = Math.max(1, Math.round((parseISO(trip.departure_date).getTime() - arrival.getTime()) / 86_400_000));
+    return `${n} ${n === 1 ? 'night' : 'nights'} · ${format(arrival, 'MMMM')}`;
+  })();
 
   // When linkTo is provided (public Explore + homepage grids), the card surfaces
   // a real, crawlable <a href> via a stretched overlay link so search engines can
@@ -284,7 +292,7 @@ const TripCard = ({
                 )}
                 <div className="flex items-center text-white/90 text-sm font-medium">
                   <Calendar className="h-4 w-4 mr-2" />
-                  {formatDateRange(trip)}
+                  {showcaseDateLine ?? formatDateRange(trip)}
                 </div>
               </div>
             </div>

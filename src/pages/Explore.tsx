@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { differenceInDays } from 'date-fns';
 import Navigation from "../components/Navigation";
 import { Button } from "@/components/ui/button";
 import { usePublicTrips } from '@/hooks/usePublicTrips';
@@ -10,15 +8,10 @@ import { Plus } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useAuth } from "@/contexts/AuthContext";
 import SEO, { SITE_URL } from '@/components/SEO';
-import { buildTripPath } from '@/utils/tripUrl';
-import { NextTripBoardingPass, DefaultHeroCard } from '@/components/trip/hero';
-import { useTravelStats } from '@/hooks/useTravelStats';
+import { buildTripPath, tripTitle } from '@/utils/tripUrl';
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
-import {
-  SectionHeader,
-  TripSearch,
-  TravelYearSection,
-} from '@/components/trip/dashboard';
+import { groupByRegion } from '@/lib/regions';
+import { SectionHeader, TripSearch } from '@/components/trip/dashboard';
 
 /** Whole-number nights between arrival and departure, or null if dates are missing. */
 const getNights = (trip: Trip): number | null => {
@@ -28,6 +21,15 @@ const getNights = (trip: Trip): number | null => {
   return Math.max(1, Math.round(ms / 86_400_000));
 };
 
+/**
+ * Explore: the public index of showcase itineraries.
+ *
+ * This used to reuse the My Trips dashboard wholesale (a countdown to the
+ * "next" showcase trip, a Travel Year chart, upcoming/current/past buckets).
+ * A visitor has no upcoming trip here, and a curated itinerary is not an
+ * event that passes. It is now a destination index: heading, search, and a
+ * grid grouped by region, with every card an evergreen "N nights · Month".
+ */
 const Explore = () => {
   const navigate = useNavigate();
   // The homepage's JSON-LD SearchAction advertises /explore?search={term}, so
@@ -64,33 +66,28 @@ const Explore = () => {
 
   const { data: publicTrips, isLoading } = usePublicTrips();
 
-  // Search filter — matches destination, primary_destination, and date text
+  const listedTrips = useMemo(
+    () => (publicTrips ?? []).filter((trip) => trip && trip.destination),
+    [publicTrips],
+  );
+
+  // Search filter — matches title, destination, primary_destination, and month
   const filteredTrips = useMemo(() => {
-    if (!publicTrips) return [];
     const query = searchQuery.trim().toLowerCase();
-    if (!query) {
-      return publicTrips.filter(trip => trip && trip.destination);
-    }
-    return publicTrips.filter(trip => {
-      if (!trip || !trip.destination) return false;
+    if (!query) return listedTrips;
+    return listedTrips.filter(trip => {
       const haystack: string[] = [
         trip.title ?? '',
         trip.destination ?? '',
         (trip as Trip & { primary_destination?: string }).primary_destination ?? '',
       ];
       const arrival = trip.arrival_date ? new Date(trip.arrival_date) : null;
-      const departure = trip.departure_date ? new Date(trip.departure_date) : null;
-      for (const date of [arrival, departure]) {
-        if (date && !Number.isNaN(date.getTime())) {
-          haystack.push(
-            date.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
-            date.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
-          );
-        }
+      if (arrival && !Number.isNaN(arrival.getTime())) {
+        haystack.push(arrival.toLocaleString('en-US', { month: 'long' }));
       }
       return haystack.some(field => field.toLowerCase().includes(query));
     });
-  }, [publicTrips, searchQuery]);
+  }, [listedTrips, searchQuery]);
 
   // Track search queries
   useEffect(() => {
@@ -99,71 +96,22 @@ const Explore = () => {
         window.gtag('event', 'search', {
           search_term: searchQuery,
           event_category: 'Explore',
-          event_label: 'Destination Search',
+          event_label: 'Public Trips Search',
           results_count: filteredTrips.length
         });
-      }, 500);
-
+      }, 1000);
       return () => clearTimeout(timeoutId);
     }
   }, [searchQuery, filteredTrips.length]);
 
-  const getTripCategory = (trip: Trip): 'upcoming' | 'current' | 'past' => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const arrivalDate = new Date(trip.arrival_date || '');
-    const departureDate = new Date(trip.departure_date || '');
-
-    if (today >= arrivalDate && today <= departureDate) {
-      return 'current';
-    }
-    if (arrivalDate > today) {
-      return 'upcoming';
-    }
-    return 'past';
-  };
-
-  const { upcomingTrips, currentTrips, pastTrips } = useMemo(() => {
-    const upcoming = filteredTrips
-      .filter(trip => getTripCategory(trip) === 'upcoming')
-      .sort((a, b) => new Date(a.arrival_date || '').getTime() - new Date(b.arrival_date || '').getTime());
-    const current = filteredTrips.filter(trip => getTripCategory(trip) === 'current');
-    const past = filteredTrips
-      .filter(trip => getTripCategory(trip) === 'past')
-      .sort((a, b) => new Date(b.departure_date || '').getTime() - new Date(a.departure_date || '').getTime());
-
-    return { upcomingTrips: upcoming, currentTrips: current, pastTrips: past };
-  }, [filteredTrips]);
-
-  // Next upcoming trip drives the hero
-  const nextTrip = useMemo(() => upcomingTrips[0], [upcomingTrips]);
-
-  const daysUntilNextTrip = useMemo(() => {
-    if (!nextTrip || !nextTrip.arrival_date) return null;
-    const today = new Date();
-    const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-    const tripDateUTC = new Date(nextTrip.arrival_date + 'T00:00:00.000Z');
-    return differenceInDays(tripDateUTC, todayUTC);
-  }, [nextTrip]);
-
-  const heroState = useMemo(() => {
-    if (nextTrip && daysUntilNextTrip !== null && daysUntilNextTrip >= 0) {
-      return 'pre-trip';
-    }
-    return 'default';
-  }, [nextTrip, daysUntilNextTrip]);
-
-  const travelStats = useTravelStats(publicTrips || []);
-
-  const lastCompletedTrip = useMemo(() => pastTrips[0] || null, [pastTrips]);
-
-  // Avoid showing the next trip twice when it's already in the hero
-  const filteredUpcomingTrips = useMemo(() => {
-    if (heroState === 'pre-trip' && nextTrip) {
-      return upcomingTrips.filter(trip => trip.trip_id !== nextTrip.trip_id);
-    }
-    return upcomingTrips;
-  }, [heroState, nextTrip, upcomingTrips]);
+  const sections = useMemo(
+    () =>
+      groupByRegion(
+        [...filteredTrips].sort((a, b) => tripTitle(a).localeCompare(tripTitle(b))),
+        (trip) => trip.destination,
+      ),
+    [filteredTrips],
+  );
 
   const handleTripClick = (trip: Trip, category: string) => {
     if (window.gtag) {
@@ -189,71 +137,52 @@ const Explore = () => {
     navigate(session ? '/create-trip' : '/auth');
   };
 
-  const itemListJsonLd = publicTrips && publicTrips.length > 0
+  const itemListJsonLd = listedTrips.length > 0
     ? {
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "Curated trip itineraries",
-        itemListElement: publicTrips.slice(0, 20).map((trip, idx) => ({
+        itemListElement: listedTrips.slice(0, 50).map((trip, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
           url: `${SITE_URL}${buildTripPath(trip)}`,
-          name: trip.destination,
+          name: tripTitle(trip),
         })),
       }
     : undefined;
 
-  const totalPublicTrips = (publicTrips || []).length;
+  const totalPublicTrips = listedTrips.length;
 
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
       <SEO
         title="Explore curated trip itineraries"
-        description="Discover hand-crafted travel itineraries from Paris to Tokyo. Get inspired by expertly designed trips covering accommodations, activities, dining, and more."
+        description="Day-by-day luxury itineraries you can copy into your own trip: hotels, dinners, and the hours in between, from Tokyo to Marrakech."
         canonicalPath="/explore"
         jsonLd={itemListJsonLd}
       />
       <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
-        <h1 className="sr-only">Explore curated trip itineraries</h1>
+        {/* Header */}
+        <header className="mb-8 md:mb-10 max-w-2xl">
+          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-3">
+            Itineraries
+          </p>
+          <h1 className="font-display text-4xl md:text-5xl text-earth-700 leading-[1.05]">
+            Trips worth copying
+          </h1>
+          <p className="mt-4 text-lg text-earth-500 leading-relaxed">
+            Every itinerary here is complete: the hotel, the table, the hours in between.
+            Open one, take a copy, set your dates, and change what you like.
+          </p>
+        </header>
 
-        {/* Hero — single primary surface */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-          {heroState === 'pre-trip' && nextTrip && (
-            <NextTripBoardingPass
-              trip={nextTrip}
-              daysUntil={daysUntilNextTrip!}
-              onViewTrip={() => {
-                handleTripClick(nextTrip, 'Hero');
-                navigate(buildTripPath(nextTrip));
-              }}
-              className="-mx-4 rounded-none md:mx-0 md:rounded-2xl"
-            />
-          )}
-          {heroState === 'default' && (
-            <DefaultHeroCard
-              onCreateTrip={handleCtaClick}
-              lastTripImage={lastCompletedTrip?.cover_image_url}
-            />
-          )}
-        </motion.div>
-
-        {/* Travel Year — discoverable analytics, sits below the hero */}
-        {totalPublicTrips > 0 && (
-          <TravelYearSection data={travelStats.dailyActivity} />
-        )}
-
-        {/* Search + secondary CTA — single row, hero already carries the sunset CTA */}
-        <div className="mb-8 flex items-center gap-2 sm:gap-3">
+        {/* Search + CTA — single row */}
+        <div className="mb-10 flex items-center gap-2 sm:gap-3">
           <TripSearch
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search destinations, dates..."
+            placeholder="Search destinations, months..."
             ariaLabel="Search public trips"
             className="flex-1 max-w-none sm:max-w-md"
           />
@@ -278,7 +207,7 @@ const Explore = () => {
           </Button>
         </div>
 
-        {/* Trip Sections */}
+        {/* Region sections */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -288,119 +217,48 @@ const Explore = () => {
               />
             ))}
           </div>
-        ) : (
+        ) : sections.length > 0 ? (
           <div className="space-y-10 md:space-y-12">
-            {/* Currently Traveling */}
-            {currentTrips.length > 0 && (
-              <section className="relative" aria-labelledby="explore-section-current">
-                <SectionHeader
-                  id="explore-section-current"
-                  title="Currently traveling"
-                  count={currentTrips.length}
-                  countClassName="text-emerald-600"
-                />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {currentTrips.map((trip) => (
-                    <TripCard
-                      key={trip.trip_id}
-                      trip={{
-                        ...trip,
-                        start_date: trip.arrival_date,
-                        end_date: trip.departure_date,
-                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                      }}
-                      isExample={true}
-                      linkTo={buildTripPath(trip)}
-                      onNavigate={() => handleTripClick(trip, 'Current')}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* On the horizon */}
-            <section className="relative" aria-labelledby="explore-section-upcoming">
-              <SectionHeader
-                id="explore-section-upcoming"
-                title="On the horizon"
-                count={filteredUpcomingTrips.length}
-              />
-              {filteredUpcomingTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                  {filteredUpcomingTrips.map((trip) => (
-                    <TripCard
-                      key={trip.trip_id}
-                      trip={{
-                        ...trip,
-                        start_date: trip.arrival_date,
-                        end_date: trip.departure_date,
-                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                      }}
-                      isExample={true}
-                      linkTo={buildTripPath(trip)}
-                      onNavigate={() => handleTripClick(trip, 'Upcoming')}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-earth-500 text-sm">
-                  {searchQuery
-                    ? `No upcoming trips match "${searchQuery}".`
-                    : 'New itineraries appear here as they go live.'}
-                </p>
-              )}
-            </section>
-
-            {/* Where they've been */}
-            <section className="relative" aria-labelledby="explore-section-past">
-              <SectionHeader
-                id="explore-section-past"
-                title="Where they've been"
-                count={pastTrips.length}
-                muted
-              />
-              {pastTrips.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                  {pastTrips.map((trip) => (
-                    <TripCard
-                      key={trip.trip_id}
-                      trip={{
-                        ...trip,
-                        start_date: trip.arrival_date,
-                        end_date: trip.departure_date,
-                        cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
-                      }}
-                      isExample={true}
-                      linkTo={buildTripPath(trip)}
-                      onNavigate={() => handleTripClick(trip, 'Past')}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-earth-500 text-sm">
-                  {searchQuery
-                    ? `No past trips match "${searchQuery}".`
-                    : 'Past itineraries will appear here.'}
-                </p>
-              )}
-            </section>
-
-            {/* Search returned nothing across all sections */}
-            {searchQuery && filteredTrips.length === 0 && (
-              <div className="flex items-center justify-between gap-3 bg-sand-100 border border-sand-200 rounded-card px-4 py-3">
-                <p className="text-earth-700 text-sm">
-                  Nothing matched <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-sm font-medium text-earth-700 hover:text-earth-900 underline-offset-4 hover:underline whitespace-nowrap"
-                >
-                  Clear search
-                </button>
-              </div>
-            )}
+            {sections.map(({ region, items }) => {
+              const id = `explore-region-${region.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+              return (
+                <section key={region} className="relative" aria-labelledby={id}>
+                  <SectionHeader id={id} title={region} count={items.length} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                    {items.map((trip) => (
+                      <TripCard
+                        key={trip.trip_id}
+                        trip={{
+                          ...trip,
+                          start_date: trip.arrival_date,
+                          end_date: trip.departure_date,
+                          cover_image_url: trip.cover_image_url || DEFAULT_TRIP_IMAGE
+                        }}
+                        isExample={true}
+                        linkTo={buildTripPath(trip)}
+                        onNavigate={() => handleTripClick(trip, region)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
+        ) : searchQuery ? (
+          <div className="flex items-center justify-between gap-3 bg-sand-100 border border-sand-200 rounded-card px-4 py-3">
+            <p className="text-earth-700 text-sm">
+              Nothing matched <span className="font-medium">&ldquo;{searchQuery}&rdquo;</span>.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="text-sm font-medium text-earth-700 hover:text-earth-900 underline-offset-4 hover:underline whitespace-nowrap"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          <p className="text-earth-500 text-sm">New itineraries appear here as they go live.</p>
         )}
 
         {/* All destinations — a crawlable hub. Always lists every public
@@ -422,8 +280,8 @@ const Explore = () => {
               Browse every curated itinerary.
             </p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
-              {(publicTrips || [])
-                .filter((trip) => trip && trip.slug && trip.is_public && trip.destination)
+              {listedTrips
+                .filter((trip) => trip.slug && trip.is_public)
                 .map((trip) => {
                   const nights = getNights(trip);
                   return (
@@ -434,7 +292,7 @@ const Explore = () => {
                         className="group inline-flex items-baseline gap-2 text-earth-700 hover:text-sunset-600 transition-colors"
                       >
                         <span className="font-medium underline-offset-4 group-hover:underline">
-                          {trip.destination}
+                          {tripTitle(trip)}
                         </span>
                         {nights && (
                           <span className="text-sm text-earth-400">
