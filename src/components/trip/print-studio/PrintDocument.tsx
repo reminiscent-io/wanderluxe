@@ -11,6 +11,7 @@ import { fmtDate, fmtMoney } from '@/services/pdf/format';
 import type { PdfTripData, Item } from '@/services/pdf/types';
 import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import { MotifBand, MotifMark } from './motifs';
+import { hasLedgerData } from './ledger';
 import './printDocument.css';
 
 const ITEM_ICONS: Record<Item['type'], React.ComponentType<{ className?: string }>> = {
@@ -45,6 +46,11 @@ interface PrintDocumentProps {
    * whose tagline the model left blank would have nowhere to type one.
    */
   isEditing?: boolean;
+  /**
+   * Draw the Ledger (spend by category, against the trip budget). Off unless
+   * the traveler opts in, so money never reaches a keepsake by default.
+   */
+  showBudget?: boolean;
 }
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -53,7 +59,7 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </h2>
 );
 
-const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy, isEditing }) => {
+const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy, isEditing, showBudget = false }) => {
   const copy: CopyRenderer = renderCopy ?? ((_key, value) => value);
   const pairing = getFontPairing(design.fontPairing);
   const { palette } = design;
@@ -82,7 +88,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
   ];
 
   const hasParticulars = data.stays.length > 0 || data.transports.length > 0 || data.diningRefs.length > 0;
-  const hasLedger = data.budgetData.total > 0 || data.budgetData.budget != null;
+  const hasLedger = showBudget && hasLedgerData(data);
 
   return (
     <article className="print-doc" style={styleVars} lang="en">
@@ -167,10 +173,8 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
                           </span>
                           <span className="pd-item-time">{item.time}</span>
                           <div className="pd-item-body">
-                            <div className="pd-item-title-row">
-                              <span className="pd-item-title">{item.title}</span>
-                              {item.cost && <span className="pd-item-cost">{item.cost}</span>}
-                            </div>
+                            {/* No price on an item, ever. The opt-in Ledger is the one place money appears. */}
+                            <p className="pd-item-title">{item.title}</p>
                             {item.details && <p className="pd-item-details">{item.details}</p>}
                             {item.location && <p className="pd-item-location">{item.location}</p>}
                           </div>

@@ -16,7 +16,7 @@ import { findSlop, repairCopy, type SlopFinding } from './voice';
 export interface PrintPalette {
   /** Deep brand hue — headings, day numerals, section labels. */
   primary: string;
-  /** Supporting hue — day dates, costs, confirmation codes. Small text, so AA is enforced. */
+  /** Supporting hue — day dates, confirmation codes. Small text, so AA is enforced. */
   secondary: string;
   /** Page ground. Must stay light: this is a printed page. */
   background: string;

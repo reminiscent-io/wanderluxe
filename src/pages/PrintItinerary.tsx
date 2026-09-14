@@ -14,15 +14,16 @@
 // copy edits are stored beside the AI's spec, never over it.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, Lock, LockOpen, Pencil, Printer, X } from 'lucide-react';
+import { ArrowLeft, Check, Lock, LockOpen, Pencil, Printer, Receipt, X } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { buildPdfTripData, fetchPdfTripData, type PdfTripRows } from '@/services/pdf/data';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import {
   applyCopyOverrides,
@@ -34,6 +35,7 @@ import {
   type PrintCopyOverrides,
 } from '@/lib/printDesign/edits';
 import PrintDocument, { type CopyRenderer } from '@/components/trip/print-studio/PrintDocument';
+import { hasLedgerData } from '@/components/trip/print-studio/ledger';
 import EditableCopy from '@/components/trip/print-studio/EditableCopy';
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { track } from '@/lib/analytics';
@@ -194,6 +196,22 @@ const PrintItinerary: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<PrintCopyOverrides>({});
 
+  // Money is off the page unless someone switches it on. The choice lives in
+  // the URL rather than on the edition: it is a print-time decision, so it
+  // survives a reload without deciding for every traveler who opens this.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showBudget = searchParams.get('budget') === '1';
+
+  const toggleBudget = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    if (showBudget) next.delete('budget');
+    else next.set('budget', '1');
+    setSearchParams(next, { replace: true });
+    // The Ledger lands at the very end of the document, usually out of view.
+    toast(showBudget ? 'Budget removed from this edition.' : 'Budget added to the end of this edition.');
+    if (tripId) track('print_studio_budget_toggled', { trip_id: tripId, show: !showBudget });
+  }, [searchParams, setSearchParams, showBudget, tripId]);
+
   const startEditing = useCallback(() => {
     setDraft(savedOverrides);
     setIsEditing(true);
@@ -334,6 +352,7 @@ const PrintItinerary: React.FC = () => {
   const isSaving = saveMutation.isPending;
   const isFinalizing = finalizeMutation.isPending;
   const canEditCopy = canEdit && !isFinalized && isReady;
+  const canShowBudget = isReady && hasLedgerData(tripData!);
 
   return (
     <div className="min-h-screen bg-sand-100 print:bg-transparent">
@@ -435,6 +454,21 @@ const PrintItinerary: React.FC = () => {
                 </Button>
               )}
 
+              {canShowBudget && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBudget}
+                  aria-pressed={showBudget}
+                  aria-label="Budget"
+                  className={cn('h-11 shrink-0 sm:h-9', showBudget && 'bg-sand-200 text-foreground hover:bg-sand-200')}
+                  title={showBudget ? 'Leave the budget out of this edition' : 'Add the budget to the end of this edition'}
+                >
+                  <Receipt className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Budget</span>
+                </Button>
+              )}
+
               <Button
                 variant="sunset"
                 size="sm"
@@ -502,6 +536,7 @@ const PrintItinerary: React.FC = () => {
               data={tripData!}
               renderCopy={isEditing ? renderCopy : undefined}
               isEditing={isEditing}
+              showBudget={showBudget}
             />
           </div>
         )}

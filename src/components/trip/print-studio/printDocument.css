@@ -359,28 +359,13 @@
   min-width: 0;
 }
 
-.pd-item-title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  /* Matches the details measure below, so title, cost, details and location
-     all share a right edge instead of the cost drifting to the page margin. */
-  max-width: var(--pd-measure);
-}
-
 .pd-item-title {
   font-weight: 600;
   font-size: 14.5px;
   color: var(--pd-ink);
-}
-
-.pd-item-cost {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--pd-secondary);
-  white-space: nowrap;
+  /* Same measure as the details and location lines, so the item block keeps
+     one right edge. */
+  max-width: var(--pd-measure);
 }
 
 .pd-item-details {
