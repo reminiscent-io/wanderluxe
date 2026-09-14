@@ -100,39 +100,51 @@ describe('InviteRedeem page', () => {
     expect(screen.getByText(/alice invited you to join/i)).toBeInTheDocument();
     expect(screen.getByText(/Jun 1, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/Jun 10, 2026/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in to join trip/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /join this trip, free/i })).toBeInTheDocument();
   });
 
-  it('shows sign-in fallback (not a dead-end) when preview fetch fails for unauthenticated user', async () => {
+  it('shows a join fallback (not a dead-end) when preview fetch fails for unauthenticated user', async () => {
     mockGetInviteLinkPreview.mockRejectedValue(new Error('Link not found'));
     renderInviteRedeem();
 
     await waitFor(() => {
-      expect(screen.getByText(/sign in to join this trip/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /join this trip, free/i })).toBeInTheDocument();
     });
     // Should still offer a path forward
-    expect(screen.getByRole('button', { name: /sign in to join trip/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /join the trip/i })).toBeInTheDocument();
   });
 
-  it('shows sign-in fallback when invite code is invalid/expired (preview returns null)', async () => {
+  it('shows a join fallback when invite code is invalid/expired (preview returns null)', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(null);
     renderInviteRedeem();
 
     await waitFor(() => {
-      expect(screen.getByText(/sign in to join this trip/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /join this trip, free/i })).toBeInTheDocument();
     });
   });
 
-  // ─── Sign In button stores pendingInviteCode ──────────────────────────────
-  it('"Sign In to Join Trip" stores code in sessionStorage and navigates to /auth', async () => {
+  // ─── Join buttons store pendingInviteCode ─────────────────────────────────
+  // Auth.tsx carries the code through sign-in, sign-up and Google; see Auth.test.tsx.
+  it('"Join this trip, free" stores the code and opens /auth on create-account', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(MOCK_PREVIEW);
     renderInviteRedeem();
 
-    await waitFor(() => screen.getByRole('button', { name: /sign in to join trip/i }));
-    await userEvent.click(screen.getByRole('button', { name: /sign in to join trip/i }));
+    await waitFor(() => screen.getByRole('button', { name: /join this trip, free/i }));
+    await userEvent.click(screen.getByRole('button', { name: /join this trip, free/i }));
 
     expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
-    expect(mockNavigate).toHaveBeenCalledWith('/auth');
+    expect(mockNavigate).toHaveBeenCalledWith('/auth?mode=signup');
+  });
+
+  it('"Join the trip" on the fallback card stores the code and opens /auth on create-account', async () => {
+    mockGetInviteLinkPreview.mockResolvedValue(null);
+    renderInviteRedeem();
+
+    await waitFor(() => screen.getByRole('button', { name: /join the trip/i }));
+    await userEvent.click(screen.getByRole('button', { name: /join the trip/i }));
+
+    expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
+    expect(mockNavigate).toHaveBeenCalledWith('/auth?mode=signup');
   });
 
   // ─── Authenticated: happy path ────────────────────────────────────────────
@@ -174,7 +186,7 @@ describe('InviteRedeem page', () => {
     expect(screen.getByText(/contact the trip owner/i)).toBeInTheDocument();
   });
 
-  it('does not offer "Sign In" when an authenticated user hits an error', async () => {
+  it('does not offer a join button when an authenticated user hits an error', async () => {
     mockUser = { id: 'user-123' };
     mockRedeemInviteLink.mockRejectedValue(new Error('Link is disabled'));
     renderInviteRedeem();
@@ -182,8 +194,8 @@ describe('InviteRedeem page', () => {
     await waitFor(() => {
       expect(screen.getByText(/unable to join/i)).toBeInTheDocument();
     });
-    // No sign-in button — user IS authenticated, the link itself is the problem
-    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
+    // No join button — user IS authenticated, the link itself is the problem
+    expect(screen.queryByRole('button', { name: /join/i })).not.toBeInTheDocument();
   });
 
   // ─── Race condition: auth context hydrates after preview loads ────────────
@@ -234,80 +246,5 @@ describe('InviteRedeem page', () => {
 
     // Without a code the component should not try to fetch
     expect(mockGetInviteLinkPreview).not.toHaveBeenCalled();
-  });
-});
-
-// ─── Auth.tsx redirect flow ──────────────────────────────────────────────────
-//
-// These tests validate the sessionStorage-based post-login redirect that
-// makes the iMessage share flow work end-to-end.
-//
-describe('Auth.tsx: post-login redirect via pendingInviteCode', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    sessionStorage.clear();
-  });
-
-  it('navigates to /invite/:code after login when pendingInviteCode is stored', () => {
-    // Simulate what InviteRedeem's handleSignIn() does
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    // Simulate what Auth.tsx navigateAfterAuth() does
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) {
-      sessionStorage.removeItem('pendingInviteCode');
-      mockNavigate(`/invite/${pendingCode}`, { replace: true });
-    } else {
-      mockNavigate('/my-trips');
-    }
-
-    expect(mockNavigate).toHaveBeenCalledWith(`/invite/${MOCK_CODE}`, { replace: true });
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('navigates to /my-trips after login when no pendingInviteCode', () => {
-    // No code in sessionStorage
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) {
-      sessionStorage.removeItem('pendingInviteCode');
-      mockNavigate(`/invite/${pendingCode}`, { replace: true });
-    } else {
-      mockNavigate('/my-trips');
-    }
-
-    expect(mockNavigate).toHaveBeenCalledWith('/my-trips');
-  });
-
-  it('clears pendingInviteCode from sessionStorage after reading it', () => {
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
-
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('Google OAuth redirect URL includes /invite/:code when pendingInviteCode is stored', () => {
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    // Simulate Auth.tsx handleGoogleSignIn()
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    const redirectUrl = pendingCode
-      ? `${window.location.origin}/invite/${pendingCode}`
-      : `${window.location.origin}/my-trips`;
-
-    if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
-
-    expect(redirectUrl).toBe(`${window.location.origin}/invite/${MOCK_CODE}`);
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('Google OAuth redirect URL falls back to /my-trips when no pendingInviteCode', () => {
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    const redirectUrl = pendingCode
-      ? `${window.location.origin}/invite/${pendingCode}`
-      : `${window.location.origin}/my-trips`;
-
-    expect(redirectUrl).toBe(`${window.location.origin}/my-trips`);
   });
 });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import SEO from "@/components/SEO";
 const isValidInviteCode = (code: string) => /^[a-zA-Z0-9_-]+$/.test(code);
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,7 +23,11 @@ const Auth = () => {
   // Explicit modes. The old form guessed: a wrong password on an existing
   // account was read as "no account" and quietly created one, so returning
   // users were told to check their email for a confirmation link.
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // `?mode=signup` opens on create-account for callers that are talking to
+  // newcomers (the invite page tells them any email works).
+  const [mode, setMode] = useState<"signin" | "signup">(() =>
+    searchParams.get("mode") === "signup" ? "signup" : "signin"
+  );
   const [firstName, setFirstName] = useState("");
   const [isSliding, setIsSliding] = useState(false);
   const navigate = useNavigate();
@@ -67,6 +72,14 @@ const Auth = () => {
 
   const handleSignUp = async () => {
     const name = firstName.trim();
+    // The confirmation link usually opens in a new tab or on another device,
+    // where sessionStorage is empty. A pending invite has to ride in the link
+    // itself, or the invitee lands signed in on /create-trip and never joins.
+    const pendingCode = sessionStorage.getItem('pendingInviteCode');
+    const emailRedirectTo = pendingCode && isValidInviteCode(pendingCode)
+      ? `${window.location.origin}/invite/${pendingCode}`
+      // Otherwise, after the confirmation link, go straight to a first trip.
+      : `${window.location.origin}/create-trip`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -74,8 +87,7 @@ const Auth = () => {
         // Lands in user_metadata; AuthContext copies it to profiles.full_name
         // so invite emails say who is inviting rather than "Someone".
         data: name ? { full_name: name } : undefined,
-        // After the confirmation link, go straight to making a first trip.
-        emailRedirectTo: `${window.location.origin}/create-trip`,
+        emailRedirectTo,
       },
     });
     if (error) throw error;
@@ -91,7 +103,8 @@ const Auth = () => {
       return;
     }
     if (data.session) {
-      // Email confirmation is off for this project: signed in already.
+      // Only when email confirmation is disabled (it is on for the live
+      // project): signed in already, so the pending invite still applies.
       setIsSliding(true);
       navigateAfterAuth(500);
       return;
