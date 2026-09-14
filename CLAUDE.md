@@ -45,7 +45,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 - **Calendar**: FullCalendar (trip calendar view) + ical-generator (token-gated iCal feed)
 - **MCP**: built-in Model Context Protocol server (`server/routes/mcp.ts`, OAuth 2.1 via Supabase)
 - **Payments**: Stripe (Pro subscription, $3.99/mo — gates the Print Studio; AI chat is unlimited on every tier)
-- **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), SendGrid (share emails), Mailgun (trip reminders), Unsplash, ExchangeRate-API
+- **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), Mailgun (share + reminder emails), Unsplash, ExchangeRate-API
 - **Analytics**: PostHog + Google Analytics/GTM, consent-gated via `ConsentContext`
 - **Testing**: Vitest
 - **PWA**: Service worker + manifest for installable app
@@ -261,16 +261,17 @@ All tables have RLS policies: users can only access their own trips or shared tr
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
 - **Typography**: DM Serif Display (headings h1-h3, `font-display`), DM Sans (body/UI, `font-sans`) via Google Fonts
+  - Each stack's second entry is a metric-matched local fallback (`DM Serif Display Fallback` = Georgia, `DM Sans Fallback` = Arial, one face per weight; `size-adjust` + ascent/descent overrides in `src/index.css`) so the `display=swap` font swap moves nothing. Put it in any new `font-family` stack. DM Serif Display has no bold face: `font-bold` on it is synthesized, so its fallback deliberately has no bold either
 - **Colors**: Warm editorial travel palette via CSS custom properties + Tailwind scales
   - Sand/Earth: warm neutrals for text and backgrounds
-  - Sunset (50-600): orange accent scale for CTAs and highlights
+  - Sunset (50-900): orange accent scale; 700→800 is the sunset button fill, 500/600 are non-text accents only
   - Navy (800-950): dark tones
   - CSS vars (`--background`, `--foreground`, `--border`, etc.) in `src/index.css` control semantic tokens
   - `--destructive-ink` is the **text** step of destructive red (5.6:1 on cream); `--destructive` is tuned as a *fill* and reaches only 3.7:1 as ink — use `text-destructive-ink` for small red text, never `text-destructive`
 - **Dark mode**: `darkMode: 'class'` in `tailwind.config.ts`; the `.dark` block in `index.css` redefines the same token set
 - **Shadows**: Brown-tinted warm shadows (`shadow-warm-sm`, `shadow-warm`, `shadow-warm-lg`, `shadow-warm-xl`)
 - **Border Radius**: `rounded-card` (0.75rem) for cards
-- **Button Variants**: `sunset` variant for primary CTAs (gradient orange)
+- **Button Variants**: `sunset` variant for primary CTAs (rust gradient, `sunset-700` → `sunset-800`; white text on the brighter 500/600 steps fails AA)
 - **Components**: Shadcn/ui (~55 Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
@@ -382,7 +383,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 2. Add endpoint to Express server in `server/index.ts`
 3. Handle CORS and error responses
 4. Call Supabase client for database operations
-5. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, SendGrid/Mailgun)
+5. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, Mailgun)
 
 ### Adding Database Table/Migration
 1. Create SQL file in `supabase/migrations/`

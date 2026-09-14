@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { MotionConfig } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthCacheSync from "@/components/AuthCacheSync";
 import { ConsentProvider } from "@/contexts/ConsentContext";
@@ -64,6 +65,10 @@ const queryClient = new QueryClient({
 const App = () => {
   useVersionCheck();
   return (
+    // Framer ignores prefers-reduced-motion unless told otherwise (the default
+    // is "never"). "user" snaps transforms and width/height to their end state
+    // for anyone who asked for less motion, and keeps opacity fades.
+    <MotionConfig reducedMotion="user">
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
       <ConsentProvider>
@@ -79,7 +84,9 @@ const App = () => {
               <ScrollToTop />
               <CookieConsentBanner />
               <AppLayout>
-                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
+                {/* The fallback fills the screen so the footer waits below the fold. At
+                    half height the footer showed, then the page shoved it off: layout shift. */}
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
@@ -162,6 +169,7 @@ const App = () => {
       </ConsentProvider>
       </HelmetProvider>
     </QueryClientProvider>
+    </MotionConfig>
   );
 };
 

@@ -2,6 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Metric-matched fallbacks for the Google Fonts faces (display=swap, loaded in
+   index.html). Until DM Serif Display / DM Sans arrive, text sets in local
+   Georgia / Arial scaled to the same advance widths and vertical metrics, so
+   the swap repaints glyphs without moving anything. They sit second in every
+   font stack (tailwind.config.ts, calendarTheme.css, mapTheme.css).
+
+   size-adjust is calibrated from rendered widths in Chrome over real headings
+   and UI copy, not from average character width: DM Sans gets wider with
+   weight faster than Arial does, so each weight has its own face. The
+   ascent/descent overrides are the web font's metrics (DM Serif 1036/335, DM
+   Sans 992/310 per 1000 upm) divided by size-adjust, since the overrides are
+   scaled by it too.
+
+   DM Serif Display ships a single weight, so `font-bold` on it is synthesized,
+   and synthetic bold adds no advance width. Its fallback must be regular-only
+   for the same reason: Georgia's real Bold is ~18% wider, and it wrapped the
+   trip hero title onto a second line until the web font landed.
+
+   No single size-adjust fits every serif string: against Georgia, DM Serif's
+   lowercase runs wide and its capitals and digits narrow. 100% matches
+   sentence-case headings, which is what the landing h1 needs (at 375px DM
+   Serif wraps it by 1.5px), and sets "N Days in X" titles about 3% wide,
+   which only matters for a title within 3% of wrapping.
+
+   Where local() finds nothing (Android, Linux) the face is skipped and the
+   stack falls through to Georgia / system-ui as it did before. */
+@font-face {
+  font-family: "DM Serif Display Fallback";
+  src: local("Georgia");
+  font-style: normal;
+  font-weight: 400;
+  size-adjust: 100%;
+  ascent-override: 103.6%;
+  descent-override: 33.5%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Serif Display Fallback";
+  src: local("Georgia Italic"), local("Georgia-Italic");
+  font-style: italic;
+  font-weight: 400;
+  size-adjust: 93.5%;
+  ascent-override: 110.8%;
+  descent-override: 35.83%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial"), local("ArialMT");
+  font-weight: 400;
+  size-adjust: 102.9%;
+  ascent-override: 96.4%;
+  descent-override: 30.13%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial"), local("ArialMT");
+  font-weight: 500;
+  size-adjust: 104.7%;
+  ascent-override: 94.75%;
+  descent-override: 29.61%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 600;
+  size-adjust: 100.1%;
+  ascent-override: 99.1%;
+  descent-override: 30.97%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  font-weight: 700;
+  size-adjust: 101.7%;
+  ascent-override: 97.54%;
+  descent-override: 30.48%;
+  line-gap-override: 0%;
+}
+
 @layer utilities {
   /* iOS Safe Area Utilities for PWA/Home Screen apps */
   .safe-pt {
@@ -173,22 +261,30 @@
     /* On iOS, this ensures content doesn't clip behind notch/status bar */
     --safe-vh: calc(1dvh - (var(--sat) + var(--sab)) / 100);
 
-    /* Default nav height - will be updated by JavaScript */
-    --app-nav-h: 56px;
+    /*
+     * Height of the fixed header (Navigation.tsx): h-14, its 1px bottom border,
+     * and the safe-area padding it carries in every display mode. Navigation
+     * re-measures after mount, so this default must already match: when it
+     * said 56px against a 65px desktop header, every page shifted the moment
+     * the measurement landed.
+     */
+    --app-nav-h: calc(57px + env(safe-area-inset-top, 0px));
+
+    /*
+     * The trip page's fixed hero lines up with <main> in TripDetails.tsx, which
+     * clears the 280px sidebar from md up. TripDetails re-measures once the
+     * trip has loaded; the same rule applies.
+     */
+    --hero-left: 0px;
+    --hero-width: 100%;
   }
 
-  /* PWA standalone mode - ensure nav height variable includes safe area */
-  /* This acts as a fallback if JavaScript measurement happens before CSS is computed */
-  @media (display-mode: standalone) {
+  /* md: keep in step with the h-16 header and the trip page's md:pl-[280px] */
+  @media (min-width: 768px) {
     :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
-    }
-  }
-
-  /* iOS specific: navigator.standalone detection via media query */
-  @media (display-mode: standalone), (display-mode: fullscreen) {
-    :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
+      --app-nav-h: calc(65px + env(safe-area-inset-top, 0px));
+      --hero-left: 280px;
+      --hero-width: calc(100% - 280px);
     }
   }
 

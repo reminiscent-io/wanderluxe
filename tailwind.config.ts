@@ -21,8 +21,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"DM Serif Display"', 'Georgia', 'serif'],
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        display: ['"DM Serif Display"', '"DM Serif Display Fallback"', 'Georgia', 'serif'],
+        sans: ['"DM Sans"', '"DM Sans Fallback"', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
@@ -44,9 +44,9 @@ export default {
             '--tw-prose-body': 'var(--earth-700)',
             '--tw-prose-headings': 'var(--earth-800)',
             '--tw-prose-links': 'var(--earth-600)',
-            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontFamily: '"DM Sans", "DM Sans Fallback", system-ui, sans-serif',
             'h1, h2, h3': {
-              fontFamily: '"DM Serif Display", Georgia, serif',
+              fontFamily: '"DM Serif Display", "DM Serif Display Fallback", Georgia, serif',
             },
             code: {
               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -55,9 +55,9 @@ export default {
         },
         DEFAULT: {
           css: {
-            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontFamily: '"DM Sans", "DM Sans Fallback", system-ui, sans-serif',
             'h1, h2, h3': {
-              fontFamily: '"DM Serif Display", Georgia, serif',
+              fontFamily: '"DM Serif Display", "DM Serif Display Fallback", Georgia, serif',
             },
             code: {
               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -153,6 +153,11 @@ export default {
           400: '#FB923C',
           500: '#F97316',
           600: '#EA580C',
+          // The sunset button's fill. White on 500/600 reached only 2.8-3.6:1;
+          // 700 clears 5.2:1 and 800 7.3:1, so a white label passes AA.
+          700: '#C2410C',
+          800: '#9A3412',
+          900: '#7C2D12',
         },
         // Timeline category hues. All sit at OKLCH L .47 / chroma <= .075 so
         // they read as ink rather than as brand colour, and each clears 6.5:1

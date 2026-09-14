@@ -13,7 +13,6 @@ import SEO from "@/components/SEO";
 const isValidInviteCode = (code: string) => /^[a-zA-Z0-9_-]+$/.test(code);
 
 const Auth = () => {
-  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,10 +22,12 @@ const Auth = () => {
   // Explicit modes. The old form guessed: a wrong password on an existing
   // account was read as "no account" and quietly created one, so returning
   // users were told to check their email for a confirmation link.
-  // `?mode=signup` opens on create-account for callers that are talking to
-  // newcomers (the invite page tells them any email works).
-  const [mode, setMode] = useState<"signin" | "signup">(() =>
-    searchParams.get("mode") === "signup" ? "signup" : "signin"
+  // `?mode=signup` opens straight on the create-account form, so a "Start
+  // planning, free" button doesn't greet a new visitor with "Welcome back",
+  // and an invitee told "any email works" lands on the form that takes one.
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<"signin" | "signup">(
+    searchParams.get("mode") === "signup" ? "signup" : "signin",
   );
   const [firstName, setFirstName] = useState("");
   const [isSliding, setIsSliding] = useState(false);
