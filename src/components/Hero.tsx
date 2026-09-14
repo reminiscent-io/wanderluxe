@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, type CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
@@ -59,14 +59,14 @@ const LOGO_CLASS =
  */
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const { session } = useAuth();
 
-  // Send visitors where they can actually act: sign-in first, trips once
-  // they're authenticated (avoids bouncing through ProtectedRoute).
+  // Send visitors where they can actually act: the create-account form first
+  // (/auth on its own opens on sign-in), trips once they're authenticated
+  // (avoids bouncing through ProtectedRoute).
   const isSignedIn = Boolean(session);
-  const primaryDestination = isSignedIn ? "/my-trips" : "/auth";
+  const primaryDestination = isSignedIn ? "/my-trips" : "/auth?mode=signup";
   const primaryLabel = isSignedIn ? "Go to my trips" : "Start planning, free";
 
   // Normalize to a consistent size/quality for smoother transitions
@@ -172,7 +172,7 @@ const Hero = () => {
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/25 to-black/45 md:from-black/30 md:via-black/40 md:to-black/60" />
 
               {/* Unsplash attribution — above the gradient scrim */}
-              <div className="absolute bottom-4 right-4 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 right-4 z-10 rounded bg-foreground/60 px-2 py-1 text-xs text-background opacity-80 transition-opacity hover:opacity-100 focus-within:opacity-100">
                 <a
                   href={`https://unsplash.com/@${current.username}?utm_source=wanderluxe&utm_medium=referral`}
                   target="_blank"
@@ -212,14 +212,16 @@ const Hero = () => {
         </motion.div>
       </div>
 
-      {/* Copy: on paper under the photograph on a phone, over it on md+ */}
+      {/* Copy: on paper under the photograph on a phone, over it on md+. The
+          md+ overlay covers the whole photo, so it lets pointer events through
+          (the photo credit sits beneath it) and only its content takes them. */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative z-10 bg-background px-6 pb-10 pt-8 text-center md:absolute md:inset-0 md:flex md:items-center md:justify-center md:bg-transparent md:p-0"
+        className="relative z-10 bg-background px-6 pb-10 pt-8 text-center md:pointer-events-none md:absolute md:inset-0 md:flex md:items-center md:justify-center md:bg-transparent md:p-0"
       >
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 sm:gap-7 md:gap-8 md:px-6">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 sm:gap-7 md:pointer-events-auto md:gap-8 md:px-6">
           {/* md+: the wordmark leads the copy, as before */}
           <LogoFromSupabase
             logoName="White Full"
@@ -236,7 +238,7 @@ const Hero = () => {
                 earth-400 body tone does not (≈3.8:1). */}
             <p className="mx-auto max-w-xl font-sans text-base leading-relaxed text-earth-500 sm:text-lg md:text-white/85 md:drop-shadow-[0_1px_8px_rgba(33,31,27,0.5)]">
               Flights, hotels, dinners and days on one itinerary everyone can see and edit.
-              Paste a confirmation and it lands on the right day. Free, no limits.
+              Paste a confirmation and it lands on the right day. Free, with no limit on trips.
             </p>
           </div>
 
@@ -250,15 +252,15 @@ const Hero = () => {
               variant="sunset"
               size="lg"
               className="h-12 w-full px-8 text-base shadow-warm-lg sm:w-auto"
-              onClick={() => navigate(primaryDestination)}
+              asChild
             >
-              {primaryLabel}
+              <Link to={primaryDestination}>{primaryLabel}</Link>
             </Button>
             <Link
               to="/explore"
               className="rounded-sm text-sm font-medium text-earth-500 underline underline-offset-4 hover:text-earth-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-500 focus-visible:ring-offset-2 md:text-white/90 md:no-underline md:hover:text-white md:hover:underline md:focus-visible:ring-white/70 md:focus-visible:ring-offset-transparent"
             >
-              See an example itinerary
+              See example itineraries
             </Link>
           </motion.div>
         </div>

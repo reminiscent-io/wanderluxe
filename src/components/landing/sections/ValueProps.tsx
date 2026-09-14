@@ -17,7 +17,9 @@ const values = [
 
 const ValueProps = () => {
   return (
-    <section className="bg-background py-20 md:py-28">
+    // Shares the cream ground with the app showcase above, so the top padding is
+    // short: two full section paddings stacked into a ~150px void on a phone.
+    <section className="bg-background pb-20 pt-6 md:pb-28 md:pt-10">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
           {values.map((v, i) => (
@@ -29,10 +31,10 @@ const ValueProps = () => {
               transition={{ duration: 0.6, delay: i * 0.15 }}
               viewport={{ once: true, margin: "-80px" }}
             >
-              <h3 className="font-display text-xl md:text-2xl text-earth-600">
+              <h3 className="font-display text-xl md:text-2xl text-earth-600 [text-wrap:balance]">
                 {v.headline}
               </h3>
-              <p className="font-sans text-base text-earth-400 mt-3 leading-relaxed">
+              <p className="font-sans text-base text-earth-500 mt-3 leading-relaxed [text-wrap:pretty]">
                 {v.body}
               </p>
             </motion.div>

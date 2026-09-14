@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,12 @@ const Auth = () => {
   // Explicit modes. The old form guessed: a wrong password on an existing
   // account was read as "no account" and quietly created one, so returning
   // users were told to check their email for a confirmation link.
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // `?mode=signup` opens straight on the create-account form, so a "Start
+  // planning, free" button doesn't greet a new visitor with "Welcome back".
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<"signin" | "signup">(
+    searchParams.get("mode") === "signup" ? "signup" : "signin",
+  );
   const [firstName, setFirstName] = useState("");
   const [isSliding, setIsSliding] = useState(false);
   const navigate = useNavigate();

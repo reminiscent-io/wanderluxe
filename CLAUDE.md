@@ -263,14 +263,14 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - **Typography**: DM Serif Display (headings h1-h3, `font-display`), DM Sans (body/UI, `font-sans`) via Google Fonts
 - **Colors**: Warm editorial travel palette via CSS custom properties + Tailwind scales
   - Sand/Earth: warm neutrals for text and backgrounds
-  - Sunset (50-600): orange accent scale for CTAs and highlights
+  - Sunset (50-900): orange accent scale; 700→800 is the sunset button fill, 500/600 are non-text accents only
   - Navy (800-950): dark tones
   - CSS vars (`--background`, `--foreground`, `--border`, etc.) in `src/index.css` control semantic tokens
   - `--destructive-ink` is the **text** step of destructive red (5.6:1 on cream); `--destructive` is tuned as a *fill* and reaches only 3.7:1 as ink — use `text-destructive-ink` for small red text, never `text-destructive`
 - **Dark mode**: `darkMode: 'class'` in `tailwind.config.ts`; the `.dark` block in `index.css` redefines the same token set
 - **Shadows**: Brown-tinted warm shadows (`shadow-warm-sm`, `shadow-warm`, `shadow-warm-lg`, `shadow-warm-xl`)
 - **Border Radius**: `rounded-card` (0.75rem) for cards
-- **Button Variants**: `sunset` variant for primary CTAs (gradient orange)
+- **Button Variants**: `sunset` variant for primary CTAs (rust gradient, `sunset-700` → `sunset-800`; white text on the brighter 500/600 steps fails AA)
 - **Components**: Shadcn/ui (~55 Radix UI primitives)
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints

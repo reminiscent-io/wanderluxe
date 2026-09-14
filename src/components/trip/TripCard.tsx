@@ -47,7 +47,7 @@ function computeTripStatus(arrivalDate?: string, departureDate?: string): TripSt
   }
 
   if (isToday(arrival)) {
-    return { status: 'today', label: 'Departure Today!', color: 'bg-sunset-500' };
+    return { status: 'today', label: 'Departure Today!', color: 'bg-sunset-700' };
   }
 
   if (isTomorrow(arrival)) {
@@ -224,7 +224,7 @@ const TripCard = ({
         <Link
           to={linkTo!}
           onClick={onNavigate}
-          className="absolute inset-0 z-10 rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sunset-400 focus-visible:ring-offset-2"
+          className="absolute inset-0 z-10 rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <span className="sr-only">{linkLabel}</span>
         </Link>

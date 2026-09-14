@@ -6,7 +6,7 @@ const HookSection = () => {
       <div className="absolute inset-0 bg-grain" />
       <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
         <motion.h2
-          className="font-display text-3xl md:text-5xl text-earth-600 leading-tight"
+          className="font-display text-3xl md:text-5xl text-earth-600 leading-tight [text-wrap:balance]"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
@@ -15,7 +15,7 @@ const HookSection = () => {
           Your journey deserves more than a spreadsheet.
         </motion.h2>
         <motion.p
-          className="font-sans text-lg md:text-xl text-earth-400 mt-6 leading-relaxed"
+          className="font-sans text-lg md:text-xl text-earth-500 mt-6 leading-relaxed [text-wrap:pretty]"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -25,7 +25,7 @@ const HookSection = () => {
           back in March. Everyone traveling with you can see it, and change it.
         </motion.p>
         <motion.div
-          className="w-16 h-0.5 bg-sunset-300 mx-auto mt-10"
+          className="w-16 h-0.5 bg-earth-200 mx-auto mt-10"
           initial={{ scaleX: 0 }}
           whileInView={{ scaleX: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
