@@ -173,8 +173,8 @@ export default function PhotoStrip({ placeId, title, keyPhotoUrl, onSelectKeyPho
                       className={`
                         absolute top-1.5 right-1.5 rounded-full p-1 transition-all
                         ${isKeyPhoto
-                          ? "bg-sunset-500 text-white shadow-md"
-                          : "bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 hover:bg-sunset-500 hover:text-white"
+                          ? "bg-sunset-700 text-white shadow-md"
+                          : "bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 hover:bg-sunset-700 hover:text-white"
                         }
                       `}
                       title={isKeyPhoto ? "Remove as key photo" : "Make key photo"}

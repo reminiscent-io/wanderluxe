@@ -33,7 +33,7 @@ const AppShowcase = () => {
     <section className="bg-background py-16 md:py-24 overflow-hidden">
       <div className="mx-auto max-w-6xl px-6">
         <motion.p
-          className="text-center font-sans text-sm uppercase tracking-widest text-earth-400 mb-10"
+          className="text-center font-sans text-sm uppercase tracking-widest text-earth-500 mb-10"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -66,7 +66,7 @@ const AppShowcase = () => {
                   decoding="async"
                 />
               </div>
-              <p className="mt-5 text-center font-sans text-sm text-earth-400 md:mt-6">
+              <p className="mt-5 text-center font-sans text-sm text-earth-500 md:mt-6">
                 {shot.caption}
               </p>
             </motion.li>

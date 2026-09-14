@@ -14,6 +14,8 @@ colors:
   roasted-bronze: "#603D2E"
   citrus-peel: "#F97316"
   burnt-orange: "#EA580C"
+  kiln-rust: "#C2410C"
+  fired-clay: "#9A3412"
   chili-red: "#EC4032"
 typography:
   display:
@@ -65,7 +67,7 @@ components:
     height: "2.5rem"
     typography: "{typography.label}"
   button-sunset:
-    backgroundColor: "{colors.citrus-peel}"
+    backgroundColor: "{colors.kiln-rust}"
     textColor: "#FFFFFF"
     rounded: "{rounded.sm}"
     padding: "0.5rem 1rem"
@@ -163,12 +165,16 @@ behaves like paper aged in soft afternoon light.
   surface needs to feel authored, it's painted with this.
 
 ### Secondary
-- **Citrus Peel** (`#F97316`, sunset-500) → **Burnt Orange** (`#EA580C`,
-  sunset-600): The conversion accent. Lives on a `from-sunset-500
-  to-sunset-600` gradient and only appears on the **highest-stakes
+- **Kiln Rust** (`#C2410C`, sunset-700) → **Fired Clay** (`#9A3412`,
+  sunset-800): The conversion accent. Lives on a `from-sunset-700
+  to-sunset-800` gradient and only appears on the **highest-stakes
   CTA on a screen** (Sign Up, Create Trip, primary submit). Not on
   secondary actions, not on hover states for non-CTAs, not as decoration.
   The rarity is the point.
+- **Citrus Peel** (`#F97316`, sunset-500) and **Burnt Orange** (`#EA580C`,
+  sunset-600): the brighter steps the button used to wear. White text on
+  them reaches only 2.8:1 and 3.6:1, so they never sit under a label;
+  they stay as small non-text accents (chart bars, indicators).
 
 ### Tertiary
 - **Tea-Stained** (`#EDDCC8`, `hsl(28 40% 90%)`): The warm highlight.
@@ -309,9 +315,9 @@ hum. The interface is a notebook, not a dashboard.
   the bronze deepens slightly. The default-default for any "do the
   thing" affordance that isn't conversion-critical.
 - **Sunset** (`variant="sunset"`): The conversion-only variant. A
-  Citrus Peel → Burnt Orange linear gradient (left to right), white
-  text, `shadow-warm-sm`. Hover deepens to `from-sunset-600
-  to-sunset-700`. **One per screen, max.** This is the only component
+  Kiln Rust → Fired Clay linear gradient (left to right), white
+  text (5.2:1 at the lighter end), `shadow-warm-sm`. Hover deepens to
+  `from-sunset-800 to-sunset-900`. **One per screen, max.** This is the only component
   in the system permitted to use a gradient.
 - **Secondary** (`variant="secondary"`): Raw Linen background,
   Espresso Ink text, no shadow. The "and also this" affordance.
