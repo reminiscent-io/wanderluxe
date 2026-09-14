@@ -12,12 +12,12 @@ Planning is free with no limits. The only paid feature is the Print Studio, a ke
 
 ## Itineraries
 
-- [Porto Cervo, Italy](https://wanderluxe.io/explore/porto-cervo-italy-5-nights): 5 nights · Hotel Cala di Volpe, a Luxury Collection Hotel, Costa Smeralda
-- [Mykonos, Greece](https://wanderluxe.io/explore/mykonos-greece-5-nights): 5 nights · Cavo Tagoo Mykonos
-- [Tokyo, Japan](https://wanderluxe.io/explore/tokyo-japan-6-nights): 6 nights · Aman Tokyo
-- [Sabi Sands & Cape Town, South Africa](https://wanderluxe.io/explore/sabi-sands-cape-town-8-nights): 8 nights · Singita Ebony, Ellerman House
-- [Marrakech, Morocco](https://wanderluxe.io/explore/marrakech-morocco-5-nights): 5 nights · Royal Mansour Marrakech
-- [St. Barthélemy, French West Indies](https://wanderluxe.io/explore/st-barths-french-west-indies-6-nights): 6 nights · Eden Rock - St Barths
+- [5 Days in Porto Cervo](https://wanderluxe.io/explore/5-days-in-porto-cervo): 5 nights. A five-night Sardinian escape in Porto Cervo: Costa Smeralda yachts, Hotel Cala di Volpe, and Michelin dining curated for slow Mediterranean summers.
+- [5 Days in Mykonos](https://wanderluxe.io/explore/5-days-in-mykonos): 5 nights. Five nights of curated Mykonos luxury: Belvedere Hotel suites, Nammos beach club afternoons, Scorpios sunsets, and private catamaran days in the Cyclades.
+- [6 Days in Tokyo](https://wanderluxe.io/explore/6-days-in-tokyo): 6 nights. A six-night luxury Tokyo itinerary: Aman Tokyo, sushi temples in Ginza, teamLab Planets, and the quietest corners of the city after dark.
+- [3 Days in Sabi Sands, 5 Days in Cape Town](https://wanderluxe.io/explore/3-days-in-sabi-sands-5-days-in-cape-town): 8 nights. An eight-night South African journey: Singita Sabi Sand Big Five safari, then Cape Town wine country, Table Mountain, and the V&A Waterfront in style.
+- [5 Days in Marrakech](https://wanderluxe.io/explore/5-days-in-marrakech): 5 nights. A five-night Marrakech escape: Royal Mansour riads, Jemaa el-Fnaa souks at dusk, an Atlas Mountain day trip, and modernist desert dining at La Mamounia.
+- [6 Days in St. Barths](https://wanderluxe.io/explore/6-days-in-st-barths): 6 nights. Six nights on St. Barthélemy: Eden Rock beach suites, Le Toiny dinners, Colombier hikes, and Gustavia harbor afternoons in pure West Indies luxury.
 
 ## Integrations
 
