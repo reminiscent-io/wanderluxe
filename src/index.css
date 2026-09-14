@@ -271,9 +271,9 @@
     --app-nav-h: calc(57px + env(safe-area-inset-top, 0px));
 
     /*
-     * The trip page's fixed hero lines up with <main> in TripDetails.tsx, which
-     * clears the 280px sidebar from md up. TripDetails re-measures once the
-     * trip has loaded; the same rule applies.
+     * The trip page's fixed hero (HeroSection.tsx) lines up with <main> in
+     * TripDetails.tsx, which clears the 280px sidebar from md up. Nothing
+     * re-measures it at runtime, so these values are final from first paint.
      */
     --hero-left: 0px;
     --hero-width: 100%;

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
@@ -86,36 +86,6 @@ const TripDetails = () => {
 
   // Ref to access Sidebar methods
   const sidebarRef = useRef<SidebarHandle>(null);
-
-  // Ref + callback for aligning the fixed hero with the main content area (offset by sidebar)
-  const mainRef = useRef<HTMLElement>(null);
-  const updateHeroBounds = useCallback(() => {
-    if (mainRef.current) {
-      const rect = mainRef.current.getBoundingClientRect();
-      const pl = parseFloat(getComputedStyle(mainRef.current).paddingLeft) || 0;
-      document.documentElement.style.setProperty('--hero-left', `${rect.left + pl}px`);
-      document.documentElement.style.setProperty('--hero-width', `${rect.width - pl}px`);
-    }
-  }, []);
-
-  useEffect(() => {
-    updateHeroBounds();
-    window.addEventListener('resize', updateHeroBounds);
-    const observer = new MutationObserver(updateHeroBounds);
-    if (mainRef.current) {
-      observer.observe(mainRef.current, { attributes: true, attributeFilter: ['class', 'style'] });
-    }
-    return () => {
-      window.removeEventListener('resize', updateHeroBounds);
-      observer.disconnect();
-    };
-  }, [updateHeroBounds]);
-
-  // Re-measure after sidebar animation settles
-  useEffect(() => {
-    const timer = setTimeout(updateHeroBounds, 350);
-    return () => clearTimeout(timer);
-  }, [updateHeroBounds]);
 
   const handleQuickAddAction = (action: "accommodation" | "transportation" | "activity" | "dining") => {
     switch (action) {
@@ -300,7 +270,7 @@ const TripDetails = () => {
         jsonLd={tripJsonLd}
       />
       {sidebar}
-      <main ref={mainRef} className="flex-1 min-w-0 pl-0 md:pl-[280px] transition-all duration-300">
+      <main className="flex-1 min-w-0 pl-0 md:pl-[280px] transition-all duration-300">
         <div className="min-h-screen flex flex-col">
 
           {/* Hero — renders fixed background + spacer */}
