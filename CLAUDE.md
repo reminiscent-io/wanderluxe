@@ -45,7 +45,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 - **Calendar**: FullCalendar (trip calendar view) + ical-generator (token-gated iCal feed)
 - **MCP**: built-in Model Context Protocol server (`server/routes/mcp.ts`, OAuth 2.1 via Supabase)
 - **Payments**: Stripe (Pro subscription, $3.99/mo — gates the Print Studio; AI chat is unlimited on every tier)
-- **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), SendGrid (share emails), Mailgun (trip reminders), Unsplash, ExchangeRate-API
+- **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), Mailgun (share + reminder emails), Unsplash, ExchangeRate-API
 - **Analytics**: PostHog + Google Analytics/GTM, consent-gated via `ConsentContext`
 - **Testing**: Vitest
 - **PWA**: Service worker + manifest for installable app
@@ -382,7 +382,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 2. Add endpoint to Express server in `server/index.ts`
 3. Handle CORS and error responses
 4. Call Supabase client for database operations
-5. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, SendGrid/Mailgun)
+5. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, Mailgun)
 
 ### Adding Database Table/Migration
 1. Create SQL file in `supabase/migrations/`
