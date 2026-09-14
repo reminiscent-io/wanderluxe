@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import CreateTripForm from '../components/trip/create/CreateTripForm';
@@ -7,7 +7,7 @@ const CreateTrip = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    window.gtag('event', 'page_view', {
+    window.gtag?.('event', 'page_view', {
       page_title: 'Create Trip',
       page_location: window.location.href,
       page_path: window.location.pathname
@@ -15,7 +15,7 @@ const CreateTrip = () => {
   }, []);
 
   const handleSubmit = (tripId: string) => {
-    window.gtag('event', 'trip_created', {
+    window.gtag?.('event', 'trip_created', {
       event_category: 'Trip',
       event_label: 'New Trip',
       value: 1

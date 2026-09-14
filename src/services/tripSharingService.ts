@@ -2,6 +2,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TripShare, SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import { buildInviteUrl, createInviteLink } from './inviteLinkService';
+
+/**
+ * How long the invite link inside a share email stays live. Long enough to
+ * survive an unread inbox for a few weeks; short enough that a forwarded
+ * email does not admit people indefinitely. The link is listed under
+ * Travelers → invite links, so the organizer can revoke it sooner.
+ */
+export const SHARE_EMAIL_INVITE_DAYS = 30;
 
 type TripShareRow = Tables<'trip_shares'>;
 type TripRow = Tables<'trips'>;
@@ -115,6 +124,13 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       (user.user_metadata?.name as string | undefined)?.trim() ||
       '';
 
+    // The email's button goes to /invite/<code>, not /trip/<uuid>: a logged-out
+    // recipient then sees a preview of the trip and a way in, and someone who
+    // signs up with a different address than the one typed here still gets
+    // access. Invite links are owner-only under RLS, so a collaborator sharing
+    // on the owner's behalf falls back to the plain trip URL.
+    const inviteUrl = await mintShareInviteUrl(tripId, permissionLevel);
+
     // Send email notification (best-effort; the share row is already saved).
     // `destination` holds the trip's title, `primary_destination` the place.
     await sendShareNotification({
@@ -128,6 +144,7 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       departureDate: tripData.departure_date ?? undefined,
       coverImageUrl: tripData.cover_image_url ?? undefined,
       permissionLevel,
+      inviteUrl,
     });
 
     // Callers handle their own toast messages
@@ -137,6 +154,21 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
     return false;
   }
 };
+
+async function mintShareInviteUrl(
+  tripId: string,
+  permissionLevel: PermissionLevel,
+): Promise<string | undefined> {
+  try {
+    const link = await createInviteLink(tripId, permissionLevel, false, {
+      expiresInHours: SHARE_EMAIL_INVITE_DAYS * 24,
+    });
+    return buildInviteUrl(link.invite_code);
+  } catch (error) {
+    console.warn('Could not create an invite link for the share email; using the trip URL instead.', error);
+    return undefined;
+  }
+}
 
 export interface ShareNotificationParams {
   toEmail: string;
@@ -152,6 +184,8 @@ export interface ShareNotificationParams {
   departureDate?: string;
   coverImageUrl?: string;
   permissionLevel?: PermissionLevel;
+  /** Absolute /invite/<code> URL for the email's button, when one was minted. */
+  inviteUrl?: string;
 }
 
 /**

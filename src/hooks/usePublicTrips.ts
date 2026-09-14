@@ -17,6 +17,9 @@ export function usePublicTrips() {
         .from('trips')
         .select('*')
         .eq('is_public', true)
+        // `hidden` is the owner's "take this off my dashboard" flag; a hidden
+        // public trip should not keep showing on Explore either.
+        .or('hidden.is.null,hidden.eq.false')
         .order('arrival_date', { ascending: true });
 
       if (error) {

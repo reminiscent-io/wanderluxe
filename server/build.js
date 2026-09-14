@@ -15,7 +15,6 @@ esbuild.buildSync({
     'express',
     'cors',
     'express-rate-limit',
-    '@sendgrid/mail',
     '@supabase/supabase-js',
     'stripe',
     'puppeteer',

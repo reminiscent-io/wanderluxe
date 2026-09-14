@@ -119,13 +119,13 @@ const InviteRedeem = () => {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center">
               <LogIn className="mx-auto h-12 w-12 text-earth-400 mb-4" />
-              <h2 className="text-xl font-semibold text-foreground mb-2">Sign In to Join This Trip</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">Join this trip, free</h2>
               <p className="text-earth-600 mb-6">
-                Sign in or create an account to accept this invite.
+                Sign in, or create an account with any email. It takes a minute and you land straight in the trip.
               </p>
               <div className="space-y-3">
                 <Button onClick={handleSignIn} className="w-full bg-earth-500 text-white hover:bg-earth-600">
-                  Sign In to Join Trip
+                  Join the trip
                 </Button>
                 <Button onClick={() => navigate('/')} variant="outline" className="w-full">
                   Go Home
@@ -190,10 +190,10 @@ const InviteRedeem = () => {
 
           <div className="space-y-3 pt-4">
             <Button onClick={handleSignIn} className="w-full bg-earth-500 text-white hover:bg-earth-600">
-              Sign In to Join Trip
+              Join this trip, free
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              You'll need to sign in or create an account to join this trip.
+              New to WanderLuxe? Create an account with any email; it takes a minute and you land straight in the trip.
             </p>
           </div>
         </CardContent>

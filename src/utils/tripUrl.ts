@@ -4,6 +4,21 @@ interface TripLinkFields {
   is_public?: boolean | null;
 }
 
+interface TripTitleFields {
+  destination: string;
+  title?: string | null;
+}
+
+/**
+ * What a trip is called on cards, headings and <title> tags. Public showcase
+ * trips carry an explicit title ("6 Days in Tokyo"); everything else is named
+ * by its destination, which is also the fallback when the column is empty.
+ */
+export function tripTitle(trip: TripTitleFields): string {
+  const title = trip.title?.trim();
+  return title && title.length > 0 ? title : trip.destination;
+}
+
 export function buildTripPath(trip: TripLinkFields): string {
   if (trip.is_public && trip.slug) {
     return `/explore/${trip.slug}`;

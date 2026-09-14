@@ -28,7 +28,8 @@ export default function TravelersPanel({
   onBack,
 }: TravelersPanelProps) {
   const { travelers, loading, error } = useTravelers(tripId);
-  const { isOwner } = useTripPermissions(tripId);
+  // Editors can manage invite links as well as the owner (RLS: can_edit_trip).
+  const { canEdit } = useTripPermissions(tripId);
 
   if (loading) {
     return (
@@ -82,7 +83,7 @@ export default function TravelersPanel({
         </div>
       )}
 
-      {isOwner && (
+      {canEdit && (
         <>
           <Separator className="my-4" />
           <InviteLinkSection tripId={tripId} />

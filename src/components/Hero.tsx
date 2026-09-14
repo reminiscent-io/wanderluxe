@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 import LandingNav from "./landing/LandingNav";
-import EnterHereRing from "./landing/EnterHereRing";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
-const SLIDE_MS = 2500; // time each image is shown
+// A slide holds for six seconds and crossfades over two: an eight-second cycle
+// reads as a slow pan through a photo book. The old 2.5 s hold felt like a
+// screensaver and pulled the eye off the headline.
+const SLIDE_MS = 6000; // time each image is shown
 const FADE_MS = 2000;  // crossfade duration
 
 const HERO_IMAGES = [
@@ -28,6 +31,15 @@ const HERO_IMAGES = [
   { url: "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874", photographer: "Victor He", username: "victorhwn725" },
 ];
 
+/**
+ * Landing hero.
+ *
+ * The photograph and the wordmark stay; the copy is now visible. A visitor
+ * from search used to see a slideshow, a logo and a spinning "Enter here"
+ * ring, and had to scroll to learn what the product was. The H1 and the
+ * primary button now sit over the photo, with an escape hatch to the
+ * showcase itineraries for anyone who wants proof before signing up.
+ */
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -37,10 +49,8 @@ const Hero = () => {
   // Send visitors where they can actually act: sign-in first, trips once
   // they're authenticated (avoids bouncing through ProtectedRoute).
   const isSignedIn = Boolean(session);
-  const enterDestination = isSignedIn ? "/my-trips" : "/auth";
-  const enterLabel = isSignedIn
-    ? "Enter — go to My Trips"
-    : "Enter — sign in to start planning";
+  const primaryDestination = isSignedIn ? "/my-trips" : "/auth";
+  const primaryLabel = isSignedIn ? "Go to my trips" : "Start planning, free";
 
   // Normalize to a consistent size/quality for smoother transitions
   const images = useMemo(
@@ -136,8 +146,9 @@ const Hero = () => {
               />
             </motion.div>
 
-            {/* Soft gradient scrim for legibility */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/50" />
+            {/* Scrim for legibility: heavier than before because there is now
+                real copy to read over the photograph. */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60" />
 
             {/* Unsplash attribution — above the gradient scrim */}
             <div className="absolute bottom-4 right-4 z-10 text-white text-xs bg-black/40 px-2 py-1 rounded backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity">
@@ -170,39 +181,44 @@ const Hero = () => {
         transition={{ duration: 0.8, delay: 0.2 }}
         className="relative flex h-full items-center justify-center text-center"
       >
-        <h1 className="sr-only">
-          Plan your next trip together — free collaborative itinerary builder
-        </h1>
-        <p className="sr-only">
-          Build, share, and edit travel itineraries with friends. WanderLuxe is a free collaborative trip planner with AI-assisted search to help you find stays, flights, dining, and activities faster.
-        </p>
-        <div className="space-y-6 px-4">
+        <div className="flex w-full max-w-3xl flex-col items-center gap-7 px-6 sm:gap-8">
+          <LogoFromSupabase
+            logoName="White Full"
+            className="w-[min(60vw,300px)] h-auto drop-shadow-[0_2px_12px_rgba(33,31,27,0.45)]"
+            fallbackClassName="font-display text-3xl text-white sm:text-4xl"
+            fallbackText="WanderLuxe"
+          />
+
+          <div className="space-y-4">
+            <h1 className="font-display text-4xl leading-[1.05] text-white [text-wrap:balance] drop-shadow-[0_2px_16px_rgba(33,31,27,0.55)] sm:text-5xl md:text-6xl">
+              Plan the trip together.
+            </h1>
+            <p className="mx-auto max-w-xl font-sans text-base leading-relaxed text-white/85 drop-shadow-[0_1px_8px_rgba(33,31,27,0.5)] sm:text-lg">
+              Flights, hotels, dinners and days on one itinerary everyone can see and edit.
+              Paste a confirmation and it lands on the right day. Free, no limits.
+            </p>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col justify-center items-center w-full px-4"
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
           >
-            <motion.button
-              initial={{ scale: 0.97 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 1.0, ease: "easeOut" }}
-              whileHover={{ scale: 1.03, transition: { duration: 0.25 } }}
-              onClick={() => navigate(enterDestination)}
-              aria-label={enterLabel}
-              className="group relative w-[min(70.4vw,calc(var(--app-height,1vh)*57.6),480px)] cursor-pointer rounded-lg border-none bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
+            <Button
+              variant="sunset"
+              size="lg"
+              className="h-12 px-8 text-base shadow-warm-lg"
+              onClick={() => navigate(primaryDestination)}
             >
-              {/* Spinning "ENTER HERE" ring — sized from this button's width
-                  (capped by viewport height above) so it always clears both
-                  the wordmark and the hero edges */}
-              <EnterHereRing />
-              <LogoFromSupabase
-                logoName="White Full"
-                className="relative w-full h-auto mx-auto"
-                fallbackClassName="relative text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
-                fallbackText="WanderLuxe"
-              />
-            </motion.button>
+              {primaryLabel}
+            </Button>
+            <Link
+              to="/explore"
+              className="text-sm font-medium text-white/90 underline-offset-4 hover:text-white hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
+            >
+              See an example itinerary
+            </Link>
           </motion.div>
         </div>
       </motion.div>

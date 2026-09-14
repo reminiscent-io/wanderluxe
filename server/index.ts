@@ -123,6 +123,7 @@ const indexPath = path.join(distPath, 'index.html');
 // A switch statement (below) maps request paths to hardcoded filenames so
 // no user-controlled string ever reaches the filesystem.
 const prerenderedExplore = path.join(distPath, 'explore', 'index.html');
+const prerenderedGuide = path.join(distPath, 'guide', 'index.html');
 const prerenderedAbout = path.join(distPath, 'about', 'index.html');
 const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
 const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
@@ -162,12 +163,29 @@ try {
   console.warn('[server] Failed to load redirects.json:', err);
 }
 
+// Old slug → current slug, also emitted by scripts/prerender.ts. Lets a
+// renamed showcase itinerary keep the URL search engines already indexed.
+let slugRedirects: Record<string, string> = {};
+try {
+  const slugRedirectsPath = path.join(distPath, 'slug-redirects.json');
+  if (fs.existsSync(slugRedirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(slugRedirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      slugRedirects = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load slug-redirects.json:', err);
+}
+
 const UUID_TRIP_PATH = /^\/trip\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/.*)?$/i;
+const OLD_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)(\/.*)?$/;
 const EXPLORE_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)$/;
 
 function prerenderedFileFor(normalizedPath: string): string | null {
   switch (normalizedPath) {
     case '/explore': return prerenderedExplore;
+    case '/guide': return prerenderedGuide;
     case '/about': return prerenderedAbout;
     case '/terms': return prerenderedTerms;
     case '/privacy': return prerenderedPrivacy;
@@ -179,6 +197,30 @@ function prerenderedFileFor(normalizedPath: string): string | null {
   return null;
 }
 
+
+// Cache policy for the static bundle. Vite content-hashes everything under
+// /assets/, so those files can be cached forever; HTML must always be
+// revalidated so a deploy is picked up on the next navigation (ETags make the
+// revalidation a cheap 304). The service worker, its version stamp and the
+// manifest are fetched by the update check, so they get no caching at all.
+const ONE_YEAR = 60 * 60 * 24 * 365;
+const ONE_WEEK = 60 * 60 * 24 * 7;
+const ONE_HOUR = 60 * 60;
+function cacheControlFor(filePath: string): string {
+  const relative = path.relative(distPath, filePath).split(path.sep).join('/');
+  const base = path.basename(relative);
+  if (relative.startsWith('assets/')) return `public, max-age=${ONE_YEAR}, immutable`;
+  if (base === 'sw.js' || base === 'version.json' || base === 'manifest.json') return 'no-cache';
+  if (base === 'sitemap.xml' || base === 'llms.txt' || base === 'robots.txt') return `public, max-age=${ONE_HOUR}`;
+  if (base.endsWith('.html')) return 'public, max-age=0, must-revalidate';
+  if (/\.(png|jpe?g|webp|gif|svg|ico|ttf|woff2?)$/i.test(base)) return `public, max-age=${ONE_WEEK}`;
+  return `public, max-age=${ONE_HOUR}`;
+}
+function setStaticCacheHeaders(res: express.Response, filePath: string): void {
+  res.setHeader('Cache-Control', cacheControlFor(filePath));
+}
+const HTML_SEND_OPTIONS = { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } };
+
 // Check if dist folder exists and serve static files
 if (fs.existsSync(distPath)) {
   // redirect:false so canonical no-trailing-slash routes (e.g. /explore/{slug},
@@ -186,7 +228,7 @@ if (fs.existsSync(distPath)) {
   // SPA/prerender handler below and are served directly, instead of serve-static
   // 301-redirecting them to a trailing-slash variant the canonical tag never
   // points to. Static asset files (with extensions) are unaffected.
-  app.use(express.static(distPath, { redirect: false }));
+  app.use(express.static(distPath, { redirect: false, setHeaders: setStaticCacheHeaders }));
 
   // 301-redirect legacy /trip/{uuid} URLs for public trips to their /explore/{slug} canonical.
   app.get(/^\/trip\/[0-9a-fA-F-]+(?:\/.*)?$/, (req, res, next) => {
@@ -198,6 +240,18 @@ if (fs.existsSync(distPath)) {
     return res.redirect(301, `/explore/${slug}${suffix}`);
   });
 
+  // 301-redirect a renamed itinerary's old slug to its current one. A slug
+  // that is live (prerendered) always wins over a stale redirect entry.
+  app.get(/^\/explore\/[a-z0-9-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = OLD_SLUG_PATH.exec(req.path);
+    if (!match) return next();
+    const [, oldSlug, suffix = ''] = match;
+    if (exploreSlugs.has(oldSlug)) return next();
+    const target = slugRedirects[oldSlug];
+    if (!target || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(target)) return next();
+    return res.redirect(301, `/explore/${target}${suffix}`);
+  });
+
   // Handle SPA routing - prefer prerendered HTML for known public routes,
   // fall back to index.html for everything else (client-side routing).
   // Use regex pattern compatible with Express 5.x
@@ -206,11 +260,11 @@ if (fs.existsSync(distPath)) {
     const prerenderedPath = prerenderedFileFor(normalizedPath);
 
     if (prerenderedPath && fs.existsSync(prerenderedPath)) {
-      return res.sendFile(prerenderedPath);
+      return res.sendFile(prerenderedPath, HTML_SEND_OPTIONS);
     }
 
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
+      res.sendFile(indexPath, HTML_SEND_OPTIONS);
     } else {
       res.status(503).send('Application is starting up. Please try again in a moment.');
     }

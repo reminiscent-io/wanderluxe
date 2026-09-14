@@ -25,6 +25,8 @@ interface TimelineContentProps {
   canEdit?: boolean;
   weather?: WeatherData;
   tripDestination?: string;
+  /** A trip with no items yet: blank days render as one quiet line, not seven identical empty pages. */
+  quietEmptyDays?: boolean;
 }
 
 const EMPTY_ACTIVITY: ActivityFormData = {
@@ -89,7 +91,8 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
   tripDepartureDate,
   canEdit = true,
   weather,
-  tripDestination
+  tripDestination,
+  quietEmptyDays = false,
 }) => {
   const queryClient = useQueryClient();
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -376,6 +379,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 weatherLocation={tripDestination}
                 allForecasts={weather?.daily}
                 tripTimezone={tripTimezone}
+                quietEmpty={quietEmptyDays}
               hotelStays={hotelStaysForDay(day, hotelStays)}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);

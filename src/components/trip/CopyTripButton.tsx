@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -63,6 +64,7 @@ export function CopyTripButton({
   }, [arrivalDate, departureDate, startDate]);
 
   const handleOpen = () => {
+    track('copy_trip_clicked', { trip_id: tripId, signed_in: Boolean(session) });
     if (!session) {
       // Come back to this trip after signing in, so the intent isn't lost.
       // `pendingRedirect` is the convention Auth.tsx already reads.
@@ -77,6 +79,7 @@ export function CopyTripButton({
     setIsCopying(true);
     try {
       const newTripId = await copyPublicTrip(tripId, startDate || undefined);
+      track('copy_trip_completed', { source_trip_id: tripId, new_trip_id: newTripId });
       await queryClient.invalidateQueries({ queryKey: ['my-trips'] });
       toast.success(`${destination} is now in My Trips — edit it however you like.`);
       setOpen(false);

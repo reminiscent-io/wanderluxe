@@ -23,8 +23,6 @@ const TimingSection: React.FC<TimingSectionProps> = ({
       travelDates: {
         start: startDate ? new Date(startDate) : null,
         end: endDate ? new Date(endDate) : null,
-        startTime: undefined,
-        endTime: undefined,
       } as LuxuryDateTimeRange
     }
   });

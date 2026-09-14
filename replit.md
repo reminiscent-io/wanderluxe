@@ -48,7 +48,7 @@ Preferred communication style: Simple, everyday language.
 - `/api/trips/:tripId/print-design` — Print Studio design generation (Pro-gated)
 - `/api/admin/insights` — admin dashboard AI insights
 - `/api/account`, `/api/account/export` — GDPR-style export and account deletion
-- `/api/send-share-notification` — trip share emails
+- `/sitemap.xml`, `/llms.txt` — live sitemap + AI-crawler index (1h cache)
 - `/mcp` + `/.well-known/oauth-protected-resource` — MCP server and OAuth 2.1 discovery
 - `/invite/:code` — invite link preview
 

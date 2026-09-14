@@ -125,8 +125,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 id: userId,
                 created_at: new Date().toISOString(),
                 last_login_at: new Date().toISOString(),
-                full_name: null,
-                avatar_url: null
+                // Google sign-in and the email sign-up form both put the name
+                // in user_metadata; without this every invite said "Someone".
+                full_name: (authUser?.user_metadata?.full_name as string | undefined)?.trim() || null,
+                avatar_url: (authUser?.user_metadata?.avatar_url as string | undefined) || null
               }
             ]);
 

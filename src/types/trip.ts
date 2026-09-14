@@ -203,6 +203,10 @@ export interface Trip {
   is_public?: boolean;
   slug?: string | null;
   summary?: string | null;
+  /** Display title (public showcase trips: "N Days in X"). NULL falls back to destination. */
+  title?: string | null;
+  /** Former public slugs, kept so old URLs can 301 to the current one. */
+  previous_slugs?: string[];
   primary_destination?: string | null;
   primary_destination_place_id?: string | null;
   cover_image_position?: string | null;

@@ -19,6 +19,11 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signUpNotice, setSignUpNotice] = useState(false);
+  // Explicit modes. The old form guessed: a wrong password on an existing
+  // account was read as "no account" and quietly created one, so returning
+  // users were told to check their email for a confirmation link.
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [firstName, setFirstName] = useState("");
   const [isSliding, setIsSliding] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,52 +65,85 @@ const Auth = () => {
     }
   };
 
+  const handleSignUp = async () => {
+    const name = firstName.trim();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        // Lands in user_metadata; AuthContext copies it to profiles.full_name
+        // so invite emails say who is inviting rather than "Someone".
+        data: name ? { full_name: name } : undefined,
+        // After the confirmation link, go straight to making a first trip.
+        emailRedirectTo: `${window.location.origin}/create-trip`,
+      },
+    });
+    if (error) throw error;
+    // Supabase returns a user with no identities when the address is already
+    // registered (it will not say so outright, to avoid enumeration).
+    const alreadyRegistered = data.user && (data.user.identities?.length ?? 0) === 0;
+    if (alreadyRegistered) {
+      toast({
+        title: "You already have an account",
+        description: "Sign in with this email instead, or reset your password.",
+      });
+      setMode("signin");
+      return;
+    }
+    if (data.session) {
+      // Email confirmation is off for this project: signed in already.
+      setIsSliding(true);
+      navigateAfterAuth(500);
+      return;
+    }
+    setSignUpNotice(true);
+  };
+
+  const handleSignIn = async () => {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (!signInError) {
+      setIsSliding(true);
+      navigateAfterAuth(500);
+      return;
+    }
+
+    if (signInError.message?.toLowerCase().includes("email not confirmed")) {
+      await supabase.auth.resend({ type: "signup", email });
+      toast({
+        title: "Email not verified",
+        description:
+          "We've sent a new verification link to your email. Please check your inbox and try again.",
+      });
+      return;
+    }
+
+    if (signInError.message?.toLowerCase().includes("invalid login credentials")) {
+      toast({
+        variant: "destructive",
+        title: "Wrong email or password",
+        description: "Check both, use Forgot password, or create an account if you are new here.",
+        className: "bg-earth-100/50 border-destructive",
+      });
+      return;
+    }
+
+    throw signInError;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (!signInError) {
-        setIsSliding(true);
-        navigateAfterAuth(500);
-        return;
+      if (mode === "signup") {
+        await handleSignUp();
+      } else {
+        await handleSignIn();
       }
-
-      if (signInError.message?.toLowerCase().includes("email not confirmed")) {
-        await supabase.auth.resend({ type: "signup", email });
-        toast({
-          title: "Email not verified",
-          description:
-            "We've sent a new verification link to your email. Please check your inbox and try again.",
-        });
-        setLoading(false);
-        return;
-      }
-
-      if (signInError.message?.toLowerCase().includes("invalid login credentials")) {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (signUpError) {
-          throw signUpError;
-        }
-
-        if (data.user) {
-          setSignUpNotice(true);
-        }
-
-        setLoading(false);
-        return;
-      }
-
-      throw signInError;
+      setLoading(false);
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -206,12 +244,25 @@ const Auth = () => {
 
           <div className="relative px-7 pt-8 pb-7 sm:px-9 sm:pt-10 sm:pb-9">
             <div className="text-center mb-7">
-              <h1 className="font-display text-[30px] leading-tight text-foreground">
-                Welcome <em className="not-italic font-display italic text-primary">back</em>
-              </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Sign in to pick up where you left off.
-              </p>
+              {mode === "signin" ? (
+                <>
+                  <h1 className="font-display text-[30px] leading-tight text-foreground">
+                    Welcome <em className="not-italic font-display italic text-primary">back</em>
+                  </h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Sign in to pick up where you left off.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-display text-[30px] leading-tight text-foreground">
+                    Start your <em className="not-italic font-display italic text-primary">first trip</em>
+                  </h1>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Free, no card, no limit on trips.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Google first — higher converting placement */}
@@ -255,6 +306,22 @@ const Auth = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === "signup" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="first-name" className="text-[13px] font-medium text-foreground">
+                    First name
+                  </Label>
+                  <Input
+                    id="first-name"
+                    type="text"
+                    placeholder="What your travel companions call you"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
+                    className="h-12 px-4 text-base"
+                  />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-[13px] font-medium text-foreground">
                   Email
@@ -271,9 +338,9 @@ const Auth = () => {
                 />
                 {signUpNotice && (
                   <div className="rounded-lg bg-sand-100 border border-sand-200 px-4 py-3 mt-2">
-                    <p className="text-sm font-medium text-foreground">Account created!</p>
+                    <p className="text-sm font-medium text-foreground">Check your email</p>
                     <p className="text-[13px] text-muted-foreground mt-0.5">
-                      Check your email for a confirmation link, then sign in.
+                      We sent a confirmation link to {email}. Open it and your first trip is one step away.
                     </p>
                   </div>
                 )}
@@ -284,23 +351,26 @@ const Auth = () => {
                   <Label htmlFor="password" className="text-[13px] font-medium text-foreground">
                     Password
                   </Label>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/auth/forgot-password")}
-                    className="text-[12px] text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    Forgot password?
-                  </button>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/auth/forgot-password")}
+                      className="text-[12px] text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                 </div>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={mode === "signup" ? "At least 6 characters" : "Enter your password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete="current-password"
+                    minLength={mode === "signup" ? 6 : undefined}
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
                     className="h-12 px-4 pr-11 text-base"
                   />
                   <button
@@ -324,15 +394,24 @@ const Auth = () => {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in…
+                    {mode === "signup" ? "Creating your account…" : "Signing in…"}
                   </>
+                ) : mode === "signup" ? (
+                  "Create account"
                 ) : (
-                  "Continue"
+                  "Sign in"
                 )}
               </Button>
 
-              <p className="text-[12px] text-center text-muted-foreground pt-1">
-                New here? We'll create your account automatically.
+              <p className="text-[13px] text-center text-muted-foreground pt-1">
+                {mode === "signin" ? "New here? " : "Already have an account? "}
+                <button
+                  type="button"
+                  onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setSignUpNotice(false); }}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {mode === "signin" ? "Create an account" : "Sign in"}
+                </button>
               </p>
             </form>
           </div>

@@ -93,16 +93,16 @@ src/
 └── utils/                 # Utility functions
 
 server/
-├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving)
+├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
 ├── dev-server.ts         # Development server config
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   printDesign (Print Studio OpenAI call + trip payload)
 └── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights,
-                          #   invite preview, share notification, account export/deletion,
-                          #   Print Studio design generation)
+                          #   invite preview, account export/deletion, Print Studio design generation,
+                          #   live sitemap.xml + llms.txt)
 
 supabase/
-├── functions/            # Serverless Deno functions (14 functions + _shared)
+├── functions/            # Serverless Deno functions (13 functions + _shared)
 │   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
@@ -111,8 +111,7 @@ supabase/
 │   ├── google-places-proxy/      # Google Places API proxy (autocomplete, details, photo proxy)
 │   ├── parse-travel-doc/         # Travel document parsing (Gemini vision OCR)
 │   ├── place-coordinates-proxy/  # Batch place → lat/lng for the map view (cached, soft-fail)
-│   ├── send-email/               # Share notification email via SendGrid
-│   ├── send-share-notification/  # Trip share notifications (SendGrid; legacy path)
+│   ├── send-email/               # Share notification email via Mailgun
 │   ├── send-trip-reminders/      # Scheduled trip reminder emails (Mailgun, pg_cron + CRON_SECRET)
 │   ├── timezone-proxy/           # place_id → IANA timezone (Google Time Zone API, cached)
 │   ├── update-exchange-rates/    # Currency exchange updates (ExchangeRate-API)
@@ -155,10 +154,10 @@ PostgreSQL database
 ```
 
 #### 4. **Trip Architecture**
-- Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.)
+- Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.). Public showcase trips also carry `title` ("N Days in X", N = nights at that place; `tripTitle()` in `utils/tripUrl.ts` falls back to `destination`) and `previous_slugs` (old slugs that `scripts/prerender.ts` turns into `dist/slug-redirects.json` and the server 301s)
 - Sub-entities: `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`
 - Relationships: `*_travelers` tables link users to bookings
-- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`)
+- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`). An email share also mints a 30-day invite link (RLS: `can_edit_trip`, so editors can manage links too; the timeline header's Invite button opens the Travelers panel where they live) and the `send-email` button points at it, so a logged-out recipient sees the invite preview and gets in whichever email they sign up with
 - Timezones: all times are floating wall-clock values, never converted between zones. Items carry nullable `timezone` columns (transportation: `departure_timezone`/`arrival_timezone`); NULL inherits the trip default (see §17)
 - Security: RLS policies enforce trip ownership and share permissions
 
@@ -244,7 +243,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
 - `useTripSubscription()` - Trip-wide realtime for detail views (lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
-- `usePublicTrips()` - Explore showcase trips (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`)
+- `usePublicTrips()` - Explore showcase trips, grouped by region on `/explore` via `lib/regions.ts` and cross-linked by `RelatedItineraries` at the foot of every public trip page (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`). Showcase dates are kept evergreen by the operator-only `roll_public_trip_dates()` SQL function (run each January)
 - `useIsAdmin()` - Admin role checking
 - `usePWAInstall()` - PWA install prompt
 - `useWeather()` - Weather data fetching
@@ -257,7 +256,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useVisualViewport()` - Mobile viewport handling
 - `useRealtimeSubscription()` - Generic real-time subscription helper (**dedupes by `channelKey` in a module-level Set** — two views sharing a key means the second one gets no events)
 - `useTripMapData()` / `usePlaceCoordinates()` / `usePlayback()` / `useMapRealtime()` - Map view data, geocoding, route playback, realtime (live in `components/trip/map/`)
-- `useFirstRun()` - One-time discovery hints (`map-view`, `calendar-sync`, `doc-import`, `live-collab`)
+- `useFirstRun()` - One-time discovery hints (`first-trip`, `map-view`, `calendar-sync`, `share-trip`, `doc-import`, `live-collab`)
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
@@ -355,7 +354,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 
 #### 22. **First-Run Discovery Hints**
 - `src/components/discovery/DiscoverHint.tsx` + `useFirstRun` — a single dismissible line that appears once, in place, beside the feature it describes. Deliberately not a tour
-- Keys (`DiscoveryKey`): `map-view`, `calendar-sync`, `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
+- Keys (`DiscoveryKey`): `first-trip` (a trip with days but no items; renders the three-way "Nothing planned yet" banner in `TimelineView`, and blank days collapse to one line via `quietEmptyDays` until the first item lands), `map-view`, `calendar-sync`, `share-trip` (3+ items, nobody else on the trip), `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
 #### 23. **Print Studio (Pro feature)**
 - The paid feature: an AI-art-directed printable keepsake itinerary. Entry: "Print Studio" button in the TimelineView toolbar → `PrintStudioDialog` (`src/components/trip/print-studio/`) — Pro members enter an optional theme and generate; free users see the upsell (checkout); anyone with trip access can open existing editions
@@ -480,7 +479,6 @@ Required in `.env`:
 Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `GOOGLE_PLACES_API_KEY` - `google-places-proxy` + `timezone-proxy` + `place-coordinates-proxy`
 - `OPENWEATHERMAP_API_KEY` - `weather-proxy` (5-day forecasts)
-- `SENDGRID_API_KEY` - `send-email` / `send-share-notification` (share emails)
 - `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` - `send-trip-reminders` (reminder emails; domain defaults to `mail.wanderluxe.io`)
 - `EXCHANGE_RATE_API` - `update-exchange-rates` (ExchangeRate-API key)
 - `UNSPLASH_ACCESS_KEY` - `generate-image` / `fetch-unsplash-metadata` (server-side counterpart of `VITE_UNSPLASH_ACCESS_KEY`)

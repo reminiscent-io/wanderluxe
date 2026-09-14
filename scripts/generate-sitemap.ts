@@ -2,27 +2,28 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  STATIC_ROUTES,
+  renderSitemapXml,
+  renderLlmsTxt,
+  tripSitemapEntries,
+  type PublicTripRow,
+} from '../server/lib/sitemap';
+
+/**
+ * Build-time fallback for /sitemap.xml and /llms.txt.
+ *
+ * The live versions are served by server/routes/sitemap.ts straight from the
+ * database. These files exist so the build still ships a complete sitemap when
+ * Supabase is unreachable at request time, and so `vite preview` (no Express)
+ * has something to serve.
+ */
 
 const SITE_URL = process.env.SITE_URL || 'https://wanderluxe.io';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
-interface SitemapEntry {
-  loc: string;
-  lastmod?: string;
-  changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
-  priority?: string;
-}
-
-const STATIC_ROUTES: SitemapEntry[] = [
-  { loc: '/', changefreq: 'weekly', priority: '1.0' },
-  { loc: '/explore', changefreq: 'daily', priority: '0.9' },
-  { loc: '/about', changefreq: 'monthly', priority: '0.7' },
-  { loc: '/terms', changefreq: 'yearly', priority: '0.3' },
-  { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
-];
-
-async function fetchPublicTrips(): Promise<SitemapEntry[]> {
+async function fetchPublicTrips(): Promise<PublicTripRow[]> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn(
       '[sitemap] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set — skipping public trips.',
@@ -33,62 +34,58 @@ async function fetchPublicTrips(): Promise<SitemapEntry[]> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const { data, error } = await supabase
     .from('trips')
-    .select('slug, created_at')
+    // `*` rather than a column list so a build or server that runs ahead of a
+    // migration (e.g. the `title` column) still gets a sitemap.
+    .select('*')
     .eq('is_public', true)
-    .not('slug', 'is', null);
+    .not('slug', 'is', null)
+    .order('arrival_date', { ascending: true });
 
   if (error) {
     console.warn('[sitemap] Could not fetch public trips:', error.message);
     return [];
   }
 
-  return (data ?? [])
-    .filter((row: { slug: string | null }): row is { slug: string; created_at?: string | null } =>
-      typeof row.slug === 'string' && row.slug.length > 0,
-    )
-    .map((row) => ({
-      loc: `/explore/${row.slug}`,
-      lastmod: row.created_at?.split('T')[0],
-      changefreq: 'weekly' as const,
-      priority: '0.9',
-    }));
+  const rows = (data ?? []) as Array<PublicTripRow & { trip_id: string }>;
+  if (rows.length === 0) return [];
+
+  const hotelsByTrip = new Map<string, string[]>();
+  const { data: stays } = await supabase
+    .from('accommodations')
+    .select('trip_id, hotel, hotel_checkin_date')
+    .in('trip_id', rows.map((r) => r.trip_id))
+    .order('hotel_checkin_date', { ascending: true });
+  for (const stay of stays ?? []) {
+    if (!stay.hotel) continue;
+    const list = hotelsByTrip.get(stay.trip_id) ?? [];
+    if (!list.includes(stay.hotel)) list.push(stay.hotel);
+    hotelsByTrip.set(stay.trip_id, list);
+  }
+
+  return rows.map((row) => ({ ...row, hotels: hotelsByTrip.get(row.trip_id) ?? [] }));
 }
 
-function renderXml(entries: SitemapEntry[]): string {
-  const urls = entries
-    .map((entry) => {
-      const parts = [`    <loc>${SITE_URL}${entry.loc}</loc>`];
-      if (entry.lastmod) parts.push(`    <lastmod>${entry.lastmod}</lastmod>`);
-      if (entry.changefreq) parts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
-      if (entry.priority) parts.push(`    <priority>${entry.priority}</priority>`);
-      return `  <url>\n${parts.join('\n')}\n  </url>`;
-    })
-    .join('\n');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>
-`;
+function writePublic(fileName: string, contents: string): string {
+  const publicDir = path.resolve(process.cwd(), 'public');
+  fs.mkdirSync(publicDir, { recursive: true });
+  const outPath = path.join(publicDir, fileName);
+  fs.writeFileSync(outPath, contents, 'utf8');
+  return outPath;
 }
 
 async function main() {
-  const tripEntries = await fetchPublicTrips();
-  const allEntries = [...STATIC_ROUTES, ...tripEntries];
-  const xml = renderXml(allEntries);
-
-  const publicDir = path.resolve(process.cwd(), 'public');
-  const outPath = path.join(publicDir, 'sitemap.xml');
-  fs.mkdirSync(publicDir, { recursive: true });
-  fs.writeFileSync(outPath, xml, 'utf8');
-  console.log(`[sitemap] Wrote ${allEntries.length} entries to ${outPath}`);
+  const rows = await fetchPublicTrips();
+  const entries = [...STATIC_ROUTES, ...tripSitemapEntries(rows)];
+  const sitemapPath = writePublic('sitemap.xml', renderSitemapXml(entries, SITE_URL));
+  console.log(`[sitemap] Wrote ${entries.length} entries to ${sitemapPath}`);
+  const llmsPath = writePublic('llms.txt', renderLlmsTxt(rows, SITE_URL));
+  console.log(`[sitemap] Wrote llms.txt to ${llmsPath}`);
 }
 
 main().catch((err) => {
   console.error('[sitemap] Generation failed:', err);
-  // Don't fail the build — emit a minimal sitemap with static routes as fallback
-  const fallback = renderXml(STATIC_ROUTES);
-  const outPath = path.resolve(process.cwd(), 'public', 'sitemap.xml');
-  fs.writeFileSync(outPath, fallback, 'utf8');
-  console.log('[sitemap] Wrote fallback sitemap with static routes only.');
+  // Don't fail the build — emit the static routes as a fallback
+  writePublic('sitemap.xml', renderSitemapXml(STATIC_ROUTES, SITE_URL));
+  writePublic('llms.txt', renderLlmsTxt([], SITE_URL));
+  console.log('[sitemap] Wrote fallback sitemap.xml and llms.txt with static routes only.');
 });

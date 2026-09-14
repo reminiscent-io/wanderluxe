@@ -16,7 +16,7 @@ Act as the CTO of WanderLuxe, an AI-powered travel planning platform (React 19 +
 - **State:** React Context (auth via `AuthContext`), TanStack Query (server state), React hooks (UI), `useSidebarState` hook (~40 state vars)
 - **Forms:** react-hook-form + zod validation
 - **Backend:** Supabase (PostgreSQL + RLS + Auth + Realtime WebSockets), Express.js server
-- **Serverless:** Supabase Edge Functions (Deno) — google-places-proxy, parse-travel-doc, send-share-notification
+- **Serverless:** Supabase Edge Functions (Deno) — google-places-proxy, parse-travel-doc, send-email
 - **AI:** OpenAI GPT-4o-mini (chat + doc parsing)
 - **External APIs:** Google Places, SendGrid, Unsplash, Exchange Rates
 - **PDF:** pdfmake (client-side, ~1,210 lines in `src/services/pdfmake-export.ts`)

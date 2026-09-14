@@ -1299,6 +1299,8 @@ export type Database = {
           primary_destination_place_id: string | null
           slug: string | null
           summary: string | null
+          title: string | null
+          previous_slugs: string[]
           timezone: string | null
           trip_id: string
           user_id: string
@@ -1322,6 +1324,8 @@ export type Database = {
           primary_destination_place_id?: string | null
           slug?: string | null
           summary?: string | null
+          title?: string | null
+          previous_slugs?: string[]
           timezone?: string | null
           trip_id?: string
           user_id: string
@@ -1345,6 +1349,8 @@ export type Database = {
           primary_destination_place_id?: string | null
           slug?: string | null
           summary?: string | null
+          title?: string | null
+          previous_slugs?: string[]
           timezone?: string | null
           trip_id?: string
           user_id?: string

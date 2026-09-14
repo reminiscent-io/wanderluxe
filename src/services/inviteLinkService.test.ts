@@ -109,6 +109,23 @@ describe('inviteLinkService', () => {
       expect(expiresAtMs).toBeLessThan(nowMs + 49 * 60 * 60 * 1000);
     });
 
+    it('honours a custom expiry so a share email can carry a 30-day link', async () => {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: MOCK_USER_ID } },
+        error: null,
+      });
+      const builder = makeQueryBuilder({ data: makeMockLink({ permission_level: 'edit' }), error: null });
+      mockSupabase.from.mockReturnValue(builder);
+
+      await createInviteLink(MOCK_TRIP_ID, 'edit', false, { expiresInHours: 30 * 24 });
+
+      const inserted = builder.insert.mock.calls[0][0] as { expires_at: string };
+      const expiresAtMs = new Date(inserted.expires_at).getTime();
+      const nowMs = Date.now();
+      expect(expiresAtMs).toBeGreaterThan(nowMs + (30 * 24 - 1) * 60 * 60 * 1000);
+      expect(expiresAtMs).toBeLessThan(nowMs + (30 * 24 + 1) * 60 * 60 * 1000);
+    });
+
     it('throws "Authentication required" when user is not logged in', async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },

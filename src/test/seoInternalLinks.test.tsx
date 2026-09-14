@@ -79,6 +79,21 @@ describe('SEO internal linking — crawlable <a href> to destination pages', () 
     expect(screen.queryByRole('link')).toBeNull();
   });
 
+  it('names the link by the showcase title when the trip has one', () => {
+    renderWithProviders(
+      <TripCard
+        trip={makeTrip({ title: '5 Days in Marrakech' })}
+        isExample
+        linkTo="/explore/5-days-in-marrakech"
+      />,
+    );
+    const link = screen.getByRole('link', { name: /5 Days in Marrakech — 5 nights/i });
+    expect(link).toHaveAttribute('href', '/explore/5-days-in-marrakech');
+    // The place moves to the subline once the title carries the heading.
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('5 Days in Marrakech');
+    expect(screen.getByText('Marrakech, Morocco')).toBeInTheDocument();
+  });
+
   it('links every featured destination from the homepage section', () => {
     mockUsePublicTrips.mockReturnValue({
       data: [
