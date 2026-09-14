@@ -23,7 +23,8 @@ const Auth = () => {
   // account was read as "no account" and quietly created one, so returning
   // users were told to check their email for a confirmation link.
   // `?mode=signup` opens straight on the create-account form, so a "Start
-  // planning, free" button doesn't greet a new visitor with "Welcome back".
+  // planning, free" button doesn't greet a new visitor with "Welcome back",
+  // and an invitee told "any email works" lands on the form that takes one.
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<"signin" | "signup">(
     searchParams.get("mode") === "signup" ? "signup" : "signin",
@@ -72,6 +73,14 @@ const Auth = () => {
 
   const handleSignUp = async () => {
     const name = firstName.trim();
+    // The confirmation link usually opens in a new tab or on another device,
+    // where sessionStorage is empty. A pending invite has to ride in the link
+    // itself, or the invitee lands signed in on /create-trip and never joins.
+    const pendingCode = sessionStorage.getItem('pendingInviteCode');
+    const emailRedirectTo = pendingCode && isValidInviteCode(pendingCode)
+      ? `${window.location.origin}/invite/${pendingCode}`
+      // Otherwise, after the confirmation link, go straight to a first trip.
+      : `${window.location.origin}/create-trip`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -79,8 +88,7 @@ const Auth = () => {
         // Lands in user_metadata; AuthContext copies it to profiles.full_name
         // so invite emails say who is inviting rather than "Someone".
         data: name ? { full_name: name } : undefined,
-        // After the confirmation link, go straight to making a first trip.
-        emailRedirectTo: `${window.location.origin}/create-trip`,
+        emailRedirectTo,
       },
     });
     if (error) throw error;
@@ -96,7 +104,8 @@ const Auth = () => {
       return;
     }
     if (data.session) {
-      // Email confirmation is off for this project: signed in already.
+      // Only when email confirmation is disabled (it is on for the live
+      // project): signed in already, so the pending invite still applies.
       setIsSliding(true);
       navigateAfterAuth(500);
       return;

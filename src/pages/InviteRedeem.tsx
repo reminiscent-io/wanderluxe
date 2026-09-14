@@ -94,7 +94,9 @@ const InviteRedeem = () => {
     if (code) {
       sessionStorage.setItem('pendingInviteCode', code);
     }
-    navigate('/auth');
+    // Both entry points on this page talk to newcomers ("any email works"),
+    // so open on create-account; returning members are one click from sign-in.
+    navigate('/auth?mode=signup');
   };
 
   if (state === 'loading' || state === 'redeeming') {

@@ -125,7 +125,8 @@ describe('InviteRedeem page', () => {
   });
 
   // ─── Join buttons store pendingInviteCode ─────────────────────────────────
-  it('"Join this trip, free" stores code in sessionStorage and navigates to /auth', async () => {
+  // Auth.tsx carries the code through sign-in, sign-up and Google; see Auth.test.tsx.
+  it('"Join this trip, free" stores the code and opens /auth on create-account', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(MOCK_PREVIEW);
     renderInviteRedeem();
 
@@ -133,10 +134,10 @@ describe('InviteRedeem page', () => {
     await userEvent.click(screen.getByRole('button', { name: /join this trip, free/i }));
 
     expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
-    expect(mockNavigate).toHaveBeenCalledWith('/auth');
+    expect(mockNavigate).toHaveBeenCalledWith('/auth?mode=signup');
   });
 
-  it('"Join the trip" on the fallback card also stores code and navigates to /auth', async () => {
+  it('"Join the trip" on the fallback card stores the code and opens /auth on create-account', async () => {
     mockGetInviteLinkPreview.mockResolvedValue(null);
     renderInviteRedeem();
 
@@ -144,7 +145,7 @@ describe('InviteRedeem page', () => {
     await userEvent.click(screen.getByRole('button', { name: /join the trip/i }));
 
     expect(sessionStorage.getItem('pendingInviteCode')).toBe(MOCK_CODE);
-    expect(mockNavigate).toHaveBeenCalledWith('/auth');
+    expect(mockNavigate).toHaveBeenCalledWith('/auth?mode=signup');
   });
 
   // ─── Authenticated: happy path ────────────────────────────────────────────
@@ -246,80 +247,5 @@ describe('InviteRedeem page', () => {
 
     // Without a code the component should not try to fetch
     expect(mockGetInviteLinkPreview).not.toHaveBeenCalled();
-  });
-});
-
-// ─── Auth.tsx redirect flow ──────────────────────────────────────────────────
-//
-// These tests validate the sessionStorage-based post-login redirect that
-// makes the iMessage share flow work end-to-end.
-//
-describe('Auth.tsx: post-login redirect via pendingInviteCode', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    sessionStorage.clear();
-  });
-
-  it('navigates to /invite/:code after login when pendingInviteCode is stored', () => {
-    // Simulate what InviteRedeem's handleSignIn() does
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    // Simulate what Auth.tsx navigateAfterAuth() does
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) {
-      sessionStorage.removeItem('pendingInviteCode');
-      mockNavigate(`/invite/${pendingCode}`, { replace: true });
-    } else {
-      mockNavigate('/my-trips');
-    }
-
-    expect(mockNavigate).toHaveBeenCalledWith(`/invite/${MOCK_CODE}`, { replace: true });
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('navigates to /my-trips after login when no pendingInviteCode', () => {
-    // No code in sessionStorage
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) {
-      sessionStorage.removeItem('pendingInviteCode');
-      mockNavigate(`/invite/${pendingCode}`, { replace: true });
-    } else {
-      mockNavigate('/my-trips');
-    }
-
-    expect(mockNavigate).toHaveBeenCalledWith('/my-trips');
-  });
-
-  it('clears pendingInviteCode from sessionStorage after reading it', () => {
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
-
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('Google OAuth redirect URL includes /invite/:code when pendingInviteCode is stored', () => {
-    sessionStorage.setItem('pendingInviteCode', MOCK_CODE);
-
-    // Simulate Auth.tsx handleGoogleSignIn()
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    const redirectUrl = pendingCode
-      ? `${window.location.origin}/invite/${pendingCode}`
-      : `${window.location.origin}/my-trips`;
-
-    if (pendingCode) sessionStorage.removeItem('pendingInviteCode');
-
-    expect(redirectUrl).toBe(`${window.location.origin}/invite/${MOCK_CODE}`);
-    expect(sessionStorage.getItem('pendingInviteCode')).toBeNull();
-  });
-
-  it('Google OAuth redirect URL falls back to /my-trips when no pendingInviteCode', () => {
-    const pendingCode = sessionStorage.getItem('pendingInviteCode');
-    const redirectUrl = pendingCode
-      ? `${window.location.origin}/invite/${pendingCode}`
-      : `${window.location.origin}/my-trips`;
-
-    expect(redirectUrl).toBe(`${window.location.origin}/my-trips`);
   });
 });
