@@ -173,22 +173,16 @@
     /* On iOS, this ensures content doesn't clip behind notch/status bar */
     --safe-vh: calc(1dvh - (var(--sat) + var(--sab)) / 100);
 
-    /* Default nav height - will be updated by JavaScript */
-    --app-nav-h: 56px;
+    /* Fixed header height, mirroring <Navigation>: h-14 (md:h-16) plus its
+       1px bottom border and safe-area top padding. Navigation re-measures
+       after mount, so this must already match: the old 56px left everything
+       offset by it (hero, route placeholder) to jump 9px on desktop. */
+    --app-nav-h: calc(57px + env(safe-area-inset-top, 0px));
   }
 
-  /* PWA standalone mode - ensure nav height variable includes safe area */
-  /* This acts as a fallback if JavaScript measurement happens before CSS is computed */
-  @media (display-mode: standalone) {
+  @media (min-width: 768px) {
     :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
-    }
-  }
-
-  /* iOS specific: navigator.standalone detection via media query */
-  @media (display-mode: standalone), (display-mode: fullscreen) {
-    :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
+      --app-nav-h: calc(65px + env(safe-area-inset-top, 0px));
     }
   }
 
