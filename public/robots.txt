@@ -5,12 +5,51 @@ Disallow: /auth
 Disallow: /auth/
 Disallow: /my-trips
 Disallow: /create-trip
+Disallow: /trip/
 Disallow: /budget
 Disallow: /accommodations
 Disallow: /settings
 Disallow: /admin
 Disallow: /profile
 Disallow: /invite/
+Disallow: /oauth/
 Disallow: /api/
+
+# AI crawlers are welcome on the public pages. Same rules as everyone else;
+# listed explicitly so the intent is unambiguous. See /llms.txt.
+User-agent: GPTBot
+Allow: /
+Disallow: /auth
+Disallow: /my-trips
+Disallow: /trip/
+Disallow: /invite/
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /auth
+Disallow: /my-trips
+Disallow: /trip/
+Disallow: /invite/
+Disallow: /api/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /auth
+Disallow: /my-trips
+Disallow: /trip/
+Disallow: /invite/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /auth
+Disallow: /my-trips
+Disallow: /trip/
+Disallow: /invite/
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
 
 Sitemap: https://wanderluxe.io/sitemap.xml

@@ -1,5 +1,4 @@
 import { Express } from 'express';
-import shareNotificationRoutes from './share-notification';
 import aiChatRoutes from './ai-chat';
 import stripeRoutes from './stripe';
 import invitePreviewRoutes from './invite-preview';
@@ -8,18 +7,21 @@ import accountRoutes from './account';
 import calendarRoutes from './calendar';
 import mcpRoutes from './mcp';
 import printDesignRoutes from './print-design';
+import sitemapRoutes from './sitemap';
 
 export function registerRoutes(app: Express) {
   // Invite preview must be registered before the SPA catch-all
   // so link preview bots get OG meta tags
   app.use(invitePreviewRoutes);
-  app.use(shareNotificationRoutes);
   app.use(aiChatRoutes);
   app.use(stripeRoutes);
   app.use(adminInsightsRoutes);
   app.use(accountRoutes);
   app.use(calendarRoutes);
   app.use(printDesignRoutes);
+  // Live sitemap.xml + llms.txt, rendered from the database. Registered here
+  // (before express.static) so they win over the build-time copies in dist/.
+  app.use(sitemapRoutes);
   // MCP endpoint + OAuth discovery metadata (registered before the SPA
   // catch-all so GET /.well-known/* isn't swallowed by the React app)
   app.use(mcpRoutes);

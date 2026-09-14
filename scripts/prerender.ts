@@ -5,7 +5,9 @@ import path from 'node:path';
 import { preview } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 
-const STATIC_ROUTES = ['/', '/explore', '/about', '/terms', '/privacy'];
+// Keep in step with STATIC_ROUTES in server/lib/sitemap.ts and
+// prerenderedFileFor() in server/index.ts.
+const STATIC_ROUTES = ['/', '/explore', '/guide', '/about', '/terms', '/privacy'];
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
 const PORT = Number(process.env.PRERENDER_PORT || 4173);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

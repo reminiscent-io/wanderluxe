@@ -1,0 +1,29 @@
+# WanderLuxe
+
+> WanderLuxe is a free collaborative trip planner. A group builds one shared itinerary of flights, hotels, dining and activities; everyone can see and edit it in real time, view it as a timeline, calendar or map, and export it as a PDF or a live calendar feed. An AI assistant turns pasted booking confirmations into itinerary items and finds real places with working links.
+
+Planning is free with no limits. The only paid feature is the Print Studio, a keepsake printed edition of a finished trip.
+
+## Product
+
+- [How WanderLuxe works](https://wanderluxe.io/guide): Plain-language guide to planning day by day, sharing with companions, calendar sync, PDF export, the map and calendar views, and the AI connector.
+- [About WanderLuxe](https://wanderluxe.io/about): Who the product is for and what it does.
+- [Explore itineraries](https://wanderluxe.io/explore): Index of every public showcase itinerary.
+
+## Itineraries
+
+- [Porto Cervo, Italy](https://wanderluxe.io/explore/porto-cervo-italy-5-nights): 5 nights · Hotel Cala di Volpe, a Luxury Collection Hotel, Costa Smeralda
+- [Mykonos, Greece](https://wanderluxe.io/explore/mykonos-greece-5-nights): 5 nights · Cavo Tagoo Mykonos
+- [Tokyo, Japan](https://wanderluxe.io/explore/tokyo-japan-6-nights): 6 nights · Aman Tokyo
+- [Sabi Sands & Cape Town, South Africa](https://wanderluxe.io/explore/sabi-sands-cape-town-8-nights): 8 nights · Singita Ebony, Ellerman House
+- [Marrakech, Morocco](https://wanderluxe.io/explore/marrakech-morocco-5-nights): 5 nights · Royal Mansour Marrakech
+- [St. Barthélemy, French West Indies](https://wanderluxe.io/explore/st-barths-french-west-indies-6-nights): 6 nights · Eden Rock - St Barths
+
+## Integrations
+
+- [MCP server discovery](https://wanderluxe.io/.well-known/oauth-protected-resource): WanderLuxe exposes a Model Context Protocol server (OAuth 2.1) so an AI client can read and edit a signed-in user's trips.
+
+## Optional
+
+- [Terms of Service](https://wanderluxe.io/terms)
+- [Privacy Policy](https://wanderluxe.io/privacy)

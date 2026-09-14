@@ -93,16 +93,16 @@ src/
 └── utils/                 # Utility functions
 
 server/
-├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving)
+├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
 ├── dev-server.ts         # Development server config
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   printDesign (Print Studio OpenAI call + trip payload)
 └── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights,
-                          #   invite preview, share notification, account export/deletion,
-                          #   Print Studio design generation)
+                          #   invite preview, account export/deletion, Print Studio design generation,
+                          #   live sitemap.xml + llms.txt)
 
 supabase/
-├── functions/            # Serverless Deno functions (14 functions + _shared)
+├── functions/            # Serverless Deno functions (13 functions + _shared)
 │   ├── ai-chat/                  # AI chat via Gemini 2.5 Flash
 │   ├── fetch-unsplash-metadata/  # Unsplash image metadata
 │   ├── fetch-url-metadata/       # URL metadata extraction
@@ -111,8 +111,7 @@ supabase/
 │   ├── google-places-proxy/      # Google Places API proxy (autocomplete, details, photo proxy)
 │   ├── parse-travel-doc/         # Travel document parsing (Gemini vision OCR)
 │   ├── place-coordinates-proxy/  # Batch place → lat/lng for the map view (cached, soft-fail)
-│   ├── send-email/               # Share notification email via SendGrid
-│   ├── send-share-notification/  # Trip share notifications (SendGrid; legacy path)
+│   ├── send-email/               # Share notification email via Mailgun
 │   ├── send-trip-reminders/      # Scheduled trip reminder emails (Mailgun, pg_cron + CRON_SECRET)
 │   ├── timezone-proxy/           # place_id → IANA timezone (Google Time Zone API, cached)
 │   ├── update-exchange-rates/    # Currency exchange updates (ExchangeRate-API)
@@ -480,7 +479,6 @@ Required in `.env`:
 Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `GOOGLE_PLACES_API_KEY` - `google-places-proxy` + `timezone-proxy` + `place-coordinates-proxy`
 - `OPENWEATHERMAP_API_KEY` - `weather-proxy` (5-day forecasts)
-- `SENDGRID_API_KEY` - `send-email` / `send-share-notification` (share emails)
 - `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` - `send-trip-reminders` (reminder emails; domain defaults to `mail.wanderluxe.io`)
 - `EXCHANGE_RATE_API` - `update-exchange-rates` (ExchangeRate-API key)
 - `UNSPLASH_ACCESS_KEY` - `generate-image` / `fetch-unsplash-metadata` (server-side counterpart of `VITE_UNSPLASH_ACCESS_KEY`)

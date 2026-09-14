@@ -403,6 +403,8 @@ A 1-second delay before redirecting unauthenticated users allows protected compo
 
 Regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` accepts invalid emails like `a@b.c`.
 
+**Resolved:** the `send-share-notification` function was dead code (nothing called it) and has been deleted. Share emails go through `send-email`.
+
 ### L2. Environment Variables Not Validated at Startup
 **Files:** `server/index.ts`, various Edge Functions - env vars checked at runtime rather than startup.
 

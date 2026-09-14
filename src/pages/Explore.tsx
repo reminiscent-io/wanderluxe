@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { differenceInDays } from 'date-fns';
 import Navigation from "../components/Navigation";
@@ -30,7 +30,24 @@ const getNights = (trip: Trip): number | null => {
 
 const Explore = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  // The homepage's JSON-LD SearchAction advertises /explore?search={term}, so
+  // the query lives in the URL: seeded from it on load, written back (replace,
+  // not push) as the user types, so a result set is shareable and the back
+  // button never walks through keystrokes.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') ?? '');
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const current = searchParams.get('search') ?? '';
+      const next = searchQuery.trim();
+      if (current === next) return;
+      const params = new URLSearchParams(searchParams);
+      if (next) params.set('search', next);
+      else params.delete('search');
+      setSearchParams(params, { replace: true });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, searchParams, setSearchParams]);
   const { session } = useAuth();
 
   // Track page view on component mount

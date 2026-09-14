@@ -290,7 +290,7 @@ wanderluxe/
 │   ├── index.ts             # Express server (CSP, canonical redirects, static serving)
 │   ├── lib/                 # icalFeed, mcpTools, tripWrites, printDesign (OpenAI call)
 │   └── routes/              # stripe, mcp, ai-chat, calendar (iCal), print-design,
-│                            # account (GDPR), admin-insights, invite-preview, share-notification
+│                            # account (GDPR), admin-insights, invite-preview, sitemap
 ├── 🗄️ supabase/
 │   ├── functions/           # 14 Edge Functions (Deno runtime)
 │   │   ├── ai-chat/         # Gemini chat + find_place/search_web tools
