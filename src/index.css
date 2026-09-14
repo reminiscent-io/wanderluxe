@@ -173,22 +173,30 @@
     /* On iOS, this ensures content doesn't clip behind notch/status bar */
     --safe-vh: calc(1dvh - (var(--sat) + var(--sab)) / 100);
 
-    /* Default nav height - will be updated by JavaScript */
-    --app-nav-h: 56px;
+    /*
+     * Height of the fixed header (Navigation.tsx): h-14, its 1px bottom border,
+     * and the safe-area padding it carries in every display mode. Navigation
+     * re-measures after mount, so this default must already match: when it
+     * said 56px against a 65px desktop header, every page shifted the moment
+     * the measurement landed.
+     */
+    --app-nav-h: calc(57px + env(safe-area-inset-top, 0px));
+
+    /*
+     * The trip page's fixed hero lines up with <main> in TripDetails.tsx, which
+     * clears the 280px sidebar from md up. TripDetails re-measures once the
+     * trip has loaded; the same rule applies.
+     */
+    --hero-left: 0px;
+    --hero-width: 100%;
   }
 
-  /* PWA standalone mode - ensure nav height variable includes safe area */
-  /* This acts as a fallback if JavaScript measurement happens before CSS is computed */
-  @media (display-mode: standalone) {
+  /* md: keep in step with the h-16 header and the trip page's md:pl-[280px] */
+  @media (min-width: 768px) {
     :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
-    }
-  }
-
-  /* iOS specific: navigator.standalone detection via media query */
-  @media (display-mode: standalone), (display-mode: fullscreen) {
-    :root {
-      --app-nav-h: calc(56px + env(safe-area-inset-top, 0px));
+      --app-nav-h: calc(65px + env(safe-area-inset-top, 0px));
+      --hero-left: 280px;
+      --hero-width: calc(100% - 280px);
     }
   }
 
