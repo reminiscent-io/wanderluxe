@@ -79,7 +79,9 @@ const App = () => {
               <ScrollToTop />
               <CookieConsentBanner />
               <AppLayout>
-                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
+                {/* The fallback fills the screen so the footer waits below the fold. At
+                    half height the footer showed, then the page shoved it off: layout shift. */}
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-6 w-6 animate-spin text-sand-400" /></div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
