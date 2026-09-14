@@ -21,8 +21,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"DM Serif Display"', 'Georgia', 'serif'],
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        display: ['"DM Serif Display"', '"DM Serif Display Fallback"', 'Georgia', 'serif'],
+        sans: ['"DM Sans"', '"DM Sans Fallback"', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
@@ -44,9 +44,9 @@ export default {
             '--tw-prose-body': 'var(--earth-700)',
             '--tw-prose-headings': 'var(--earth-800)',
             '--tw-prose-links': 'var(--earth-600)',
-            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontFamily: '"DM Sans", "DM Sans Fallback", system-ui, sans-serif',
             'h1, h2, h3': {
-              fontFamily: '"DM Serif Display", Georgia, serif',
+              fontFamily: '"DM Serif Display", "DM Serif Display Fallback", Georgia, serif',
             },
             code: {
               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -55,9 +55,9 @@ export default {
         },
         DEFAULT: {
           css: {
-            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontFamily: '"DM Sans", "DM Sans Fallback", system-ui, sans-serif',
             'h1, h2, h3': {
-              fontFamily: '"DM Serif Display", Georgia, serif',
+              fontFamily: '"DM Serif Display", "DM Serif Display Fallback", Georgia, serif',
             },
             code: {
               fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',

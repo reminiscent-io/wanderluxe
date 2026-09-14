@@ -261,6 +261,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
 - **Typography**: DM Serif Display (headings h1-h3, `font-display`), DM Sans (body/UI, `font-sans`) via Google Fonts
+  - Each stack's second entry is a metric-matched local fallback (`DM Serif Display Fallback` = Georgia, `DM Sans Fallback` = Arial, one face per weight; `size-adjust` + ascent/descent overrides in `src/index.css`) so the `display=swap` font swap moves nothing. Put it in any new `font-family` stack. DM Serif Display has no bold face: `font-bold` on it is synthesized, so its fallback deliberately has no bold either
 - **Colors**: Warm editorial travel palette via CSS custom properties + Tailwind scales
   - Sand/Earth: warm neutrals for text and backgrounds
   - Sunset (50-600): orange accent scale for CTAs and highlights
