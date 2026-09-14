@@ -8,12 +8,21 @@ function generateCode(): string {
   return Array.from(array, (b) => chars[b % chars.length]).join('');
 }
 
+const DEFAULT_EXPIRY_HOURS = 48;
+
+export interface CreateInviteLinkOptions {
+  /** Lifetime of an expiring link. Defaults to 48 hours (the dialog's choice). */
+  expiresInHours?: number;
+}
+
 export async function createInviteLink(
   tripId: string,
   permissionLevel: 'read' | 'edit',
-  neverExpires: boolean
+  neverExpires: boolean,
+  options: CreateInviteLinkOptions = {}
 ): Promise<InviteLink> {
-  const expiresAt = neverExpires ? null : new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+  const hours = options.expiresInHours ?? DEFAULT_EXPIRY_HOURS;
+  const expiresAt = neverExpires ? null : new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Authentication required');

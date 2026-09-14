@@ -157,7 +157,7 @@ PostgreSQL database
 - Root entity: `trips` table (destination, dates, budget, default IANA `timezone`, `calendar_feed_token`/`calendar_feed_enabled`, etc.)
 - Sub-entities: `trip_days`, `day_activities`, `accommodations`, `transportation`, `reservations`
 - Relationships: `*_travelers` tables link users to bookings
-- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`)
+- Sharing: `trip_shares` (email shares, view/edit) + `trip_invite_links` (link invites with permission and optional expiry, redeemed at `/invite/:code`). An email share also mints a 30-day invite link (owner-only under RLS) and the `send-email` button points at it, so a logged-out recipient sees the invite preview and gets in whichever email they sign up with
 - Timezones: all times are floating wall-clock values, never converted between zones. Items carry nullable `timezone` columns (transportation: `departure_timezone`/`arrival_timezone`); NULL inherits the trip default (see §17)
 - Security: RLS policies enforce trip ownership and share permissions
 

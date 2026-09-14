@@ -2,6 +2,8 @@
 // /supabase/functions/send-email/index.ts
 // WanderLuxe — Share Trip Email via Mailgun (Supabase Edge Function)
 const DEFAULT_VIEW_URL = "https://wanderluxe.io";
+// Mirrors SHARE_EMAIL_INVITE_DAYS in src/services/tripSharingService.ts.
+const INVITE_DAYS = 30;
 // Minimal CORS (tighten the origin if you want an allowlist)
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://wanderluxe.io';
 const ALLOWED_ORIGIN_PATTERNS = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /\.replit\.app(:\d+)?$/];
@@ -111,7 +113,21 @@ type EmailView = {
   canEdit: boolean;
   coverImageUrl: string | null;
   viewUrl: string;
+  /** True when viewUrl is an /invite/<code> link the recipient can redeem. */
+  isInvite: boolean;
 };
+
+const INVITE_CODE_PATTERN = /\/invite\/([A-Za-z0-9]{6,32})\/?$/;
+
+/**
+ * Only ever email an invite link on our own origin. The client builds the URL
+ * from window.location.origin, so take just the code and re-anchor it here —
+ * a preview-domain link (or anything stranger) never reaches an inbox.
+ */
+function safeInviteUrl(raw: string): string | null {
+  const match = INVITE_CODE_PATTERN.exec(raw);
+  return match ? `${DEFAULT_VIEW_URL}/invite/${match[1]}` : null;
+}
 
 function renderHtml(v: EmailView): string {
   const accessLabel = v.canEdit ? "Can edit" : "View only";
@@ -233,7 +249,7 @@ a.link { color: ${COLORS.earth600}; }
                         <td align="center" bgcolor="${COLORS.earth600}" style="border-radius:8px;">
                           <a href="${esc(v.viewUrl)}" target="_blank" class="cta"
                              style="font-family:${FONT_SANS};display:inline-block;padding:15px 30px;text-decoration:none;color:#ffffff;background:${COLORS.earth600};border-radius:8px;font-weight:600;font-size:16px;line-height:1;">
-                             View the itinerary
+                             ${v.isInvite ? "Join the trip" : "View the itinerary"}
                           </a>
                         </td>
                       </tr>
@@ -242,7 +258,9 @@ a.link { color: ${COLORS.earth600}; }
                     <hr class="divider" style="border:none;border-top:1px solid ${COLORS.sand200};margin:0 0 16px 0;">
 
                     <p class="muted" style="margin:0 0 10px 0;font-size:13px;line-height:1.6;color:${COLORS.muted};">
-                      Sign in with <span class="noline" style="font-weight:600;color:${COLORS.muted};">${esc(v.toEmail)}</span> to open it. No account yet? Sign up with that address and the trip will be waiting in <em>Shared With Me</em>.
+                      ${v.isInvite
+                        ? `Open the link to join. New to WanderLuxe? Sign up with any email and you will land in the trip. The link works for ${INVITE_DAYS} days.`
+                        : `Sign in with <span class="noline" style="font-weight:600;color:${COLORS.muted};">${esc(v.toEmail)}</span> to open it. No account yet? Sign up with that address and the trip will be waiting in <em>Shared With Me</em>.`}
                     </p>
                     <p class="muted" style="margin:0;font-size:13px;line-height:1.6;color:${COLORS.muted};">
                       Button not working? <a class="link" href="${esc(v.viewUrl)}" target="_blank">Open your trip</a>
@@ -279,9 +297,11 @@ function renderText(v: EmailView): string {
       ? `${v.sharerLabel} invited you to view and help plan this trip.`
       : `${v.sharerLabel} invited you to follow along with this trip.`,
     ``,
-    `View the itinerary: ${v.viewUrl}`,
+    v.isInvite ? `Join the trip: ${v.viewUrl}` : `View the itinerary: ${v.viewUrl}`,
     ``,
-    `Sign in with ${v.toEmail} to open it. No account yet? Sign up with that address and the trip will be waiting in "Shared With Me".`,
+    v.isInvite
+      ? `Open the link to join. New to WanderLuxe? Sign up with any email and you will land in the trip. The link works for ${INVITE_DAYS} days.`
+      : `Sign in with ${v.toEmail} to open it. No account yet? Sign up with that address and the trip will be waiting in "Shared With Me".`,
     ``,
     `Happy travels,`,
     `The WanderLuxe Team`,
@@ -323,10 +343,12 @@ Deno.serve(async (req) => {
       throw new Error("Missing or invalid fields: toEmail, fromEmail, or tripDestination");
     }
 
-    // Build the view URL - include tripId if provided for direct navigation
-    const viewUrl = tripId
-      ? `${DEFAULT_VIEW_URL}/trip/${encodeURIComponent(tripId)}`
-      : DEFAULT_VIEW_URL;
+    // Prefer the invite link the client minted for this share: it shows a
+    // logged-out recipient a preview of the trip and admits them whatever
+    // email they sign up with. Fall back to the trip URL when no link came.
+    const inviteUrl = safeInviteUrl((body.inviteUrl ?? "").toString().trim());
+    const viewUrl = inviteUrl
+      ?? (tripId ? `${DEFAULT_VIEW_URL}/trip/${encodeURIComponent(tripId)}` : DEFAULT_VIEW_URL);
 
     // The trip name and the place are frequently the same string ("Gregg in
     // Austria"); only show the place when it adds something.
@@ -344,6 +366,7 @@ Deno.serve(async (req) => {
       canEdit,
       coverImageUrl,
       viewUrl,
+      isInvite: inviteUrl !== null,
     };
 
     // Subject is plain text — do not HTML-escape it.
