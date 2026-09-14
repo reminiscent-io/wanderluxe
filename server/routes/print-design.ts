@@ -193,7 +193,8 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
       });
     }
 
-    // Everything on the trip, fetched server-side so the payload is truthful.
+    // Every item on the trip, fetched server-side so the payload is truthful.
+    // No money columns: the model writes keepsake copy, never prices.
     const [
       { data: trip, error: tripErr },
       { data: days },
@@ -201,15 +202,13 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
       { data: stays },
       { data: transportation },
       { data: reservations },
-      { data: otherExpenses },
     ] = await Promise.all([
-      supabase.from('trips').select('destination, arrival_date, departure_date, timezone, budget').eq('trip_id', tripId).single(),
+      supabase.from('trips').select('destination, arrival_date, departure_date, timezone').eq('trip_id', tripId).single(),
       supabase.from('trip_days').select('day_id, date, title, description').eq('trip_id', tripId).order('date'),
-      supabase.from('day_activities').select('day_id, title, description, start_time, end_time, cost').eq('trip_id', tripId),
-      supabase.from('accommodations').select('hotel, hotel_address, hotel_checkin_date, hotel_checkout_date, cost').eq('trip_id', tripId),
+      supabase.from('day_activities').select('day_id, title, description, start_time, end_time').eq('trip_id', tripId),
+      supabase.from('accommodations').select('hotel, hotel_address, hotel_checkin_date, hotel_checkout_date').eq('trip_id', tripId),
       supabase.from('transportation').select('type, provider, departure_location, arrival_location, start_date, start_time').eq('trip_id', tripId),
       supabase.from('reservations').select('restaurant_name, reservation_time, notes').eq('trip_id', tripId),
-      supabase.from('other_expenses').select('description, cost').eq('trip_id', tripId),
     ]);
 
     if (tripErr || !trip) {
@@ -223,7 +222,6 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
       stays: (stays ?? []) as Record<string, unknown>[],
       transportation: (transportation ?? []) as Record<string, unknown>[],
       reservations: (reservations ?? []) as Record<string, unknown>[],
-      otherExpenses: (otherExpenses ?? []) as Record<string, unknown>[],
     };
 
     const { design, model } = await generatePrintDesign(OPENAI_API_KEY, rows, themePrompt);

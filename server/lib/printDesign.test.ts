@@ -29,7 +29,6 @@ function rows(overrides: Partial<PrintTripRows> = {}): PrintTripRows {
     reservations: [
       { restaurant_name: 'Ta Karamanlidika', reservation_time: '2026-06-01T20:00', notes: 'Meze' },
     ],
-    otherExpenses: [{ description: 'Travel insurance', cost: 120 }],
     ...overrides,
   };
 }
@@ -45,7 +44,13 @@ describe('buildTripPayload', () => {
     expect((payload.accommodations as unknown[]).length).toBe(1);
     expect((payload.transportation as unknown[]).length).toBe(1);
     expect((payload.dining as unknown[]).length).toBe(1);
-    expect((payload.other_expenses as unknown[]).length).toBe(1);
+  });
+
+  it('leaves money out of what the model sees', () => {
+    const { payload } = buildTripPayload(rows());
+    expect(payload).not.toHaveProperty('budget');
+    expect(payload).not.toHaveProperty('other_expenses');
+    expect(JSON.stringify(payload)).not.toContain('"cost"');
   });
 
   it('caps runaway trips at 40 days', () => {
@@ -77,6 +82,12 @@ describe('buildDesignMessages', () => {
     expect(messages[0].content).toContain('styling preference');
     expect(messages[1].content).toContain('THEME REQUEST');
     expect(messages[1].content).toContain('art deco riviera');
+  });
+
+  it('tells the model to keep prices out of the copy', () => {
+    const { payload, dayDates } = buildTripPayload(rows());
+    const [system] = buildDesignMessages(payload, dayDates, null);
+    expect(system.content).toMatch(/never mention prices/i);
   });
 
   it('lists every trip date the model must caption', () => {

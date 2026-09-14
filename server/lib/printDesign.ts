@@ -47,19 +47,22 @@ export interface PrintTripRows {
   stays: Row[];
   transportation: Row[];
   reservations: Row[];
-  otherExpenses: Row[];
 }
 
 const MAX_DAYS = 40;
 const MAX_PER_DAY = 20;
 
 /**
- * Serialize the trip into the compact JSON the model sees. Every aspect of
- * the trip is present (titles, notes, places, times, costs), clamped so a
- * pathological trip cannot blow up the prompt.
+ * Serialize the trip into the compact JSON the model sees. Every item on the
+ * trip is present (titles, notes, places, times), clamped so a pathological
+ * trip cannot blow up the prompt.
+ *
+ * Money is left out on purpose: no costs, no budget, no expenses. Prices stay
+ * off an edition's pages unless the traveler opts into the Ledger, and a model
+ * that never saw a number cannot write one into a caption.
  */
 export function buildTripPayload(rows: PrintTripRows): { payload: Row; dayDates: string[] } {
-  const { trip, days, activities, stays, transportation, reservations, otherExpenses } = rows;
+  const { trip, days, activities, stays, transportation, reservations } = rows;
 
   const dayDates = days
     .map((d) => String(d.date ?? ''))
@@ -78,7 +81,6 @@ export function buildTripPayload(rows: PrintTripRows): { payload: Row; dayDates:
         description: clamp(a.description, 280),
         start_time: a.start_time ?? undefined,
         end_time: a.end_time ?? undefined,
-        cost: a.cost ?? undefined,
       })),
   }));
 
@@ -87,14 +89,12 @@ export function buildTripPayload(rows: PrintTripRows): { payload: Row; dayDates:
     arrival_date: trip.arrival_date,
     departure_date: trip.departure_date,
     timezone: trip.timezone ?? undefined,
-    budget: trip.budget ?? undefined,
     days: payloadDays,
     accommodations: stays.slice(0, 15).map((s) => ({
       name: clamp(s.hotel, 140),
       address: clamp(s.hotel_address, 200),
       check_in: s.hotel_checkin_date,
       check_out: s.hotel_checkout_date,
-      cost: s.cost ?? undefined,
     })),
     transportation: transportation.slice(0, 25).map((t) => ({
       type: clamp(t.type, 40),
@@ -108,10 +108,6 @@ export function buildTripPayload(rows: PrintTripRows): { payload: Row; dayDates:
       name: clamp(r.restaurant_name, 140),
       time: r.reservation_time ?? undefined,
       notes: clamp(r.notes, 200),
-    })),
-    other_expenses: otherExpenses.slice(0, 20).map((e) => ({
-      description: clamp(e.description, 140),
-      cost: e.cost ?? undefined,
     })),
   };
 
@@ -140,6 +136,7 @@ export function buildDesignMessages(
     FONT_MENU,
     '- a decorative motif from: ' + MOTIF_MENU,
     '- editorial copy: a cover title (specific to this trip, not just the destination name), a subtitle listing the places on the route separated by " · ", a one-line tagline, a warm 2–3 sentence intro, one short caption per day (each under 120 characters, naming a real activity, place or time from that day\'s plan), and a short closing line.',
+    'Never mention prices, costs, spending, or budgets in any copy.',
     '',
     VOICE_RULES,
     '',
