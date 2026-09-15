@@ -55,8 +55,8 @@ const StudioTeaser: React.FC<StudioTeaserProps> = ({ tripId, destination, enable
       </div>
       <div className="min-w-0">
         <p className="text-sm text-earth-600">
-          Your trip, in a sample style. Pro designs one around it — a palette, typefaces and a line
-          for every day — and every line is yours to rewrite.
+          Your trip, in a sample style. Pro designs one around it: a palette, typefaces and a line
+          for every day, and every line is yours to rewrite.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           <span className="font-semibold tabular-nums text-foreground">$3.99</span> / month

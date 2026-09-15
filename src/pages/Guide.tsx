@@ -140,7 +140,7 @@ const SECTIONS: Section[] = [
       {
         icon: Printer,
         title: 'Print it, simply or designed',
-        body: 'Every trip exports as a simple PDF, free: a proper typeset itinerary to print, email, or keep on your phone for the flight when there is no signal. With Pro, the Print Studio designs the same itinerary as a keepsake edition — a palette, a typeface pairing, a motif, and a line of copy for each day — and every line it writes is yours to rewrite. Either way, the bookings and times come from your itinerary.',
+        body: 'Every trip exports as a simple PDF, free: a proper typeset itinerary to print, email, or keep on your phone for the flight when there is no signal. With Pro, the Print Studio designs the same itinerary as a keepsake edition, with a palette, a typeface pairing, a motif and a line of copy for each day, and every line it writes is yours to rewrite. Either way, the bookings and times come from your itinerary.',
         to: (p) => (p ? `${p}/timeline?print=1` : null),
         actionLabel: 'Open it',
       },
