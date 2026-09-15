@@ -96,6 +96,17 @@ describe('consistency invariants', () => {
     expect(json).not.toContain('✈');
   });
 
+  it('no column text starts or ends with whitespace (pdfmake cuts it at line edges)', () => {
+    const columnSets: unknown[] = [];
+    collect(docWithChrome(buildDocDefinition(romeTrip(), FIXTURE_OPTS)), 'columns', columnSets);
+    const texts = (columnSets as unknown[][])
+      .flat()
+      .map((col) => (col as { text?: unknown }).text)
+      .filter((t): t is string => typeof t === 'string');
+    expect(texts.length).toBeGreaterThan(0);
+    for (const t of texts) expect(t).toBe(t.trim());
+  });
+
   it('footer pins the export timestamp from options', () => {
     const doc = buildDocDefinition(romeTrip(), FIXTURE_OPTS);
     const footer = typeof doc.footer === 'function' ? doc.footer(2, 7, PAGE_CTX) : doc.footer;
