@@ -1,14 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import {
+  auditPrintCopy,
+  auditPrintPalette,
   contrastRatio,
   FALLBACK_PALETTE,
   FONT_PAIRINGS,
   getFontPairing,
   isHexColor,
+  PALETTE_FLOORS,
   relativeLuminance,
   sanitizePrintDesign,
-  auditPrintCopy,
 } from './spec';
+import { hexToOklch } from './color';
+
+const hueDelta = (a: number, b: number) => {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+};
+
+type TextRole = keyof typeof PALETTE_FLOORS;
+const TEXT_ROLES = Object.keys(PALETTE_FLOORS) as TextRole[];
 
 const DATES = ['2026-06-01', '2026-06-02', '2026-06-03'];
 
@@ -57,14 +68,11 @@ describe('color math', () => {
   });
 
   it('the fallback palette passes its own contrast gates', () => {
-    const bg = FALLBACK_PALETTE.background;
-    // Roles that set text clear AA; primary is display-only and accent is decorative.
-    expect(contrastRatio(FALLBACK_PALETTE.ink, bg)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(FALLBACK_PALETTE.muted, bg)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(FALLBACK_PALETTE.secondary, bg)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(FALLBACK_PALETTE.primary, bg)).toBeGreaterThanOrEqual(3);
-    expect(contrastRatio(FALLBACK_PALETTE.accent, bg)).toBeGreaterThanOrEqual(3);
-    expect(relativeLuminance(bg)).toBeGreaterThanOrEqual(0.5);
+    for (const role of TEXT_ROLES) {
+      expect(contrastRatio(FALLBACK_PALETTE[role], FALLBACK_PALETTE.background)).toBeGreaterThanOrEqual(
+        PALETTE_FLOORS[role]
+      );
+    }
   });
 });
 
@@ -77,6 +85,8 @@ describe('sanitizePrintDesign', () => {
     expect(spec.motif).toBe('waves');
     expect(spec.cover.title).toBe('Ten Days in the Aegean');
     expect(spec.dayCaptions['2026-06-01']).toBe('Arrival and a rooftop dinner.');
+    expect(spec.palette).toEqual(VALID_RAW.palette);
+    expect('layout' in spec).toBe(false);
   });
 
   it('survives complete garbage with renderable fallbacks', () => {
@@ -92,29 +102,26 @@ describe('sanitizePrintDesign', () => {
     }
   });
 
-  it('rejects a dark page background', () => {
+  it('keeps a dark page background and lightens text to read on it', () => {
     const spec = sanitizePrintDesign(
       { ...VALID_RAW, palette: { ...VALID_RAW.palette, background: '#101418' } },
       DATES
     );
-    expect(spec.palette.background).toBe(FALLBACK_PALETTE.background);
+    expect(spec.palette.background).toBe('#101418');
+    for (const role of TEXT_ROLES) {
+      expect(contrastRatio(spec.palette[role], '#101418')).toBeGreaterThanOrEqual(PALETTE_FLOORS[role]);
+    }
   });
 
-  it('replaces unreadable ink and muted colors', () => {
+  it('moves unreadable ink and muted colours until they read, instead of replacing them', () => {
     const spec = sanitizePrintDesign(
       { ...VALID_RAW, palette: { ...VALID_RAW.palette, ink: '#eeeeee', muted: '#f0f0f0' } },
       DATES
     );
-    expect(spec.palette.ink).toBe(FALLBACK_PALETTE.ink);
-    expect(spec.palette.muted).toBe(FALLBACK_PALETTE.muted);
-  });
-
-  it('demotes a low-contrast primary to the ink color', () => {
-    const spec = sanitizePrintDesign(
-      { ...VALID_RAW, palette: { ...VALID_RAW.palette, primary: '#fdf3e0' } },
-      DATES
-    );
-    expect(spec.palette.primary).toBe(spec.palette.ink);
+    expect(contrastRatio(spec.palette.ink, spec.palette.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(spec.palette.muted, spec.palette.background)).toBeGreaterThanOrEqual(4.5);
+    expect(spec.palette.ink).not.toBe(FALLBACK_PALETTE.ink);
+    expect(spec.palette.muted).not.toBe(FALLBACK_PALETTE.muted);
   });
 
   it('normalizes hex casing', () => {
@@ -125,24 +132,45 @@ describe('sanitizePrintDesign', () => {
     expect(spec.palette.accent).toBe('#c65f28');
   });
 
-  it('demotes a low-contrast secondary to the primary hue, not to the neutral', () => {
-    // Secondary sets 12px day dates and confirmation codes; a pale one is
-    // unreadable. Demoting to primary keeps the page inside the model's theme.
-    const spec = sanitizePrintDesign(
-      { ...VALID_RAW, palette: { ...VALID_RAW.palette, secondary: '#cfe3f0' } },
+  it('keeps a pale primary, secondary and accent in their own hues instead of demoting them', () => {
+    const sent = { primary: '#f4a6c0', secondary: '#a8d0f0', accent: '#b5c7a6' };
+    const { palette } = sanitizePrintDesign(
+      { ...VALID_RAW, palette: { ...VALID_RAW.palette, ...sent } },
       DATES
     );
-    expect(spec.palette.secondary).toBe(spec.palette.primary);
-    expect(contrastRatio(spec.palette.secondary, spec.palette.background)).toBeGreaterThanOrEqual(4.5);
+    for (const role of ['primary', 'secondary', 'accent'] as const) {
+      expect(contrastRatio(palette[role], palette.background)).toBeGreaterThanOrEqual(PALETTE_FLOORS[role]);
+      expect(hueDelta(hexToOklch(palette[role]).h, hexToOklch(sent[role]).h)).toBeLessThan(2);
+      expect(palette[role]).not.toBe(palette.ink);
+    }
+    expect(new Set([palette.primary, palette.secondary, palette.accent]).size).toBe(3);
   });
 
-  it('demotes an accent that cannot draw a visible hairline', () => {
+  it('keeps a known layout and leaves an unknown or missing one absent', () => {
+    expect(sanitizePrintDesign({ ...VALID_RAW, layout: 'bold' }, DATES).layout).toBe('bold');
+    expect(sanitizePrintDesign({ ...VALID_RAW, layout: 'editorial' }, DATES).layout).toBe('editorial');
+    expect('layout' in sanitizePrintDesign({ ...VALID_RAW, layout: 'lasers' }, DATES)).toBe(false);
+    expect('layout' in sanitizePrintDesign(VALID_RAW, DATES)).toBe(false);
+  });
+
+  it('keeps the fills the model sent', () => {
     const spec = sanitizePrintDesign(
-      { ...VALID_RAW, palette: { ...VALID_RAW.palette, accent: '#f7e3d2' } },
+      { ...VALID_RAW, layout: 'bold', palette: { ...VALID_RAW.palette, fills: ['#ff00aa', '#00e5ff'] } },
       DATES
     );
-    expect(spec.palette.accent).toBe(spec.palette.secondary);
-    expect(contrastRatio(spec.palette.accent, spec.palette.background)).toBeGreaterThanOrEqual(3);
+    expect(spec.palette.fills?.map((f) => f.color)).toEqual(['#ff00aa', '#00e5ff']);
+  });
+
+  it('returns an already-sanitized design unchanged', () => {
+    const once = sanitizePrintDesign(
+      {
+        ...VALID_RAW,
+        layout: 'bold',
+        palette: { ...VALID_RAW.palette, background: '#1b1030', fills: ['#ff00aa'] },
+      },
+      DATES
+    );
+    expect(sanitizePrintDesign(once, DATES)).toEqual(once);
   });
 
   it('every text-bearing role clears AA no matter what the model returned', () => {
@@ -154,11 +182,8 @@ describe('sanitizePrintDesign', () => {
       },
     };
     const { palette } = sanitizePrintDesign(hostile, DATES);
-    for (const role of ['ink', 'muted', 'secondary'] as const) {
-      expect(contrastRatio(palette[role], palette.background)).toBeGreaterThanOrEqual(4.5);
-    }
-    for (const role of ['primary', 'accent'] as const) {
-      expect(contrastRatio(palette[role], palette.background)).toBeGreaterThanOrEqual(3);
+    for (const role of TEXT_ROLES) {
+      expect(contrastRatio(palette[role], palette.background)).toBeGreaterThanOrEqual(PALETTE_FLOORS[role]);
     }
   });
 
@@ -280,5 +305,23 @@ describe('font pairings', () => {
       expect(p.body).toMatch(/'/);
       expect(p.googleQuery).toMatch(/^family=/);
     }
+  });
+});
+
+describe('auditPrintPalette', () => {
+  it('reports each palette change with the ratio that caused it', () => {
+    const audit = auditPrintPalette({
+      ...VALID_RAW,
+      palette: { ...VALID_RAW.palette, accent: '#f7e3d2', fills: ['nope'] },
+    });
+    expect(audit.map((a) => [a.role, a.kind])).toEqual([
+      ['accent', 'adjusted'],
+      ['fills', 'dropped'],
+    ]);
+    expect(audit[0].ratio).toBeLessThan(3);
+  });
+
+  it('reports nothing for a legible palette', () => {
+    expect(auditPrintPalette(VALID_RAW)).toEqual([]);
   });
 });
