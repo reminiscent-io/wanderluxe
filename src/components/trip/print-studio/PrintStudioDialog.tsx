@@ -29,7 +29,8 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { track } from '@/lib/analytics';
-import { FALLBACK_PALETTE, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import type { PrintDesignSpec } from '@/lib/printDesign/spec';
+import { swatchColors } from './swatch';
 import {
   countCopyEdits,
   sanitizeCopyOverrides,
@@ -108,11 +109,7 @@ const PaletteSwatch: React.FC<{ palette?: Partial<PrintDesignSpec['palette']> }>
     className="flex h-7 w-7 shrink-0 overflow-hidden rounded-md border border-border"
     aria-hidden
   >
-    {[
-      palette?.primary ?? FALLBACK_PALETTE.primary,
-      palette?.accent ?? FALLBACK_PALETTE.accent,
-      palette?.secondary ?? FALLBACK_PALETTE.secondary,
-    ].map((color, i) => (
+    {swatchColors(palette).map((color, i) => (
       <span key={i} className="h-full flex-1" style={{ background: color }} />
     ))}
   </span>
