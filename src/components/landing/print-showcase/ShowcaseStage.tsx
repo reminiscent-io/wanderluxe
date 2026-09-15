@@ -192,7 +192,7 @@ const ShowcaseStage: React.FC = () => {
         onFocus={() => {
           tookOver.current = true;
         }}
-        className="-mx-6 flex snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0"
+        className="-mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0"
       >
         {SHOWCASE_STEPS.map((s, i) => {
           const selected = s.id === step;
@@ -226,7 +226,7 @@ const ShowcaseStage: React.FC = () => {
         })}
       </div>
 
-      <div id={PANEL_ID} role="tabpanel" aria-label={SHOWCASE_STEPS.find((s) => s.id === step)!.label}>
+      <div id={PANEL_ID} role="tabpanel" className="min-w-0" aria-label={SHOWCASE_STEPS.find((s) => s.id === step)!.label}>
         {step === 'timeline' && <TimelineRows />}
 
         {step === 'pdf' && (
