@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import ShowcaseStage from './ShowcaseStage';
 import tripJson from './tokyoTrip.json';
@@ -9,12 +9,49 @@ vi.mock('framer-motion', async () => {
   return { ...actual, useReducedMotion: () => reducedMotion.current };
 });
 
+/**
+ * The autoplay waits for the stage to be on screen. The global mock in
+ * src/test/setup.ts keeps every observer inert, which other suites rely on, so
+ * this suite stubs one whose callback it can fire by hand.
+ */
+let onIntersect: IntersectionObserverCallback | null = null;
+
+class TriggerableIntersectionObserver {
+  readonly root = null;
+  readonly rootMargin = '';
+  readonly thresholds: number[];
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn(() => []);
+  constructor(callback: IntersectionObserverCallback, options: IntersectionObserverInit = {}) {
+    onIntersect = callback;
+    const threshold = options.threshold ?? 0;
+    this.thresholds = Array.isArray(threshold) ? threshold : [threshold];
+  }
+}
+
 beforeEach(() => {
   reducedMotion.current = false;
+  onIntersect = null;
   vi.useRealTimers();
+  vi.stubGlobal('IntersectionObserver', TriggerableIntersectionObserver);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const step = (name: RegExp) => screen.getByRole('tab', { name });
+
+/** Scroll the stage onto the screen, as far as the given share of it. */
+const bringOnScreen = (intersectionRatio = 0.4) =>
+  act(() => {
+    onIntersect?.(
+      [{ isIntersecting: true, intersectionRatio } as IntersectionObserverEntry],
+      {} as IntersectionObserver
+    );
+  });
 
 /**
  * The autoplay's state changes come from a timer, not an event, so React does
@@ -97,13 +134,38 @@ describe('ShowcaseStage', () => {
     reducedMotion.current = true;
     vi.useFakeTimers();
     render(<ShowcaseStage />);
+    bringOnScreen();
     waitOutTheAutoplay();
     expect(step(/your timeline/i)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('does not autoplay before the stage is on screen', () => {
+    // The stage mounts well before anyone can see it. A run that started then
+    // would be over by the time a visitor scrolled to it.
+    vi.useFakeTimers();
+    render(<ShowcaseStage />);
+    waitOutTheAutoplay();
+    expect(step(/your timeline/i)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('waits until 40% of the stage is on screen', () => {
+    // By the spec an observer reports isIntersecting as soon as its target
+    // touches the screen, whatever the threshold, so the share is checked too.
+    vi.useFakeTimers();
+    render(<ShowcaseStage />);
+    bringOnScreen(0.1);
+    waitOutTheAutoplay();
+    expect(step(/your timeline/i)).toHaveAttribute('aria-selected', 'true');
+
+    bringOnScreen(0.4);
+    waitOutTheAutoplay();
+    expect(step(/studio edition/i)).toHaveAttribute('aria-selected', 'true');
   });
 
   it('autoplays as far as the edition, then stops', () => {
     vi.useFakeTimers();
     render(<ShowcaseStage />);
+    bringOnScreen();
     waitOutTheAutoplay();
     expect(step(/studio edition/i)).toHaveAttribute('aria-selected', 'true');
   });
@@ -111,6 +173,7 @@ describe('ShowcaseStage', () => {
   it('stops autoplaying once the visitor takes over', () => {
     vi.useFakeTimers();
     render(<ShowcaseStage />);
+    bringOnScreen();
     fireEvent.click(step(/print/i));
     waitOutTheAutoplay();
     expect(step(/print/i)).toHaveAttribute('aria-selected', 'true');
@@ -122,8 +185,35 @@ describe('ShowcaseStage', () => {
     // visitor's next arrow press would land on the step already showing.
     vi.useFakeTimers();
     render(<ShowcaseStage />);
+    bringOnScreen();
     act(() => step(/your timeline/i).focus());
     waitOutTheAutoplay();
     expect(step(/your timeline/i)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('keeps the chosen step in view by scrolling the rail, never the page', () => {
+    render(<ShowcaseStage />);
+    const rail = screen.getByRole('tablist');
+    // jsdom has no layout, so give the rail the overflow it has at phone width
+    // and the chip an offset past the right edge.
+    Object.defineProperty(rail, 'scrollWidth', { configurable: true, value: 721 });
+    Object.defineProperty(rail, 'clientWidth', { configurable: true, value: 375 });
+    Object.defineProperty(step(/studio edition/i), 'offsetLeft', { configurable: true, value: 300 });
+    const railScroll = vi.fn();
+    rail.scrollTo = railScroll as unknown as typeof rail.scrollTo;
+    const pageScroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const intoView = vi.fn();
+    const originalIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = intoView;
+
+    try {
+      fireEvent.click(step(/studio edition/i));
+      expect(railScroll).toHaveBeenCalledWith(expect.objectContaining({ left: 276 }));
+      expect(pageScroll).not.toHaveBeenCalled();
+      expect(intoView).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = originalIntoView;
+      pageScroll.mockRestore();
+    }
   });
 });

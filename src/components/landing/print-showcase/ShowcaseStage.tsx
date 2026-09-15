@@ -47,6 +47,12 @@ const SHEET_LABEL = 'A Print Studio edition of a sample trip to Tokyo';
 /** One panel for all five steps, so every tab points at the same region. */
 const PANEL_ID = 'print-showcase-panel';
 
+/** How much of the stage has to be on screen before the autoplay runs. */
+const AUTOPLAY_VISIBLE_RATIO = 0.4;
+
+/** The rail's inline padding (px-6), so a scrolled-to chip keeps the same inset as the first. */
+const RAIL_INSET_PX = 24;
+
 // Both axes, because the rail really is both: a horizontal strip on a phone and
 // a column beside the sheet from md up. Whichever arrow a visitor reaches for is
 // the right one.
@@ -93,6 +99,8 @@ const ShowcaseStage: React.FC = () => {
   const [editionIndex, setEditionIndex] = useState(0);
   const [overrides, setOverrides] = useState<PrintCopyOverrides>({});
   const tookOver = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const baseDesign = EDITIONS[editionIndex];
@@ -100,15 +108,61 @@ const ShowcaseStage: React.FC = () => {
   useGoogleFonts(getFontPairing(design.fontPairing).googleQuery);
 
   // One short run to the edition, so a visitor who only scrolls past still
-  // sees the plain page become a designed one. Their first interaction ends it.
+  // sees the plain page become a designed one. The stage mounts well before it
+  // is on screen, so the run waits until 40% of it is visible; started at
+  // mount, it would be over before anyone arrived. Their first interaction
+  // ends it.
   useEffect(() => {
     if (prefersReduced) return;
-    const timers = [
-      window.setTimeout(() => !tookOver.current && setStep('pdf'), 1800),
-      window.setTimeout(() => !tookOver.current && setStep('edition'), 4000),
-    ];
-    return () => timers.forEach(window.clearTimeout);
+    let timers: number[] = [];
+    const start = () => {
+      timers = [
+        window.setTimeout(() => !tookOver.current && setStep('pdf'), 1800),
+        window.setTimeout(() => !tookOver.current && setStep('edition'), 4000),
+      ];
+    };
+    const clearTimers = () => timers.forEach(window.clearTimeout);
+
+    const root = rootRef.current;
+    if (typeof IntersectionObserver === 'undefined' || !root) {
+      start();
+      return clearTimers;
+    }
+
+    // The ratio is checked as well as isIntersecting: by the spec an observer
+    // reports isIntersecting as soon as the stage touches the screen, whatever
+    // its threshold.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.some(
+          (e) => e.isIntersecting && e.intersectionRatio >= AUTOPLAY_VISIBLE_RATIO
+        );
+        if (!visible) return;
+        observer.disconnect();
+        start();
+      },
+      { threshold: AUTOPLAY_VISIBLE_RATIO }
+    );
+    observer.observe(root);
+    return () => {
+      observer.disconnect();
+      clearTimers();
+    };
   }, [prefersReduced]);
+
+  // Keep the chosen step's chip in view on the phone rail, where the autoplay
+  // selects one past the right edge. Only the rail scrolls: scrollIntoView
+  // would move the page under the visitor as well.
+  useEffect(() => {
+    const rail = railRef.current;
+    const tab = tabRefs.current[SHOWCASE_STEPS.findIndex((s) => s.id === step)];
+    if (!rail || !tab || typeof rail.scrollTo !== 'function') return;
+    if (rail.scrollWidth <= rail.clientWidth) return;
+    rail.scrollTo({
+      left: Math.max(0, tab.offsetLeft - RAIL_INSET_PX),
+      behavior: prefersReduced ? 'auto' : 'smooth',
+    });
+  }, [step, prefersReduced]);
 
   const go = (id: StepId) => {
     tookOver.current = true;
@@ -196,10 +250,11 @@ const ShowcaseStage: React.FC = () => {
   const NoteRow: React.ElementType = isPdf ? 'figcaption' : 'div';
 
   return (
-    <div className={STAGE_GRID_CLASS}>
+    <div ref={rootRef} className={STAGE_GRID_CLASS}>
       {/* Mobile: a snap rail — five steps will not fit a segmented control at
           375px. sm+: a column beside the sheet. */}
       <div
+        ref={railRef}
         role="tablist"
         aria-label="Print Studio steps"
         aria-orientation="vertical"
@@ -210,7 +265,8 @@ const ShowcaseStage: React.FC = () => {
           tookOver.current = true;
         }}
         className={cn(
-          '-mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0',
+          // relative: a tab's offsetLeft is then measured from the rail.
+          'relative -mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0',
           STAGE_RAIL_CLASS
         )}
       >
