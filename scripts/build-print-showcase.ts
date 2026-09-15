@@ -4,7 +4,8 @@
 //   npm run build:print-showcase
 //
 // Needs OPENAI_API_KEY in .env (three model calls, a few cents), and the PDF
-// page step uses macOS `sips`. Outputs are committed, so nobody else ever runs
+// page step shells out to ./pdf-page-to-png.swift (macOS CoreGraphics; needs
+// Xcode Command Line Tools). Outputs are committed, so nobody else ever runs
 // this and the landing page never calls an API at runtime.
 
 import 'dotenv/config';
@@ -26,6 +27,14 @@ const outDir = path.join(root, 'src/components/landing/print-showcase');
 const fontsDir = path.join(root, 'src/assets/fonts/pdf');
 const OPTS = { showImages: false, showCosts: true } as const;
 const CONTENT_WIDTH = 800;
+
+// Page two, not page one: page one of this export is the cover and summary
+// block, which for a short trip is mostly empty paper and shows a visitor
+// nothing about how the itinerary itself is set. Page two carries all three
+// days and the budget table. At 2x the vector page rasterizes crisply for
+// HiDPI screens and still lands well under 300 KB.
+const PDF_PAGE = 2;
+const PNG_SCALE = 2;
 
 /** The generation module names its rows differently from the PDF module. */
 function toPrintTripRows(rows: typeof TOKYO_ROWS): PrintTripRows {
@@ -78,9 +87,14 @@ function renderSimplePdfImage(doc: TDocumentDefinitions) {
     pdf.on('error', reject);
     stream.on('finish', () => {
       const out = path.join(root, 'public/images/print-showcase-simple-pdf.png');
-      // sips converts page one only, which is what the landing page shows.
-      execFileSync('sips', ['-s', 'format', 'png', tmpPdf, '--out', out]);
-      console.log(`wrote ${path.relative(root, out)}`);
+      const rendered = execFileSync('swift', [
+        path.join(root, 'scripts/pdf-page-to-png.swift'),
+        tmpPdf,
+        out,
+        String(PDF_PAGE),
+        String(PNG_SCALE),
+      ]).toString().trim();
+      console.log(`wrote ${path.relative(root, out)} (${rendered}, ${fs.statSync(out).size} bytes)`);
       resolve();
     });
     pdf.end();

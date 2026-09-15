@@ -116,9 +116,17 @@ export const TOKYO_ROWS: PdfTripRows = {
   otherExpenses: [],
 };
 
-/** The three directions the sample editions are generated from. */
+/**
+ * The three directions the sample editions are generated from.
+ *
+ * Each names a saturated register on purpose. The sanitizer holds every text
+ * role to a WCAG floor against a light printed ground, so a pale prompt
+ * ("sun-bleached", "pastel") comes back with primary, secondary and accent all
+ * demoted to the same ink — a real edition, but a monochrome one that shows a
+ * visitor nothing about a custom palette. Deep inks survive the floors.
+ */
 export const TOKYO_THEMES = [
-  'Sun-bleached coast',
+  'Ukiyo-e woodblock',
   'Art deco poster',
   'Botanical notes',
 ];
