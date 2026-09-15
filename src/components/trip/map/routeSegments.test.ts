@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   buildSegments,
   dedupeMarkers,
@@ -9,6 +9,10 @@ import {
 import type { PlaceCoordinateMap, ResolvedPlace } from './usePlaceCoordinates';
 import type { MapStop, PlaceLocator, StopKind } from './stopModel';
 import { TIER_TIMED } from './stopModel';
+
+// routeSegments needs the real coordsFor, whose module also imports the client;
+// its env validation throws without a .env. Pure logic, so the client is never called.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
 
 const PARIS = { lat: 48.8566, lng: 2.3522 };
 const LONDON = { lat: 51.5074, lng: -0.1278 };
