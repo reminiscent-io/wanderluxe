@@ -819,6 +819,7 @@ exports[`buildDocDefinition snapshots > matches snapshot: images + costs, LETTER
       },
     },
     {
+      "columnGap": 4,
       "columns": [
         {
           "style": "body",
@@ -827,7 +828,7 @@ exports[`buildDocDefinition snapshots > matches snapshot: images + costs, LETTER
         },
         {
           "style": "metaText",
-          "text": "  |  ",
+          "text": "|",
           "width": "auto",
         },
         {
