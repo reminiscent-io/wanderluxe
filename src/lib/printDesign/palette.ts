@@ -77,6 +77,9 @@ const asRecord = (v: unknown): Record<string, unknown> =>
 
 const cleanHex = (v: unknown): string | null => (isHexColor(v) ? normalizeHex(v) : null);
 
+/** What to log as `from` for a missing/invalid value: the raw string (truncated), or null when there wasn't one. */
+const missingFrom = (v: unknown): string | null => (typeof v === 'string' ? v.slice(0, 40) : null);
+
 /**
  * Make a palette printable. Guarantees, whatever came in:
  *  - every colour is a normalized #rrggbb
@@ -95,7 +98,14 @@ export function resolvePalette(raw: unknown): { palette: PrintPalette; adjustmen
   const sentBackground = cleanHex(r.background);
   const background = sentBackground ?? FALLBACK_PALETTE.background;
   if (!sentBackground) {
-    adjustments.push({ role: 'background', from: null, to: background, ratio: null, floor: null, kind: 'replaced' });
+    adjustments.push({
+      role: 'background',
+      from: missingFrom(r.background),
+      to: background,
+      ratio: null,
+      floor: null,
+      kind: 'replaced',
+    });
   }
 
   const surface = cleanHex(r.surface) ?? background;
@@ -107,7 +117,7 @@ export function resolvePalette(raw: unknown): { palette: PrintPalette; adjustmen
     const to = ensureContrast(sent ?? FALLBACK_PALETTE[role], background, floor);
     text[role] = to;
     if (!sent) {
-      adjustments.push({ role, from: null, to, ratio: null, floor, kind: 'replaced' });
+      adjustments.push({ role, from: missingFrom(r[role]), to, ratio: null, floor, kind: 'replaced' });
     } else if (to !== sent) {
       adjustments.push({ role, from: sent, to, ratio: contrastRatio(sent, background), floor, kind: 'adjusted' });
     }

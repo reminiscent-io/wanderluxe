@@ -974,7 +974,6 @@
 }
 
 @media print {
-  .print-doc[data-layout='bold'] .pd-cover-panel,
   .print-doc[data-layout='bold'] .pd-closing,
   .print-doc[data-layout='bold'] .pd-day-num {
     break-inside: avoid;

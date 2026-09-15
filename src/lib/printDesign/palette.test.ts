@@ -87,7 +87,7 @@ describe('resolvePalette', () => {
   it('replaces a missing or malformed colour with the fallback, then fits it to the page', () => {
     const { palette, adjustments } = resolvePalette({ ...VALID, background: '#141414', ink: 'nope' });
     expect(contrastRatio(palette.ink, '#141414')).toBeGreaterThanOrEqual(4.5);
-    expect(adjustments.find((a) => a.role === 'ink')).toMatchObject({ from: null, kind: 'replaced' });
+    expect(adjustments.find((a) => a.role === 'ink')).toMatchObject({ from: 'nope', kind: 'replaced' });
 
     const bare = resolvePalette(null);
     expect(bare.palette.background).toBe(FALLBACK_PALETTE.background);

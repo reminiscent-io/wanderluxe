@@ -141,6 +141,7 @@ describe('the palette brief', () => {
     const system = systemPrompt();
     expect(system).toContain('4.5:1');
     expect(system).toContain('3:1');
+    expect(system).toContain('7:1');
   });
 
   it('gives the model no hex colour to copy', () => {
@@ -171,11 +172,12 @@ describe('formatPaletteAudit', () => {
       formatPaletteAudit([
         { role: 'primary', from: '#f654a6', to: '#d02d86', ratio: 2.961, floor: 4.5, kind: 'adjusted' },
         { role: 'ink', from: null, to: '#2b2620', ratio: null, floor: 4.5, kind: 'replaced' },
+        { role: 'primary', from: 'pink', to: '#3f4a5c', ratio: null, floor: 4.5, kind: 'replaced' },
         { role: 'fills', from: 'pink', to: null, ratio: null, floor: null, kind: 'dropped' },
         { role: 'fills', from: null, to: null, ratio: null, floor: null, kind: 'dropped' },
       ])
     ).toBe(
-      'primary #f654a6 (2.96:1 < 4.5) → #d02d86 | ink missing → #2b2620 | fills dropped "pink" | fills dropped (not a string)'
+      'primary #f654a6 (2.96:1 < 4.5) → #d02d86 | ink missing → #2b2620 | primary "pink" is not a colour → #3f4a5c | fills dropped "pink" | fills dropped (not a string)'
     );
   });
 });

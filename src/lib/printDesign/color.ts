@@ -118,7 +118,7 @@ const BLACK = '#000000';
 const WHITE = '#ffffff';
 
 /**
- * The lightest move of `hex` toward black or white that clears `floor`
+ * The smallest move of `hex` toward black or white that clears `floor`
  * against `ground`, with OKLCH hue and chroma held.
  *
  * The pole is whichever of black and white contrasts more with the ground;

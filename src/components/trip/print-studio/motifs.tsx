@@ -1,9 +1,9 @@
 // Print Studio decorative motifs — stroke-based SVG pattern bands.
 //
-// Each motif is a small repeating tile drawn in currentColor, mostly strokes with the odd small dot, so the
-// same component renders the airy cover band, section dividers, and the
-// closing mark just by varying size/opacity. Stroke-only drawing keeps the
-// document printable even when the browser drops background fills.
+// Each motif is a small repeating tile drawn in currentColor, in strokes plus
+// small filled dots where a tile calls for them, so one component renders the
+// cover band, dividers and closing mark by varying size and colour. Drawing
+// in currentColor lets each layout give the motif its colour.
 
 import React, { useId } from 'react';
 import type { MotifId } from '@/lib/printDesign/spec';

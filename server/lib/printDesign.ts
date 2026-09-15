@@ -136,7 +136,7 @@ export function buildDesignMessages(
     '- a theme (name + one-sentence rationale) drawn from the trip itself: its destination, season, pace, and the character of its activities',
     "- a seven-color palette plus fills, as #rrggbb hex values. Match the traveler's theme request and do not tone it down:",
     '  - background is the page. Any color works. Light paper is the classic keepsake and the right default; go saturated or dark when the theme asks for it.',
-    '  - ink (body text), muted (item details and times at small sizes), secondary (day dates and confirmation codes, small) and primary (titles, day numerals and small section labels) are all text on that page, and each needs 4.5:1 contrast against it. accent draws the item icons and hairlines and needs 3:1. Pastel text colors cannot pass on a light page, and dark text colors cannot pass on a dark one.',
+    '  - ink (body text), muted (item details and times at small sizes), secondary (day dates and confirmation codes, small) and primary (titles, day numerals and small section labels) are all text on that page, and each needs 4.5:1 contrast against it. Aim higher for ink, around 7:1, so body text stays distinct from muted details. accent draws the item icons and hairlines and needs 3:1. Pastel text colors cannot pass on a light page, and dark text colors cannot pass on a dark one.',
     '  - A text color that misses its floor is moved lighter or darker at the same hue, so choose colors that already clear it.',
     '  - muted is a toned color from the theme, not a plain grey. Give primary, secondary, accent and the fills clearly different hues or depths.',
     '  - surface is a mat behind the cover photo and never carries text.',
@@ -241,7 +241,11 @@ export function formatPaletteAudit(adjustments: PaletteAdjustment[]): string {
       if (a.kind === 'dropped') {
         return `fills dropped ${a.from === null ? '(not a string)' : JSON.stringify(a.from)}`;
       }
-      if (a.kind === 'replaced') return `${a.role} missing → ${a.to}`;
+      if (a.kind === 'replaced') {
+        return a.from === null
+          ? `${a.role} missing → ${a.to}`
+          : `${a.role} ${JSON.stringify(a.from)} is not a colour → ${a.to}`;
+      }
       return `${a.role} ${a.from} (${(a.ratio ?? 0).toFixed(2)}:1 < ${a.floor}) → ${a.to}`;
     })
     .join(' | ');
