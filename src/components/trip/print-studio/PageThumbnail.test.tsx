@@ -18,8 +18,18 @@ describe('PageThumbnail', () => {
         <p>Ten Days in Tokyo</p>
       </PageThumbnail>
     );
-    expect(screen.getByText('Preview of this trip')).toBeInTheDocument();
-    expect(container.querySelector('[aria-hidden="true"]')).toBeTruthy();
+    // The label should be accessible to screen readers
+    const label = screen.getByText('Preview of this trip');
+    expect(label).toBeInTheDocument();
+
+    // Neither the label nor any ancestor of it may be aria-hidden — an
+    // own-attribute check alone would miss the whole tree (label included)
+    // being wrapped in aria-hidden="true".
+    expect(label.closest('[aria-hidden="true"]')).toBeNull();
+
+    // The rendered page should be inside an aria-hidden="true" subtree
+    const page = container.querySelector('[data-testid="thumb-page"]');
+    expect(page?.closest('[aria-hidden="true"]')).toBeTruthy();
   });
 
   it('lays the page out at its natural width, scaled from the top left', () => {
