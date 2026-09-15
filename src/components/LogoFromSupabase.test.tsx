@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import LogoFromSupabase from './LogoFromSupabase';
+
+// storageUtils imports the real client, whose env validation throws without a
+// .env. A static render runs no effects, so nothing here ever calls it.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
 
 describe('LogoFromSupabase', () => {
   // A static render runs no effects, so this is the markup a browser lays out

@@ -13,6 +13,9 @@ vi.mock('./useCalendarEvents', () => ({
   useCalendarEvents: () => ({ isLoading: false, events: mockEvents }),
 }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
+// calendarMutations and the entity dialogs import the real client, whose env
+// validation throws without a .env. No test here drops an event or opens a dialog.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
 
 const FUTURE_TRIP = { arrival_date: '2030-03-01', departure_date: '2030-03-05' };
 

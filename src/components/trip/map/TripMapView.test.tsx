@@ -24,6 +24,10 @@ vi.mock('@/components/trip/transportation/TransportationDialog', () => ({
   default: () => <div data-testid="transportation-dialog" />,
 }));
 
+// importOriginal below still loads the real usePlaceCoordinates, which imports the
+// client; its env validation throws without a .env. The hook itself is stubbed.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+
 let mockCoords: PlaceCoordinateMap = new Map();
 vi.mock('./usePlaceCoordinates', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./usePlaceCoordinates')>();
