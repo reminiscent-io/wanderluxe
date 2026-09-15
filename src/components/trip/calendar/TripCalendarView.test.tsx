@@ -38,6 +38,13 @@ describe('TripCalendarView', () => {
     expect(await screen.findByText('Louvre')).toBeInTheDocument();
   });
 
+  it('paints each event block with its category', async () => {
+    mockEvents = [{ ...LOUVRE, extendedProps: { entityType: 'activity', category: 'ocean', record: { id: 'a1' } } }];
+    renderCalendar(FUTURE_TRIP);
+    const block = (await screen.findByText('Louvre')).closest('.fc-event');
+    expect(block).toHaveClass('wl-cat-ocean');
+  });
+
   it('defaults to the 3-day time grid view', () => {
     const { container } = renderCalendar(FUTURE_TRIP);
     expect(container.querySelector('.fc-timeGridThreeDay-view')).toBeInTheDocument();

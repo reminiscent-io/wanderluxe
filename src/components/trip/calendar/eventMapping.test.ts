@@ -127,6 +127,47 @@ describe('mapTransportationToEvent', () => {
   });
 });
 
+describe('event category', () => {
+  // The calendar paints blocks by the same category the timeline tints its icons with.
+  const stay = {
+    stay_id: 's1', trip_id: 't1', hotel: 'Hotel Lutetia',
+    hotel_checkin_date: '2026-06-30', hotel_checkout_date: '2026-07-03',
+  } as HotelStay;
+  const flight = {
+    id: 'tr1', trip_id: 't1', type: 'flight', provider: 'AF',
+    start_date: '2026-06-30', start_time: '09:00:00', end_date: '2026-06-30', end_time: '11:30:00',
+    departure_location: 'JFK', arrival_location: 'CDG',
+  } as Transportation;
+  const reservation = {
+    id: 'r1', day_id: 'd1', trip_id: 't1', restaurant_name: 'Septime', reservation_time: '20:00:00',
+  } as RestaurantReservation;
+
+  it('marks an ordinary activity sage', () => {
+    expect(mapActivityToEvent(baseActivity, '2026-06-30')?.extendedProps?.category).toBe('sage');
+  });
+  it('marks a water activity ocean', () => {
+    const e = mapActivityToEvent({ ...baseActivity, title: 'Snorkel tour at Hanauma Bay' }, '2026-06-30');
+    expect(e?.extendedProps?.category).toBe('ocean');
+  });
+  it('marks an untimed activity by its title too', () => {
+    const e = mapActivityToEvent({ ...baseActivity, title: 'Kayak the lagoon', start_time: undefined }, '2026-06-30');
+    expect(e?.extendedProps?.category).toBe('ocean');
+  });
+  it('marks dining clay', () => {
+    expect(mapReservationToEvent(reservation, '2026-07-01')?.extendedProps?.category).toBe('clay');
+  });
+  it('marks a stay lodging', () => {
+    expect(mapAccommodationToEvent(stay)?.extendedProps?.category).toBe('lodging');
+  });
+  it('marks a flight slate', () => {
+    expect(mapTransportationToEvent(flight)?.extendedProps?.category).toBe('slate');
+  });
+  it('marks a ferry ocean, including a multi-day crossing', () => {
+    expect(mapTransportationToEvent({ ...flight, type: 'ferry' })?.extendedProps?.category).toBe('ocean');
+    expect(mapTransportationToEvent({ ...flight, type: 'ferry', end_date: '2026-07-01' })?.extendedProps?.category).toBe('ocean');
+  });
+});
+
 describe('buildDropPatch', () => {
   it('retimes a timed activity and re-derives its date', () => {
     const patch = buildDropPatch({

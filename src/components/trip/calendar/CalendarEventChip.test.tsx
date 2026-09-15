@@ -22,6 +22,11 @@ describe('CalendarEventChip', () => {
     expect(screen.getByTestId('chip-icon-activity')).toBeInTheDocument();
   });
 
+  it('tints the icon with the event category rather than the entity type', () => {
+    render(<CalendarEventChip arg={makeArg({ extendedProps: { entityType: 'activity', category: 'ocean' } })} />);
+    expect(screen.getByTestId('chip-icon-activity')).toHaveClass('text-category-ocean');
+  });
+
   it('stacks title over time for long timegrid events', () => {
     const arg = {
       ...makeArg({ end: new Date(2026, 5, 30, 16, 0) }),
