@@ -5,9 +5,11 @@
 // column — a 46rem measure squeezed to 10rem would not be the document the
 // traveler is being shown. Scale is width-driven and starts at a sensible
 // fraction, so a frame that never reports a width (jsdom, a hidden panel)
-// still renders something truthful rather than nothing.
+// still renders something truthful rather than nothing. The page is taken out
+// of flow so the thumbnail contributes no intrinsic width to its container,
+// because a transform does not shrink layout.
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface PageThumbnailProps {
@@ -31,7 +33,7 @@ const PageThumbnail: React.FC<PageThumbnailProps> = ({
   const frameRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.25);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
 
@@ -50,13 +52,13 @@ const PageThumbnail: React.FC<PageThumbnailProps> = ({
     <div className={cn('relative', className)}>
       <div
         ref={frameRef}
-        className="overflow-hidden rounded-card border border-border bg-background shadow-warm-sm"
+        className="relative overflow-hidden rounded-card border border-border bg-background shadow-warm-sm"
         style={{ aspectRatio: `1 / ${aspect}` }}
         aria-hidden="true"
       >
         <div
           data-testid="thumb-page"
-          className="pointer-events-none origin-top-left"
+          className="pointer-events-none absolute left-0 top-0"
           style={{ width: `${pageWidth}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }}
         >
           {children}
