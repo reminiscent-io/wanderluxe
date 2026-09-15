@@ -9,7 +9,7 @@ import React from 'react';
 import { BedDouble, Compass, UtensilsCrossed, Plane } from 'lucide-react';
 import { fmtDate, fmtMoney } from '@/services/pdf/format';
 import type { PdfTripData, Item } from '@/services/pdf/types';
-import { getFontPairing, resolveFills, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import { contrastRatio, getFontPairing, resolveFills, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import { MotifBand, MotifMark } from './motifs';
 import { hasLedgerData } from './ledger';
 import './printDocument.css';
@@ -53,6 +53,12 @@ interface PrintDocumentProps {
   showBudget?: boolean;
 }
 
+// A page colour well away from white prints as a coloured block inside the
+// printer's white margin, so its content needs its own inset (see the print
+// block in printDocument.css). Near-white paper, which every edition stored
+// before 2026-09-15 uses, keeps the margin-only print layout it always had.
+const TINTED_GROUND_CONTRAST = 1.25;
+
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <h2 className="pd-section-label">
     <span>{children}</span>
@@ -65,6 +71,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
   const { palette } = design;
 
   const layout = design.layout ?? 'editorial';
+  const tintedGround = contrastRatio(palette.background, '#ffffff') >= TINTED_GROUND_CONTRAST;
 
   // Solid shape colours for the bold layout. Editions stored without fills
   // borrow primary, accent and secondary. Four slots, cycling when there are
@@ -112,7 +119,13 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
   const hasLedger = showBudget && hasLedgerData(data);
 
   return (
-    <article className="print-doc" data-layout={layout} style={styleVars} lang="en">
+    <article
+      className="print-doc"
+      data-layout={layout}
+      data-ground={tintedGround ? 'tinted' : undefined}
+      style={styleVars}
+      lang="en"
+    >
       <div className="pd-page">
         {/* ------------------------------------------------ cover */}
         <header className="pd-cover">

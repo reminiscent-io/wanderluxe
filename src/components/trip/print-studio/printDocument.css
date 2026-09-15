@@ -596,6 +596,15 @@
     padding: 0;
   }
 
+  /* A coloured page prints as a block inside the printer's white margin, so
+     its content needs its own inset or it runs into the block's edge. Near-white
+     paper keeps the page-margin-only layout it has always had. */
+  .print-doc[data-ground='tinted'] .pd-page {
+    padding: 9mm 10mm;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
   .pd-cover {
     /* vh resolves against the page box when printing, so this is one page. */
     min-height: 100vh;

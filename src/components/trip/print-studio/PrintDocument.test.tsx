@@ -95,3 +95,27 @@ describe('PrintDocument layouts', () => {
     expect(panel?.querySelector('.pd-eyebrow')).not.toBeNull();
   });
 });
+
+describe('PrintDocument page ground', () => {
+  const data = romeTrip();
+  const dates = data.days.map((d) => d.date);
+  const docOf = (container: HTMLElement) => container.querySelector<HTMLElement>('.print-doc')!;
+
+  it.each(['#1b1030', '#ff00aa'])('marks a tinted page background (%s) as data-ground="tinted"', (background) => {
+    const design = sanitizePrintDesign({ palette: { background } }, dates);
+    const { container } = render(<PrintDocument design={design} data={data} />);
+    expect(docOf(container).getAttribute('data-ground')).toBe('tinted');
+  });
+
+  it('leaves data-ground absent for the fallback cream page', () => {
+    const design = sanitizePrintDesign({}, dates);
+    const { container } = render(<PrintDocument design={design} data={data} />);
+    expect(docOf(container).getAttribute('data-ground')).toBeNull();
+  });
+
+  it('leaves data-ground absent for a near-white page background', () => {
+    const design = sanitizePrintDesign({ palette: { background: '#fdfcf7' } }, dates);
+    const { container } = render(<PrintDocument design={design} data={data} />);
+    expect(docOf(container).getAttribute('data-ground')).toBeNull();
+  });
+});
