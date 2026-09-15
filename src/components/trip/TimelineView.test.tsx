@@ -29,8 +29,13 @@ vi.mock('@/hooks/useFirstRun', () => ({
   useFirstRun: () => ({ isUnseen: false, dismiss: vi.fn() }),
   default: () => ({ isUnseen: false, dismiss: vi.fn() }),
 }));
-vi.mock('./ExportPdfButton', () => ({ default: () => null }));
-vi.mock('./print-studio/PrintStudioDialog', () => ({ default: (): null => null }));
+const printDialogProps: Array<Record<string, unknown>> = [];
+vi.mock('./print-studio/PrintStudioDialog', () => ({
+  default: (props: Record<string, unknown>) => {
+    printDialogProps.push(props);
+    return props.open ? <div data-testid="print-dialog">{String(props.initialSection)}</div> : null;
+  },
+}));
 vi.mock('./calendar/CalendarSyncSheet', () => ({ default: () => null }));
 vi.mock('./calendar/TripCalendarView', () => ({
   default: () => <div data-testid="calendar-view" />,
@@ -153,5 +158,34 @@ describe('TimelineView itinerary view switching', () => {
   it('does not mount the map until it is first opened', () => {
     renderView();
     expect(screen.queryByTestId('map-view-host')).not.toBeInTheDocument();
+  });
+});
+
+describe('TimelineView print entry point', () => {
+  beforeEach(() => {
+    printDialogProps.length = 0;
+    (window as { gtag?: unknown }).gtag = vi.fn();
+  });
+
+  it('offers one Print button per layout instead of separate PDF and Studio buttons', () => {
+    renderView();
+    expect(screen.queryByRole('button', { name: /^PDF$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Studio$/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Print$/ })).toHaveLength(2);
+  });
+
+  it('opens the dialog on the Studio half for a keepsake deep link', () => {
+    renderView('/trip/trip-1/timeline?print=1');
+    expect(screen.getByTestId('print-dialog')).toHaveTextContent('studio');
+  });
+
+  it('opens the dialog on the PDF half for an export deep link', () => {
+    renderView('/trip/trip-1/timeline?export=pdf');
+    expect(screen.getByTestId('print-dialog')).toHaveTextContent('pdf');
+  });
+
+  it('passes the destination through so the preview cover can use it', () => {
+    renderView('/trip/trip-1/timeline?print=1');
+    expect(printDialogProps.at(-1)?.tripDestination).toBe('Kyoto');
   });
 });

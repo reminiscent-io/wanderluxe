@@ -39,6 +39,8 @@ import { hasLedgerData } from '@/components/trip/print-studio/ledger';
 import EditableCopy from '@/components/trip/print-studio/EditableCopy';
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { track } from '@/lib/analytics';
+import { PRINT_OPTS, CONTENT_WIDTH, printTripDataKey } from '@/components/trip/print-studio/printTripData';
+import { useGoogleFonts } from '@/components/trip/print-studio/useGoogleFonts';
 
 const isValidUUID = (s: string | undefined): s is string =>
   !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -54,36 +56,6 @@ interface DesignRow {
   created_at: string;
 }
 
-const PRINT_OPTS = { showImages: true, showCosts: true } as const;
-
-/** Width the cover image is cropped to. Matches the document's measure. */
-const CONTENT_WIDTH = 800;
-
-/**
- * Loads the design's Google Fonts pairing. The preconnect matters here: the
- * whole page is a type specimen, so a late stylesheet shows the document in
- * fallback faces first.
- */
-function useGoogleFonts(googleQuery: string | null) {
-  useEffect(() => {
-    if (!googleQuery) return;
-    const nodes: HTMLLinkElement[] = [];
-    const add = (rel: string, href: string, crossOrigin?: string) => {
-      const link = document.createElement('link');
-      link.rel = rel;
-      link.href = href;
-      if (crossOrigin !== undefined) link.crossOrigin = crossOrigin;
-      document.head.appendChild(link);
-      nodes.push(link);
-    };
-    add('preconnect', 'https://fonts.googleapis.com');
-    add('preconnect', 'https://fonts.gstatic.com', '');
-    add('stylesheet', `https://fonts.googleapis.com/css2?${googleQuery}&display=swap`);
-    return () => {
-      for (const node of nodes) node.remove();
-    };
-  }, [googleQuery]);
-}
 
 /** The document's own shape, held while the design and trip data load. */
 const DocumentSkeleton: React.FC = () => (
@@ -173,7 +145,7 @@ const PrintItinerary: React.FC = () => {
   } = useQuery({
     // finalized_at is part of the key so freezing or reopening an edition
     // swaps the source of the itinerary rather than serving a stale render.
-    queryKey: ['print-trip-data', tripId, designRow?.finalized_at ?? 'live'],
+    queryKey: printTripDataKey(tripId, designRow?.finalized_at ?? null),
     enabled: validParams && !!designRow,
     queryFn: () =>
       snapshot

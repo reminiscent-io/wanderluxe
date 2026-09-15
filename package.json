@@ -10,6 +10,7 @@
     "build": "npm run build:sitemap && vite build && npm run prerender && npm run build:server",
     "build:server": "node server/build.js",
     "build:sitemap": "npx tsx scripts/generate-sitemap.ts",
+    "build:print-showcase": "npx tsx scripts/build-print-showcase.ts",
     "prerender": "npx tsx scripts/prerender.ts",
     "build:dev": "vite build --mode development",
     "claude": "claude",

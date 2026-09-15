@@ -401,9 +401,12 @@ function renderBudgetSummary(budgetData: BudgetData): Content[] {
     const remaining = budgetData.budget - budgetData.total;
     const overBudget = remaining < 0;
     content.push({
+      // The gap is columnGap, not spaces around the pipe: pdfmake cuts whitespace
+      // at line edges (U+00A0 included), so a padded '  |  ' column shrank to '|'.
+      columnGap: SPACE.sm,
       columns: [
         { text: `Budget: ${fmtMoney(budgetData.budget, 'USD')}`, style: 'body', width: 'auto' },
-        { text: '  |  ', style: 'metaText', width: 'auto' },
+        { text: '|', style: 'metaText', width: 'auto' },
         {
           text: overBudget
             ? `Over budget by ${fmtMoney(Math.abs(remaining), 'USD')}`

@@ -1,0 +1,83 @@
+[
+  {
+    "themeName": "Edo Blue October",
+    "themeRationale": "A pace that drifts with the river, autumn light, and woodblock motifs fits a Tokyo weekend that favors twilight walks and quiet detail.",
+    "palette": {
+      "primary": "#3771a6",
+      "secondary": "#57707f",
+      "background": "#f6f4ef",
+      "surface": "#e7ded6",
+      "ink": "#22272a",
+      "muted": "#637078",
+      "accent": "#b67f4c"
+    },
+    "fontPairing": "editorial",
+    "motif": "waves",
+    "cover": {
+      "title": "Blue Dusk, Slow Steps: Three Days in Tokyo",
+      "subtitle": "Kanda · Akihabara · Toyosu · Shibuya · Tsukiji",
+      "tagline": "Evenings by the river, lights on wet streets, and mornings with tamagoyaki."
+    },
+    "intro": "Tokyo rewards the slow step and sharp eye. From the dusk walk to Akihabara’s arcades to the morning markets of Tsukiji, each day opens with a quiet detail then turns bold. In October, the sky stays clear and the city’s blue feels endless.",
+    "dayCaptions": {
+      "2026-10-03": "Landing in Haneda, then a first walk along the Kanda river to Akihabara after dark.",
+      "2026-10-04": "Barefoot rooms at teamLab Planets before noon, Shibuya Sky at sunset, and omakase at Sushi Sho.",
+      "2026-10-05": "Tsukiji outer market at 7:30, look for the tamagoyaki stand in the second lane."
+    },
+    "closing": "You can always find your way by the shade of blue on the river."
+  },
+  {
+    "themeName": "Tokyo Deco Evenings",
+    "themeRationale": "Tokyo’s neon and river lights in autumn lend themselves to a crisp, stylized deco poster look, clean shapes, cool dusk tones, a little shimmer.",
+    "palette": {
+      "primary": "#01628f",
+      "secondary": "#3b3e49",
+      "background": "#f5f7fa",
+      "surface": "#e0e4ec",
+      "ink": "#23262d",
+      "muted": "#6b6257",
+      "accent": "#3b3e49"
+    },
+    "fontPairing": "deco",
+    "motif": "deco",
+    "cover": {
+      "title": "Neon & River: Three Days in Tokyo",
+      "subtitle": "San Francisco · Haneda · Kanda · Akihabara · Shin-Toyosu · Shibuya · Tsukiji",
+      "tagline": "Lights sharpen at dusk and each street draws a different line."
+    },
+    "intro": "Tokyo in early October is bright but not hot. Your days here move by train and footwork, circling riverbanks and rooftops, quick mornings, long city lights, a little pause before you go west.",
+    "dayCaptions": {
+      "2026-10-03": "Walk from Kanda Surugadai to Akihabara along the river at 7:30 p.m.",
+      "2026-10-04": "teamLab Planets at 10:00 a.m., then Shibuya Sky for sunset at 5:15 p.m.",
+      "2026-10-05": "Tamago at the Tsukiji outer market, second lane, just after 7:30 a.m."
+    },
+    "closing": "All streets lead out from here."
+  },
+  {
+    "themeName": "Autumn Greens: Tokyo in October",
+    "themeRationale": "October in Tokyo catches the city between summer’s end and fall’s quieter mood, where gardens, riverbanks, and street corners hold onto their color but the air feels slower and clear.",
+    "palette": {
+      "primary": "#709257",
+      "secondary": "#53744a",
+      "background": "#f8f9f3",
+      "surface": "#e4e8dd",
+      "ink": "#23281b",
+      "muted": "#6b6257",
+      "accent": "#53744a"
+    },
+    "fontPairing": "elegant",
+    "motif": "botanical",
+    "cover": {
+      "title": "October Walks in Tokyo",
+      "subtitle": "Kanda · Toyosu · Shibuya · Tsukiji",
+      "tagline": "City strolls, green corners, and new flavors in three autumn days."
+    },
+    "intro": "Tokyo in October moves at its own pace. There’s time to follow the Kanda river until the city lights start blinking on, linger over tamagoyaki at Tsukiji, and watch sunset from above the scramble. Keep this little record as proof of a weekend that let the city breathe.",
+    "dayCaptions": {
+      "2026-10-03": "Arrive and walk from Ochanomizu down the Kanda river to Akihabara after dark.",
+      "2026-10-04": "Wade through the art rooms at teamLab Planets, then see Shibuya Sky turn gold at 5:15 pm.",
+      "2026-10-05": "Catch tamagoyaki at Tsukiji outer market before heading out from Tokyo station."
+    },
+    "closing": "Hope you make it back for another October."
+  }
+]

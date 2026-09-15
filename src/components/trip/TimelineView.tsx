@@ -3,10 +3,9 @@ import { useTimelineEvents } from '@/hooks/use-timeline-events';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
-import ExportPdfButton from './ExportPdfButton';
 import { Button } from '@/components/ui/button';
 // Aliased: a bare `Map` import shadows the global Map constructor used below.
-import { CalendarDays, ListTree, CalendarPlus, FileDown, Map as MapIcon, Palette, UserPlus, Sparkles, ClipboardPaste, PenLine } from 'lucide-react';
+import { CalendarDays, ListTree, CalendarPlus, Map as MapIcon, Printer, UserPlus, Sparkles, ClipboardPaste, PenLine } from 'lucide-react';
 import PrintStudioDialog from './print-studio/PrintStudioDialog';
 import { useSearchParams } from 'react-router-dom';
 import CalendarSyncSheet from './calendar/CalendarSyncSheet';
@@ -66,8 +65,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
   const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
-  const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
-  const [isPrintStudioOpen, setIsPrintStudioOpen] = useState(false);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [printSection, setPrintSection] = useState<'pdf' | 'studio'>('pdf');
   // View lives in the URL so all three are deep-linkable and survive a refresh.
   // 'timeline' is the absent state, keeping existing bookmarks untouched.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -102,8 +101,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     if (!sync && !exportParam && !print) return;
 
     if (sync === '1') setIsSyncSheetOpen(true);
-    if (exportParam === 'pdf') setIsPdfExportOpen(true);
-    if (print === '1') setIsPrintStudioOpen(true);
+    if (exportParam === 'pdf') {
+      setPrintSection('pdf');
+      setIsPrintOpen(true);
+    }
+    if (print === '1') {
+      setPrintSection('studio');
+      setIsPrintOpen(true);
+    }
 
     setSearchParams(
       (prev) => {
@@ -360,29 +365,26 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
                 + Cal
               </Button>
             )}
-            <ExportPdfButton
-              tripId={tripId}
-              className="hidden sm:inline-flex"
-              open={isPdfExportOpen}
-              onOpenChange={setIsPdfExportOpen}
-            />
             <Button
               variant="outline"
               size="sm"
               className="hidden sm:inline-flex"
-              title="Print Studio — a keepsake edition of this trip"
-              onClick={() => setIsPrintStudioOpen(true)}
+              title="Print this trip: a simple PDF, or a designed edition"
+              onClick={() => {
+                setPrintSection('pdf');
+                setIsPrintOpen(true);
+              }}
             >
-              <Palette className="h-4 w-4" />
-              Studio
+              <Printer className="h-4 w-4" />
+              Print
             </Button>
           </div>
 
           {/* Mobile: the same actions as labelled buttons rather than an
               unlabelled overflow icon — nobody taps a menu they can't read.
               Same short labels as the desktop row: one action, one name.
-              `flex-1` rather than a grid so two buttons (no edit rights)
-              split the row as evenly as three do. */}
+              `flex-1` rather than a grid so this row works whether it holds
+              one button (no edit rights) or up to three. */}
           <div className="flex w-full gap-2 sm:hidden">
             {canEdit && onInvite && (
               <Button
@@ -409,20 +411,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             <Button
               variant="outline"
               className="h-11 flex-1"
-              title="Export this itinerary as a PDF"
-              onClick={() => setIsPdfExportOpen(true)}
+              title="Print this trip: a simple PDF, or a designed edition"
+              onClick={() => {
+                setPrintSection('pdf');
+                setIsPrintOpen(true);
+              }}
             >
-              <FileDown className="h-4 w-4" />
-              PDF
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 flex-1"
-              title="Print Studio — a keepsake edition of this trip"
-              onClick={() => setIsPrintStudioOpen(true)}
-            >
-              <Palette className="h-4 w-4" />
-              Studio
+              <Printer className="h-4 w-4" />
+              Print
             </Button>
           </div>
         </header>
@@ -507,7 +503,13 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
         {canEdit && (
           <CalendarSyncSheet tripId={tripId} open={isSyncSheetOpen} onOpenChange={setIsSyncSheetOpen} />
         )}
-        <PrintStudioDialog tripId={tripId} open={isPrintStudioOpen} onOpenChange={setIsPrintStudioOpen} />
+        <PrintStudioDialog
+          tripId={tripId}
+          open={isPrintOpen}
+          onOpenChange={setIsPrintOpen}
+          tripDestination={tripDestination}
+          initialSection={printSection}
+        />
 
         {mapMounted && (
           <div className={itineraryView === 'map' ? undefined : 'hidden'} data-testid="map-view-host">

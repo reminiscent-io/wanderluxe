@@ -10,13 +10,14 @@ const freeFeatures = [
   "20 document imports a day",
   "Share with anyone, to view or edit",
   "Timeline, calendar, and map views",
-  "PDF export and calendar sync",
+  "Simple PDF itinerary and calendar sync",
 ];
 
 const proFeatures = [
   "Everything in Free",
-  "Print Studio: keepsake itineraries designed by AI",
+  "Print Studio: your itinerary as a designed edition",
   "A custom palette, type, and theme for every trip",
+  "Every line of copy is yours to rewrite",
   "Early access to new features",
   "Cancel anytime",
 ];
@@ -52,8 +53,9 @@ const PricingClarity = () => {
           </h2>
           <p className="font-sans text-lg text-earth-500 mt-4 max-w-xl mx-auto leading-relaxed [text-wrap:pretty]">
             Planning, sharing, exporting, and AI chat cost nothing, on as many
-            trips as you like. The $3.99 a month buys the Print Studio: a keepsake
-            itinerary, designed by AI around your trip.
+            trips as you like. Every trip prints as a simple PDF for free; the
+            $3.99 a month buys the Print Studio, which designs the same
+            itinerary as a keepsake edition.
           </p>
         </motion.div>
 
@@ -103,6 +105,12 @@ const PricingClarity = () => {
                 <span className="text-earth-500 text-sm">/month</span>
               </div>
               <FeatureList features={proFeatures} />
+              <a
+                href="#print-studio"
+                className="mt-6 inline-block font-sans text-sm text-earth-500 underline underline-offset-4 hover:text-earth-600"
+              >
+                See what an edition looks like
+              </a>
               <Button
                 variant="outline"
                 size="lg"
