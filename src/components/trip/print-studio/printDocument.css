@@ -778,9 +778,10 @@
 /* Editing is a screen state. If a print somehow starts mid-edit, the words
    still print as words — no boxes, no hairlines, no counters. */
 @media print {
+  /* !important because the hover, focus and edited rules above outrank a plain (0,1,0) reset. */
   .pd-edit-input {
-    box-shadow: none;
-    background: transparent;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 
   .pd-edit-tools {
