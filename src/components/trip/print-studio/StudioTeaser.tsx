@@ -37,7 +37,10 @@ const StudioTeaser: React.FC<StudioTeaserProps> = ({ tripId, destination, enable
     staleTime: 60_000,
   });
 
-  if (isError) return <ProFeatureList />;
+  // Only when there is nothing to show. A background refetch that fails (the
+  // window regains focus after staleTime, offline) must not swap a working
+  // preview for sell copy.
+  if (isError && !data) return <ProFeatureList />;
 
   return (
     <div className="flex items-start gap-4">

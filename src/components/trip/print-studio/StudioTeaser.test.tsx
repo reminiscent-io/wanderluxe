@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import StudioTeaser from './StudioTeaser';
 import { PRO_FEATURES } from './ProFeatureList';
+import { printTripDataKey } from './printTripData';
 import type { PdfTripData } from '@/services/pdf/types';
 
 const fetchPdfTripData = vi.fn();
@@ -31,14 +32,14 @@ const tripData: PdfTripData = {
   budgetData: { budget: null, categories: [], total: 0 },
 };
 
-const renderTeaser = () => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+const renderTeaser = (
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+) =>
+  render(
     <QueryClientProvider client={client}>
       <StudioTeaser tripId="trip-1" destination="Lisbon" />
     </QueryClientProvider>
   );
-};
 
 beforeEach(() => {
   fetchPdfTripData.mockReset().mockResolvedValue(tripData);
@@ -63,5 +64,24 @@ describe('StudioTeaser', () => {
     renderTeaser();
     await waitFor(() => expect(screen.getByText(PRO_FEATURES[0])).toBeInTheDocument());
     expect(screen.queryByText('Flight lands, LIS')).not.toBeInTheDocument();
+  });
+
+  it('keeps a loaded preview when a background refetch fails', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderTeaser(client);
+    await waitFor(() => expect(screen.getByText('Flight lands, LIS')).toBeInTheDocument());
+
+    fetchPdfTripData.mockRejectedValue(new Error('offline'));
+    await act(() => client.refetchQueries());
+    // React Query tells its observers about the failure on a zero-delay timer.
+    // Without letting that land, the assertions below read the page from
+    // before the refetch failed and pass whatever the component does.
+    await waitFor(() =>
+      expect(client.getQueryState(printTripDataKey('trip-1', null))?.status).toBe('error')
+    );
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    expect(screen.getByText('Flight lands, LIS')).toBeInTheDocument();
+    expect(screen.queryByText(PRO_FEATURES[0])).not.toBeInTheDocument();
   });
 });
