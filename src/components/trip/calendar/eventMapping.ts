@@ -3,6 +3,7 @@ import { addDays, format, parse } from 'date-fns';
 import type { DayActivity, RestaurantReservation, HotelStay, Transportation } from '@/types/trip';
 import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
 import { explicitReservationEnd } from '@/utils/timeUtils';
+import { getEventCategory } from '@/components/trip/day/components/timeline-utils';
 
 function entityTzBadge(entityTz: string | null | undefined, tripTz: string | null | undefined, onDate: string): string {
   return shouldShowBadge(entityTz, tripTz) ? tzAbbrev(effectiveTz(entityTz, tripTz)!, onDate) : '';
@@ -32,13 +33,14 @@ export function combineDateTime(date: string, time: string): string {
 
 export function mapActivityToEvent(activity: DayActivity, dayDate: string, tripTz?: string | null): EventInput | null {
   if (!dayDate) return null;
+  const category = getEventCategory({ type: 'activity', title: activity.title });
   if (!activity.start_time) {
     return {
       id: makeEventId('activity', activity.id),
       title: activity.title,
       start: dayDate,
       allDay: true,
-      extendedProps: { entityType: 'activity', record: activity, tzBadge: '' },
+      extendedProps: { entityType: 'activity', category, record: activity, tzBadge: '' },
     };
   }
   return {
@@ -47,19 +49,20 @@ export function mapActivityToEvent(activity: DayActivity, dayDate: string, tripT
     start: combineDateTime(dayDate, activity.start_time),
     end: activity.end_time ? combineDateTime(dayDate, activity.end_time) : undefined,
     allDay: false,
-    extendedProps: { entityType: 'activity', record: activity, tzBadge: entityTzBadge(activity.timezone, tripTz ?? null, dayDate) },
+    extendedProps: { entityType: 'activity', category, record: activity, tzBadge: entityTzBadge(activity.timezone, tripTz ?? null, dayDate) },
   };
 }
 
 export function mapReservationToEvent(reservation: RestaurantReservation, dayDate: string, tripTz?: string | null): EventInput | null {
   if (!dayDate) return null;
+  const category = getEventCategory({ type: 'dining', title: reservation.restaurant_name });
   if (!reservation.reservation_time) {
     return {
       id: makeEventId('dining', reservation.id),
       title: reservation.restaurant_name,
       start: dayDate,
       allDay: true,
-      extendedProps: { entityType: 'dining', record: reservation, tzBadge: '' },
+      extendedProps: { entityType: 'dining', category, record: reservation, tzBadge: '' },
     };
   }
   // Only a real end goes on the event. FullCalendar derives both the chip's
@@ -73,7 +76,7 @@ export function mapReservationToEvent(reservation: RestaurantReservation, dayDat
     start: combineDateTime(dayDate, reservation.reservation_time),
     end: end ? combineDateTime(dayDate, end) : undefined,
     allDay: false,
-    extendedProps: { entityType: 'dining', record: reservation, tzBadge: entityTzBadge(reservation.timezone, tripTz ?? null, dayDate) },
+    extendedProps: { entityType: 'dining', category, record: reservation, tzBadge: entityTzBadge(reservation.timezone, tripTz ?? null, dayDate) },
   };
 }
 
@@ -98,12 +101,13 @@ export function mapAccommodationToEvent(stay: HotelStay): EventInput | null {
     start: stay.hotel_checkin_date,
     end: exclusiveEnd(stay.hotel_checkout_date),
     allDay: true,
-    extendedProps: { entityType: 'accommodation', record: stay, tzBadge: '' },
+    extendedProps: { entityType: 'accommodation', category: getEventCategory({ type: 'hotel', title: stay.hotel }), record: stay, tzBadge: '' },
   };
 }
 
 export function mapTransportationToEvent(t: Transportation, tripTz?: string | null): EventInput | null {
   if (!t.start_date) return null;
+  const category = getEventCategory({ type: 'transportation', title: transportationTitle(t), data: { type: t.type } });
   const sameDay = !t.end_date || t.end_date === t.start_date;
   if (sameDay && t.start_time) {
     const labels = transportTzLabels(t.departure_timezone, t.arrival_timezone, tripTz ?? null, t.start_date);
@@ -116,7 +120,7 @@ export function mapTransportationToEvent(t: Transportation, tripTz?: string | nu
       start: combineDateTime(t.start_date, t.start_time),
       end: t.end_time ? combineDateTime(t.start_date, t.end_time) : undefined,
       allDay: false,
-      extendedProps: { entityType: 'transportation', record: t, tzBadge },
+      extendedProps: { entityType: 'transportation', category, record: t, tzBadge },
     };
   }
   return {
@@ -125,7 +129,7 @@ export function mapTransportationToEvent(t: Transportation, tripTz?: string | nu
     start: t.start_date,
     end: exclusiveEnd(t.end_date ?? t.start_date),
     allDay: true,
-    extendedProps: { entityType: 'transportation', record: t, tzBadge: '' },
+    extendedProps: { entityType: 'transportation', category, record: t, tzBadge: '' },
   };
 }
 

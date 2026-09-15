@@ -17,6 +17,7 @@ import AddEntityPicker from './AddEntityPicker';
 import { buildDropPatch, isDateWithinTripRange, type CalendarEntityType } from './eventMapping';
 import { computeSlotMinTime, computeSlotMaxTime, DEFAULT_SLOT_MIN_TIME, DEFAULT_SLOT_MAX_TIME } from './slotWindow';
 import { applyDropPatch } from './calendarMutations';
+import type { EventCategory } from '@/components/trip/day/components/timeline-utils';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import TransportationDialog from '@/components/trip/transportation/TransportationDialog';
@@ -180,7 +181,7 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
           slotMinTime={slotMinTime}
           slotMaxTime={slotMaxTime}
           eventContent={(arg) => <CalendarEventPeek arg={arg} />}
-          eventClassNames={(arg) => [`wl-ev-${(arg.event.extendedProps as { entityType?: CalendarEntityType }).entityType ?? 'activity'}`]}
+          eventClassNames={(arg) => [`wl-cat-${(arg.event.extendedProps as { category?: EventCategory }).category ?? 'sage'}`]}
           dayHeaderContent={(arg) =>
             arg.view.type.startsWith('timeGrid') ? (
               <div className="flex flex-col items-center gap-0.5 py-1 font-sans">
