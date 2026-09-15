@@ -104,12 +104,15 @@ async function getToken(): Promise<string | null> {
  * Three bands of the edition's own palette — a paint chip, not a pie chart.
  * It is the only place the list shows what an edition actually looks like.
  */
-const PaletteSwatch: React.FC<{ palette?: Partial<PrintDesignSpec['palette']> }> = ({ palette }) => (
+const PaletteSwatch: React.FC<{
+  palette?: Partial<PrintDesignSpec['palette']>;
+  layout?: PrintDesignSpec['layout'];
+}> = ({ palette, layout }) => (
   <span
     className="flex h-7 w-7 shrink-0 overflow-hidden rounded-md border border-border"
     aria-hidden
   >
-    {swatchColors(palette).map((color, i) => (
+    {swatchColors(palette, layout).map((color, i) => (
       <span key={i} className="h-full flex-1" style={{ background: color }} />
     ))}
   </span>
@@ -268,7 +271,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
                 onClick={() => openDesign(d.id)}
                 className="flex w-full items-center gap-3 rounded-card border border-border bg-sand-50/60 px-3 py-2.5 text-left transition-colors hover:border-earth-300 hover:bg-sand-100 active:bg-sand-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <PaletteSwatch palette={d.design?.palette} />
+                <PaletteSwatch palette={d.design?.palette} layout={d.design?.layout} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-foreground">
                     {d.design?.themeName ?? 'Edition'}

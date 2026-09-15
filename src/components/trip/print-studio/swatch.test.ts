@@ -19,12 +19,12 @@ describe('swatchColors', () => {
 
   it('shows the first three fills when the edition has them', () => {
     const fills = ['#ff00aa', '#00e5ff', '#ffd400', '#7cff00'].map((color) => ({ color, text: '#000000' }));
-    expect(swatchColors({ ...palette, fills })).toEqual(['#ff00aa', '#00e5ff', '#ffd400']);
+    expect(swatchColors({ ...palette, fills }, 'bold')).toEqual(['#ff00aa', '#00e5ff', '#ffd400']);
   });
 
   it('repeats fills when there are fewer than three', () => {
     const fills = [{ color: '#ff00aa', text: '#000000' }, { color: '#00e5ff', text: '#000000' }];
-    expect(swatchColors({ ...palette, fills })).toEqual(['#ff00aa', '#00e5ff', '#ff00aa']);
+    expect(swatchColors({ ...palette, fills }, 'bold')).toEqual(['#ff00aa', '#00e5ff', '#ff00aa']);
   });
 
   it('falls back to the house palette for a row with no design', () => {
@@ -33,5 +33,15 @@ describe('swatchColors', () => {
       FALLBACK_PALETTE.accent,
       FALLBACK_PALETTE.secondary,
     ]);
+  });
+
+  it('shows primary, accent and secondary for an editorial edition even when it has fills', () => {
+    const fills = ['#ff00aa', '#00e5ff', '#ffd400'].map((color) => ({ color, text: '#000000' }));
+    expect(swatchColors({ ...palette, fills }, 'editorial')).toEqual(['#1d3557', '#c65f28', '#3d6f8e']);
+  });
+
+  it('treats an edition with no layout as editorial', () => {
+    const fills = ['#ff00aa', '#00e5ff', '#ffd400'].map((color) => ({ color, text: '#000000' }));
+    expect(swatchColors({ ...palette, fills })).toEqual(['#1d3557', '#c65f28', '#3d6f8e']);
   });
 });
