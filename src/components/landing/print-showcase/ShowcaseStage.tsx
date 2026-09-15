@@ -268,7 +268,10 @@ const ShowcaseStage: React.FC = () => {
         }}
         className={cn(
           // relative: a tab's offsetLeft is then measured from the rail.
-          'relative -mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0',
+          // scroll-px-6 matches px-6, so each chip's snap position keeps the
+          // first chip's inset; without it the rail snaps every chip flush to
+          // the screen edge, the first one included, on load.
+          'relative -mx-6 flex min-w-0 snap-x scroll-px-6 gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0',
           STAGE_RAIL_CLASS
         )}
       >
