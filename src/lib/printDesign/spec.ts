@@ -12,23 +12,29 @@
 // must stay dependency-free and DOM-free.
 
 import { findSlop, repairCopy, type SlopFinding } from './voice';
+import { resolvePalette, type PaletteAdjustment } from './palette';
+import type { PrintPalette } from './palette';
 
-export interface PrintPalette {
-  /** Deep brand hue — headings, day numerals, section labels. */
-  primary: string;
-  /** Supporting hue — day dates, confirmation codes. Small text, so AA is enforced. */
-  secondary: string;
-  /** Page ground. Must stay light: this is a printed page. */
-  background: string;
-  /** Card/section fill, one step off the background. */
-  surface: string;
-  /** Body text. Contrast against background is enforced. */
-  ink: string;
-  /** Meta text (times, details, locations). Real content at 12–13px, so AA is enforced. */
-  muted: string;
-  /** Decorative strokes only — motif bands, icon chips, hairlines. Held to the 3:1 graphics floor. */
-  accent: string;
-}
+// Colour and palette live in their own modules; these re-exports keep every
+// existing `from '@/lib/printDesign/spec'` import working.
+export { contrastRatio, isHexColor, normalizeHex, relativeLuminance } from './color';
+export {
+  FALLBACK_PALETTE,
+  PALETTE_FLOORS,
+  resolveFills,
+  type PaletteAdjustment,
+  type PrintFill,
+  type PrintPalette,
+} from './palette';
+
+/**
+ * How an edition carries colour. 'editorial' sets structure in type and
+ * hairline rules; 'bold' puts the palette's fills into panels, bands and
+ * badges.
+ */
+export const PRINT_LAYOUTS = ['editorial', 'bold'] as const;
+
+export type PrintLayout = (typeof PRINT_LAYOUTS)[number];
 
 export interface PrintDesignSpec {
   /** Short display name for the theme, e.g. "Aegean Deco". */
@@ -40,6 +46,11 @@ export interface PrintDesignSpec {
   fontPairing: FontPairingId;
   /** Key into MOTIFS — drives the cover pattern + section dividers. */
   motif: MotifId;
+  /**
+   * How the page carries colour. Absent on editions stored before 2026-09-15;
+   * absent renders as 'editorial'.
+   */
+  layout?: PrintLayout;
   cover: {
     /** Editorial title, e.g. "Ten Days in the Aegean" — not just the destination. */
     title: string;
@@ -142,6 +153,41 @@ export const FONT_PAIRINGS = [
     body: "'Work Sans', 'Helvetica Neue', sans-serif",
     googleQuery: 'family=Lora:wght@500;600;700&family=Work+Sans:wght@400;500;600',
   },
+  {
+    id: 'playful',
+    label: 'Fredoka & Nunito',
+    display: "'Fredoka', 'Trebuchet MS', sans-serif",
+    body: "'Nunito', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Fredoka:wght@400;600&family=Nunito:wght@400;600;700',
+  },
+  {
+    id: 'poster',
+    label: 'Lilita One & Poppins',
+    display: "'Lilita One', Impact, sans-serif",
+    body: "'Poppins', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Lilita+One&family=Poppins:wght@400;500;600',
+  },
+  {
+    id: 'retro',
+    label: 'Shrikhand & Karla',
+    display: "'Shrikhand', Georgia, serif",
+    body: "'Karla', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Shrikhand&family=Karla:wght@400;500;700',
+  },
+  {
+    id: 'grotesque',
+    label: 'Archivo Black & Archivo',
+    display: "'Archivo Black', 'Arial Black', sans-serif",
+    body: "'Archivo', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Archivo+Black&family=Archivo:wght@400;500;600',
+  },
+  {
+    id: 'expanded',
+    label: 'Unbounded & Work Sans',
+    display: "'Unbounded', 'Arial Black', sans-serif",
+    body: "'Work Sans', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Unbounded:wght@400;600&family=Work+Sans:wght@400;500;600',
+  },
 ] as const;
 
 export type FontPairingId = (typeof FONT_PAIRINGS)[number]['id'];
@@ -160,63 +206,17 @@ export const MOTIFS = [
   'stars', // desert nights, northern lights
   'botanical', // gardens, countryside
   'geometric', // modern cities
+  'confetti', // birthdays, parties, celebrations
+  'dots', // playful, retro, pop
+  'sunburst', // sunny, mid-century, festive
   'none', // let the typography carry it
 ] as const;
 
 export type MotifId = (typeof MOTIFS)[number];
 
 /* =========================================================================
-   Color math — tiny, dependency-free WCAG helpers
-   ========================================================================= */
-
-const HEX_RE = /^#([0-9a-f]{6})$/i;
-
-export function isHexColor(v: unknown): v is string {
-  return typeof v === 'string' && HEX_RE.test(v.trim());
-}
-
-export function normalizeHex(v: string): string {
-  return `#${HEX_RE.exec(v.trim())![1].toLowerCase()}`;
-}
-
-function channel(c: number): number {
-  const s = c / 255;
-  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-export function relativeLuminance(hex: string): number {
-  const m = HEX_RE.exec(hex.trim());
-  if (!m) return 0;
-  const n = parseInt(m[1], 16);
-  return (
-    0.2126 * channel((n >> 16) & 0xff) +
-    0.7152 * channel((n >> 8) & 0xff) +
-    0.0722 * channel(n & 0xff)
-  );
-}
-
-export function contrastRatio(a: string, b: string): number {
-  const la = relativeLuminance(a);
-  const lb = relativeLuminance(b);
-  const [hi, lo] = la >= lb ? [la, lb] : [lb, la];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-/* =========================================================================
    Sanitizer — clamp whatever the model returned into a safe, printable spec
    ========================================================================= */
-
-export const FALLBACK_PALETTE: PrintPalette = {
-  primary: '#3f4a5c',
-  // #7a6046 rather than a lighter bronze: secondary sets 12px day dates and
-  // confirmation codes, and the old #8a6f52 measured 4.42:1 on this ground.
-  secondary: '#7a6046',
-  background: '#faf8f4',
-  surface: '#f1ece3',
-  ink: '#2b2620',
-  muted: '#6b6257',
-  accent: '#b0562e',
-};
 
 /**
  * Which voice checks a copy field answers to.
@@ -244,63 +244,31 @@ function cleanCopy(v: unknown, maxLen: number, mode: CopyMode, fallback = ''): s
   return repaired.length > maxLen ? `${repaired.slice(0, maxLen - 1).trimEnd()}…` : repaired;
 }
 
-function cleanHex(v: unknown, fallback: string): string {
-  return isHexColor(v) ? normalizeHex(v) : fallback;
-}
-
 /**
  * Validate + clamp a raw model response into a renderable PrintDesignSpec.
  *
- * Guarantees, regardless of input:
- *  - every color is a normalized #rrggbb hex
- *  - the page background is light enough to print (luminance >= 0.5)
- *  - every role that carries text clears WCAG AA against the page ground:
- *    ink and muted >= 4.5:1, secondary >= 4.5:1, primary >= 3:1 (display sizes
- *    only), and the decorative accent >= 3:1. A failing role demotes to a color
- *    already proven against this background — the model's own theme where
- *    possible, the neutral fallback otherwise — so a sloppy palette costs
- *    style, never legibility.
+ * Sanitizes for legibility, not taste. Guarantees, regardless of input:
+ *  - the palette is printable (resolvePalette in ./palette): every colour is a
+ *    normalized #rrggbb, each text role clears its floor against the page, and
+ *    each fill carries legible text. Any page colour, surface and fill passes
+ *    through as sent; a text colour that misses moves in lightness only, so it
+ *    keeps its hue.
+ *  - layout is a known id, or absent (absent renders 'editorial')
  *  - fontPairing and motif are known registry ids
  *  - all copy is single-line-ish, length-clamped, never empty for required slots
  *  - prose copy clears the house voice: banned words, travel clichés and AI
  *    sentence shapes are dropped to the field's fallback (see ./voice.ts)
  *  - dayCaptions only contains keys from `dayDates`
+ *  - sanitizing an already-sanitized design returns it unchanged
  */
 export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): PrintDesignSpec {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const rawPalette = (r.palette && typeof r.palette === 'object' ? r.palette : {}) as Record<string, unknown>;
 
-  let background = cleanHex(rawPalette.background, FALLBACK_PALETTE.background);
-  // A dark page ground wastes toner and breaks the "printed keepsake" brief.
-  if (relativeLuminance(background) < 0.5) background = FALLBACK_PALETTE.background;
+  const { palette } = resolvePalette(r.palette);
 
-  let surface = cleanHex(rawPalette.surface, FALLBACK_PALETTE.surface);
-  if (relativeLuminance(surface) < 0.4) surface = background;
-
-  let ink = cleanHex(rawPalette.ink, FALLBACK_PALETTE.ink);
-  if (contrastRatio(ink, background) < 4.5) ink = FALLBACK_PALETTE.ink;
-
-  // Muted is not decoration: it sets item details, locations and times at
-  // 12-13px. The generation prompt already asks the model for 4.5:1 here, and
-  // this is where that promise is actually kept.
-  let muted = cleanHex(rawPalette.muted, FALLBACK_PALETTE.muted);
-  if (contrastRatio(muted, background) < 4.5) muted = FALLBACK_PALETTE.muted;
-
-  // Primary only ever appears at display sizes (cover title, day numerals,
-  // section labels), so the large-text floor is the right gate.
-  let primary = cleanHex(rawPalette.primary, FALLBACK_PALETTE.primary);
-  if (contrastRatio(primary, background) < 3) primary = ink;
-
-  // Secondary carries small text. Demote to primary rather than to the neutral
-  // fallback: primary has already passed against this ground and belongs to the
-  // model's own theme, so the page stays coherent instead of going two-toned.
-  let secondary = cleanHex(rawPalette.secondary, FALLBACK_PALETTE.secondary);
-  if (contrastRatio(secondary, background) < 4.5) secondary = primary;
-
-  // Accent draws hairlines, motif bands and icon rings — graphics, never text —
-  // so it answers to the 3:1 non-text floor.
-  let accent = cleanHex(rawPalette.accent, FALLBACK_PALETTE.accent);
-  if (contrastRatio(accent, background) < 3) accent = secondary;
+  const layout = (PRINT_LAYOUTS as readonly string[]).includes(r.layout as string)
+    ? (r.layout as PrintLayout)
+    : undefined;
 
   const fontPairing = FONT_PAIRING_IDS.includes(r.fontPairing as FontPairingId)
     ? (r.fontPairing as FontPairingId)
@@ -337,9 +305,10 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
   return {
     themeName: cleanCopy(r.themeName, 60, 'prose', 'Traveler’s Edition'),
     themeRationale: cleanCopy(r.themeRationale, 240, 'prose'),
-    palette: { primary, secondary, background, surface, ink, muted, accent },
+    palette,
     fontPairing,
     motif,
+    ...(layout ? { layout } : {}),
     cover: {
       title: cleanCopy(rawCover.title, 80, 'prose', 'The Itinerary'),
       subtitle: cleanCopy(rawCover.subtitle, 120, 'names'),
@@ -400,4 +369,15 @@ export function auditPrintCopy(raw: unknown): CopyAudit[] {
     if (findings.length > 0) audits.push({ field, findings });
   }
   return audits;
+}
+
+/**
+ * Report what resolvePalette changes in the model's palette, and why. Purely
+ * observational: the server logs it, so a model that keeps sending pastel text
+ * colours shows up as a line with ratios attached rather than as a quiet shift
+ * in every edition's colours.
+ */
+export function auditPrintPalette(raw: unknown): PaletteAdjustment[] {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  return resolvePalette(r.palette).adjustments;
 }

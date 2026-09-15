@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { buildTripPayload, buildDesignMessages, PRINT_DESIGN_SCHEMA, type PrintTripRows } from './printDesign';
+import {
+  buildTripPayload,
+  buildDesignMessages,
+  formatPaletteAudit,
+  PRINT_DESIGN_SCHEMA,
+  type PrintTripRows,
+} from './printDesign';
 
 function rows(overrides: Partial<PrintTripRows> = {}): PrintTripRows {
   return {
@@ -112,5 +118,64 @@ describe('PRINT_DESIGN_SCHEMA', () => {
       if (n.type === 'array') check(n.items);
     };
     check(PRINT_DESIGN_SCHEMA.schema);
+  });
+});
+
+describe('the palette brief', () => {
+  const systemPrompt = () => {
+    const { payload, dayDates } = buildTripPayload(rows());
+    return buildDesignMessages(payload, dayDates, null)[0].content;
+  };
+
+  it('lets the design pick any page colour and bright fills', () => {
+    const system = systemPrompt();
+    expect(system).not.toMatch(/never use neon/i);
+    expect(system).not.toMatch(/near-white/i);
+    expect(system).toContain('fills');
+    expect(system).toContain('"editorial"');
+    expect(system).toContain('"bold"');
+    expect(system).toContain('primary, secondary, accent and the fills clearly different hues or depths');
+  });
+
+  it('still states the text floors', () => {
+    const system = systemPrompt();
+    expect(system).toContain('4.5:1');
+    expect(system).toContain('3:1');
+  });
+
+  it('gives the model no hex colour to copy', () => {
+    expect(systemPrompt()).not.toMatch(/#[0-9a-f]{6}\b/i);
+  });
+
+  it('offers the new typefaces and motifs', () => {
+    const system = systemPrompt();
+    for (const id of ['playful', 'poster', 'retro', 'grotesque', 'expanded', 'confetti', 'dots', 'sunburst']) {
+      expect(system).toContain(id);
+    }
+  });
+});
+
+describe('PRINT_DESIGN_SCHEMA layout and fills', () => {
+  it('asks for a layout and for fills', () => {
+    const { schema } = PRINT_DESIGN_SCHEMA;
+    expect(schema.properties.layout).toEqual({ type: 'string', enum: ['editorial', 'bold'] });
+    expect(schema.properties.palette.properties.fills).toEqual({ type: 'array', items: { type: 'string' } });
+    expect(schema.required).toContain('layout');
+    expect(schema.properties.palette.required).toContain('fills');
+  });
+});
+
+describe('formatPaletteAudit', () => {
+  it('names each change and the ratio that caused it', () => {
+    expect(
+      formatPaletteAudit([
+        { role: 'primary', from: '#f654a6', to: '#d02d86', ratio: 2.961, floor: 4.5, kind: 'adjusted' },
+        { role: 'ink', from: null, to: '#2b2620', ratio: null, floor: 4.5, kind: 'replaced' },
+        { role: 'fills', from: 'pink', to: null, ratio: null, floor: null, kind: 'dropped' },
+        { role: 'fills', from: null, to: null, ratio: null, floor: null, kind: 'dropped' },
+      ])
+    ).toBe(
+      'primary #f654a6 (2.96:1 < 4.5) → #d02d86 | ink missing → #2b2620 | fills dropped "pink" | fills dropped (not a string)'
+    );
   });
 });

@@ -10,9 +10,12 @@
 
 import {
   auditPrintCopy,
+  auditPrintPalette,
   FONT_PAIRINGS,
   MOTIFS,
+  PRINT_LAYOUTS,
   sanitizePrintDesign,
+  type PaletteAdjustment,
   type PrintDesignSpec,
 } from '../../src/lib/printDesign/spec';
 import { VOICE_RULES } from '../../src/lib/printDesign/voice';
@@ -131,7 +134,14 @@ export function buildDesignMessages(
     '',
     'You decide:',
     '- a theme (name + one-sentence rationale) drawn from the trip itself: its destination, season, pace, and the character of its activities',
-    '- a seven-color palette as #rrggbb hex values. The page is PRINTED, so every color is measured against the background: background is near-white paper tinted toward the theme; ink is very dark body text (aim for 7:1); muted sets item details and times at small sizes (4.5:1 minimum); secondary sets day dates and confirmation codes, also small (4.5:1 minimum); primary carries the theme at display sizes only (3:1 minimum); accent draws hairlines and motif strokes, never text (3:1 minimum). Anything that misses its floor is darkened away from your choice, so pick colors that already clear it. Never use neon.',
+    "- a seven-color palette plus fills, as #rrggbb hex values. Match the traveler's theme request and do not tone it down:",
+    '  - background is the page. Any color works. Light paper is the classic keepsake and the right default; go saturated or dark when the theme asks for it.',
+    '  - ink (body text), muted (item details and times at small sizes), secondary (day dates and confirmation codes, small) and primary (titles, day numerals and small section labels) are all text on that page, and each needs 4.5:1 contrast against it. accent draws the item icons and hairlines and needs 3:1. Pastel text colors cannot pass on a light page, and dark text colors cannot pass on a dark one.',
+    '  - A text color that misses its floor is moved lighter or darker at the same hue, so choose colors that already clear it.',
+    '  - muted is a toned color from the theme, not a plain grey. Give primary, secondary, accent and the fills clearly different hues or depths.',
+    '  - surface is a mat behind the cover photo and never carries text.',
+    '  - fills are 2 to 4 colors for solid shapes: cover and closing panels, section bands, day-number badges. They have no contrast requirement against the page, so any brightness works, including neon when the theme calls for it. Text placed on a fill is colored automatically so it stays legible.',
+    '- a layout: "editorial" (structure in type and hairline rules; quiet, and right for most trips) or "bold" (color panels, bands and badges built from the fills; for parties, pop, poster, playful, or anything loud).',
     '- a font pairing id from this menu (nothing else):',
     FONT_MENU,
     '- a decorative motif from: ' + MOTIF_MENU,
@@ -170,14 +180,14 @@ export const PRINT_DESIGN_SCHEMA = {
   schema: {
     type: 'object',
     additionalProperties: false,
-    required: ['themeName', 'themeRationale', 'palette', 'fontPairing', 'motif', 'cover', 'intro', 'dayCaptions', 'closing'],
+    required: ['themeName', 'themeRationale', 'palette', 'layout', 'fontPairing', 'motif', 'cover', 'intro', 'dayCaptions', 'closing'],
     properties: {
       themeName: { type: 'string' },
       themeRationale: { type: 'string' },
       palette: {
         type: 'object',
         additionalProperties: false,
-        required: ['primary', 'secondary', 'background', 'surface', 'ink', 'muted', 'accent'],
+        required: ['primary', 'secondary', 'background', 'surface', 'ink', 'muted', 'accent', 'fills'],
         properties: {
           primary: { type: 'string' },
           secondary: { type: 'string' },
@@ -186,8 +196,10 @@ export const PRINT_DESIGN_SCHEMA = {
           ink: { type: 'string' },
           muted: { type: 'string' },
           accent: { type: 'string' },
+          fills: { type: 'array', items: { type: 'string' } },
         },
       },
+      layout: { type: 'string', enum: [...PRINT_LAYOUTS] },
       fontPairing: { type: 'string', enum: FONT_PAIRINGS.map((p) => p.id) },
       motif: { type: 'string', enum: [...MOTIFS] },
       cover: {
@@ -221,6 +233,19 @@ export const PRINT_DESIGN_SCHEMA = {
 /* =========================================================================
    OpenAI call
    ========================================================================= */
+
+/** One log line for everything resolvePalette changed in a model's palette. */
+export function formatPaletteAudit(adjustments: PaletteAdjustment[]): string {
+  return adjustments
+    .map((a) => {
+      if (a.kind === 'dropped') {
+        return `fills dropped ${a.from === null ? '(not a string)' : JSON.stringify(a.from)}`;
+      }
+      if (a.kind === 'replaced') return `${a.role} missing → ${a.to}`;
+      return `${a.role} ${a.from} (${(a.ratio ?? 0).toFixed(2)}:1 < ${a.floor}) → ${a.to}`;
+    })
+    .join(' | ');
+}
 
 export class PrintDesignError extends Error {
   constructor(message: string, public status: number) {
@@ -298,6 +323,13 @@ export async function generatePrintDesign(
         .map((a) => `${a.field} [${a.findings.map((f) => `${f.rule}: "${f.match}"`).join('; ')}]`)
         .join(' | ')
     );
+  }
+
+  // The same for colour: a text colour moved to clear its floor, or a fill that
+  // was not a colour. A steady run of these on one role means the prompt drifted.
+  const paletteAudit = auditPrintPalette(parsed);
+  if (paletteAudit.length > 0) {
+    console.warn('print-design palette adjusted:', formatPaletteAudit(paletteAudit));
   }
 
   return { design: sanitizePrintDesign(parsed, dayDates), model: OPENAI_MODEL };

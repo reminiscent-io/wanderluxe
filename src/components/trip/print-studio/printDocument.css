@@ -1,12 +1,16 @@
-/* Print Studio document — editorial keepsake layout.
+/* Print Studio document — editorial and bold keepsake layouts.
  *
  * All colors and families arrive as CSS custom properties set inline by
  * PrintDocument from the AI design spec:
  *   --pd-primary --pd-secondary --pd-bg --pd-surface --pd-ink --pd-muted
  *   --pd-accent --pd-display --pd-body
+ *   --pd-fill-1..4 and --pd-on-fill-1..4 (solid shapes, and the text on them)
+ *   --pd-day-fill and --pd-day-on-fill (set on each day, cycling the fills)
  *
- * Structure is carried by typography and hairline rules, not background
- * fills, so the page survives printers that drop background graphics.
+ * The editorial layout carries structure in typography and hairline rules.
+ * The bold layout ([data-layout='bold'], at the end of this file) moves the
+ * fills into panels, bands and badges. Both print their colour: .print-doc
+ * sets print-color-adjust: exact.
  */
 
 .print-doc {
@@ -112,6 +116,12 @@
   color: var(--pd-accent);
   opacity: 0.85;
   margin-bottom: 3.2rem;
+}
+
+/* The cover's title block. Generates no box in the editorial layout, so the
+   cover's flex column is exactly what it was; the bold layout paints it. */
+.pd-cover-panel {
+  display: contents;
 }
 
 .pd-cover-title {
@@ -786,6 +796,188 @@
 
   .pd-edit-tools {
     display: none;
+  }
+}
+
+/* =========================================================================
+   Bold layout
+   -------------------------------------------------------------------------
+   The same document, with colour moved from hairlines into shapes. Every piece
+   of text inside a shape takes that shape's on-fill colour, which the
+   sanitizer chose to clear 4.5:1 against it. Text on the page keeps the
+   palette's text roles, which clear their floors against the page. A fill is
+   never used as a text colour: fills carry no floor against the page.
+   ========================================================================= */
+
+.print-doc[data-layout='bold'] .pd-cover-band {
+  color: var(--pd-fill-2);
+  opacity: 1;
+  margin-bottom: 1.6rem;
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--pd-fill-1);
+  color: var(--pd-on-fill-1);
+  border-radius: 1.1rem;
+  padding: 2.6rem 2.2rem 2.4rem;
+  break-inside: avoid;
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-eyebrow,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-title,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-tagline,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route span,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-dates {
+  color: var(--pd-on-fill-1);
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route {
+  align-self: stretch;
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route::before,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route::after {
+  border-top-color: color-mix(in srgb, var(--pd-on-fill-1) 45%, transparent);
+}
+
+.print-doc[data-layout='bold'] .pd-theme-plate {
+  border-top: 3px solid var(--pd-fill-2);
+}
+
+.print-doc[data-layout='bold'] .pd-section-label::after {
+  border-top: 2px solid var(--pd-fill-2);
+}
+
+.print-doc[data-layout='bold'] .pd-section-label span {
+  background: var(--pd-fill-2);
+  color: var(--pd-on-fill-2);
+  padding: 0.45rem 0.9rem 0.4rem;
+  border-radius: 999px;
+}
+
+.print-doc[data-layout='bold'] .pd-facts {
+  border-block: 2px solid var(--pd-fill-2);
+}
+
+.print-doc[data-layout='bold'] .pd-day-head {
+  border-top: 3px solid var(--pd-day-fill);
+  padding-top: 1rem;
+  align-items: center;
+}
+
+.print-doc[data-layout='bold'] .pd-day-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  height: 3.2rem;
+  padding: 0 0.5rem;
+  border-radius: 0.9rem;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
+  font-size: 1.7rem;
+}
+
+.print-doc[data-layout='bold'] .pd-item-icon {
+  border: 0;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
+}
+
+.print-doc[data-layout='bold'] .pd-table th {
+  background: var(--pd-fill-3);
+  color: var(--pd-on-fill-3);
+  border-bottom: 0;
+  padding: 0.5rem 0.6rem;
+}
+
+.print-doc[data-layout='bold'] .pd-table th:first-child {
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+.print-doc[data-layout='bold'] .pd-table th:last-child {
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.print-doc[data-layout='bold'] .pd-table td {
+  padding-left: 0.6rem;
+}
+
+.print-doc[data-layout='bold'] .pd-closing {
+  background: var(--pd-fill-1);
+  color: var(--pd-on-fill-1);
+  border-radius: 1.1rem;
+  padding: 2.6rem 2rem 2.2rem;
+}
+
+.print-doc[data-layout='bold'] .pd-closing-mark,
+.print-doc[data-layout='bold'] .pd-closing-line,
+.print-doc[data-layout='bold'] .pd-closing .pd-credit {
+  color: var(--pd-on-fill-1);
+}
+
+/* Editing inside a panel: the accent hairline could vanish on a fill, so the
+   affordance follows the text colour instead. */
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-input {
+  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input:hover,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-input:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input:focus,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-input:focus {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  box-shadow: inset 0 -2px 0 0 currentColor;
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit[data-edited] .pd-edit-input,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit[data-edited] .pd-edit-input {
+  box-shadow: inset 0 -1px 0 0 currentColor;
+}
+
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input::placeholder,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-input::placeholder,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-tools,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-tools,
+.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-revert,
+.print-doc[data-layout='bold'] .pd-closing .pd-edit-revert {
+  color: inherit;
+}
+
+@media (max-width: 40rem) {
+  .print-doc[data-layout='bold'] .pd-cover-panel,
+  .print-doc[data-layout='bold'] .pd-closing {
+    padding: 2rem 1.25rem 1.8rem;
+    border-radius: 0.9rem;
+  }
+
+  .print-doc[data-layout='bold'] .pd-day-num {
+    min-width: 2.7rem;
+    height: 2.7rem;
+    font-size: 1.45rem;
+  }
+}
+
+@media print {
+  .print-doc[data-layout='bold'] .pd-cover-panel,
+  .print-doc[data-layout='bold'] .pd-closing,
+  .print-doc[data-layout='bold'] .pd-day-num {
+    break-inside: avoid;
+  }
+
+  /* The panel editing rules above outrank any plain print reset (their
+     edited and focus states most of all), so on paper this one is final:
+     words print as words. */
+  .print-doc[data-layout='bold'] .pd-edit-input {
+    box-shadow: none !important;
+    background: transparent !important;
   }
 }
 
