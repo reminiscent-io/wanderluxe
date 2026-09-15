@@ -14,7 +14,7 @@ import EditableCopy from '@/components/trip/print-studio/EditableCopy';
 import PageThumbnail from '@/components/trip/print-studio/PageThumbnail';
 import { useGoogleFonts } from '@/components/trip/print-studio/useGoogleFonts';
 import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
-import { applyCopyOverrides, type PrintCopyOverrides } from '@/lib/printDesign/edits';
+import { applyCopyOverrides, fieldForKey, type PrintCopyOverrides } from '@/lib/printDesign/edits';
 import type { PdfTripData } from '@/services/pdf/types';
 import { cn } from '@/lib/utils';
 import {
@@ -205,12 +205,14 @@ const ShowcaseStage: React.FC = () => {
     );
   };
 
+  // Three lines are wired for editing. Their labels and limits come from the
+  // edits contract, the same place the product's editor reads them, so the
+  // demo can never allow a line the real edition would clamp.
+  const firstCaption = `day.${TRIP.days[0].date}`;
   const renderCopy = (key: string, value: string) => {
-    if (key === 'cover.title') return editable('cover.title', 'Cover title', 80)(value);
-    if (key === 'cover.tagline') return editable('cover.tagline', 'Cover tagline', 160)(value);
-    const firstCaption = `day.${TRIP.days[0].date}`;
-    if (key === firstCaption) return editable(firstCaption, 'Day caption', 140)(value);
-    return value;
+    if (key !== 'cover.title' && key !== 'cover.tagline' && key !== firstCaption) return value;
+    const f = fieldForKey(key);
+    return editable(key, f.label, f.max)(value);
   };
 
   // Every step but the editing one shows the sheet as a picture: scaled to the
