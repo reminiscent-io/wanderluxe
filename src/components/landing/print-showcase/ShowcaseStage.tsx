@@ -171,7 +171,10 @@ const ShowcaseStage: React.FC = () => {
       tabIndex={0}
       className="max-h-[32rem] overflow-y-auto rounded-card border border-border bg-background shadow-warm-sm"
     >
-      <PrintDocument design={design} data={TRIP} renderCopy={renderCopy} />
+      {/* isEditing keeps a blanked optional slot on the page. Without it,
+          backspacing out the tagline or a caption to rewrite it would unmount
+          the field and its revert button together. */}
+      <PrintDocument design={design} data={TRIP} renderCopy={renderCopy} isEditing />
     </div>
   );
 
@@ -183,6 +186,12 @@ const ShowcaseStage: React.FC = () => {
         role="tablist"
         aria-label="Print Studio steps"
         aria-orientation="vertical"
+        // Reaching the rail by keyboard is an interaction too. A timer that
+        // moved the selection off the focused tab would send the next arrow
+        // press to the step already showing.
+        onFocus={() => {
+          tookOver.current = true;
+        }}
         className="-mx-6 flex snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0"
       >
         {SHOWCASE_STEPS.map((s, i) => {

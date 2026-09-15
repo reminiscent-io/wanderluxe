@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import ShowcaseStage from './ShowcaseStage';
+import tripJson from './tokyoTrip.json';
 
 const reducedMotion = { current: false };
 vi.mock('framer-motion', async () => {
@@ -43,15 +44,24 @@ describe('ShowcaseStage', () => {
   });
 
   it('keeps every itinerary item when the edition changes', () => {
-    render(<ShowcaseStage />);
+    // The whole plan, in order, straight from the fixture. Comparing the full
+    // ordered list is what makes a dropped or reordered item fail; counting one
+    // title could not, since the AI's captions mention it too.
+    const plan = tripJson.days.flatMap((d) => d.items.map((i) => i.title));
+    const { container } = render(<ShowcaseStage />);
+    const itemTitles = () =>
+      Array.from(container.querySelectorAll('.pd-item-title'), (node) => node.textContent);
+
     fireEvent.click(step(/studio edition/i));
-    const itemsBefore = screen.getAllByText(/teamLab Planets/i).length;
+    expect(itemTitles()).toEqual(plan);
 
     const chips = within(screen.getByRole('group', { name: /sample editions/i })).getAllByRole('button');
-    fireEvent.click(chips[1]);
-
-    expect(screen.getAllByText(/teamLab Planets/i)).toHaveLength(itemsBefore);
-    expect(chips[1]).toHaveAttribute('aria-pressed', 'true');
+    expect(chips).toHaveLength(3);
+    for (const chip of chips) {
+      fireEvent.click(chip);
+      expect(chip).toHaveAttribute('aria-pressed', 'true');
+      expect(itemTitles()).toEqual(plan);
+    }
   });
 
   it('lets a visitor rewrite a line and put it back', () => {
@@ -67,6 +77,20 @@ describe('ShowcaseStage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /restore the original cover title/i }));
     expect((screen.getByLabelText(/cover title/i) as HTMLTextAreaElement).value).toBe(original);
+
+    // Backspacing a line out to rewrite it is normal editing. An optional line
+    // blanked this way has to keep its field and its way back, or it is gone
+    // until reload.
+    const tagline = screen.getByLabelText(/cover tagline/i) as HTMLTextAreaElement;
+    const originalTagline = tagline.value;
+    fireEvent.change(tagline, { target: { value: '' } });
+    expect(screen.getByLabelText(/cover tagline/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /restore the original cover tagline/i }));
+    expect((screen.getByLabelText(/cover tagline/i) as HTMLTextAreaElement).value).toBe(originalTagline);
+
+    fireEvent.change(screen.getByLabelText(/day caption/i), { target: { value: '' } });
+    expect(screen.getByLabelText(/day caption/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /restore the original day caption/i })).toBeInTheDocument();
   });
 
   it('does not autoplay when the visitor asked for less motion', () => {
@@ -90,5 +114,16 @@ describe('ShowcaseStage', () => {
     fireEvent.click(step(/print/i));
     waitOutTheAutoplay();
     expect(step(/print/i)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('stops autoplaying once a keyboard visitor reaches the steps', () => {
+    // Tabbing onto the rail is an interaction. If a timer could still move the
+    // selection, the focused tab would no longer be the selected one, and the
+    // visitor's next arrow press would land on the step already showing.
+    vi.useFakeTimers();
+    render(<ShowcaseStage />);
+    act(() => step(/your timeline/i).focus());
+    waitOutTheAutoplay();
+    expect(step(/your timeline/i)).toHaveAttribute('aria-selected', 'true');
   });
 });
