@@ -180,7 +180,7 @@ PostgreSQL database
 **Trip Details Page**
 - Wrapper component routes to top-level tabs: Timeline, Budget, Booking (Expedia affiliate widget), Chat
 - The Timeline tab carries its own three-way **Timeline ⇄ Calendar ⇄ Map** switch, persisted in the `?view=` query param (`timeline` is the absent state, so old bookmarks keep working)
-- `TimelineView` also consumes one-shot deep-link params from the Guide page and strips them after opening: `?sync=1` (calendar sync sheet), `?export=pdf` (PDF export), `?print=1` (Print Studio)
+- `TimelineView` also consumes one-shot deep-link params from the Guide page and strips them after opening: `?sync=1` (calendar sync sheet), `?export=pdf` and `?print=1` (both open the single Print dialog — `export=pdf` on its Simple PDF half, `print=1` on its Studio half)
 - Each view fetches its own data via React Query
 - Real-time subscriptions keep data fresh
 - Shared trip permissions checked via `useTripPermissions()`
@@ -196,6 +196,7 @@ PostgreSQL database
 - Mutation handling with optimistic updates via React Query
 
 #### 7. **PDF Export**
+- **Entry point**: the Simple PDF section of the Print dialog (`components/trip/print-studio/SimplePdfSection.tsx`). `ExportPdfButton` and `PdfExportDialog` are gone; the pdfmake pipeline below is unchanged
 - **Fully client-side** via pdfmake (no server endpoint; the old `/api/export-pdf` note was stale)
 - **Modules**: `src/services/pdf/` — `theme.ts` (type scale/spacing/colors/page tokens — all sizes and colors MUST come from here), `images.ts` (cover-crop + supersampled data URIs), `builder.ts` (pure `buildDocDefinition(data, opts)`), `data.ts` (Supabase fetch), `format.ts` (locale-pinned formatters), `pagination.ts` (orphan-heading rule)
 - **Orchestrator**: `src/services/pdfmake-export.ts` (fonts → fetch → build → download)
@@ -358,7 +359,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 - Keys (`DiscoveryKey`): `first-trip` (a trip with days but no items; renders the three-way "Nothing planned yet" banner in `TimelineView`, and blank days collapse to one line via `quietEmptyDays` until the first item lands), `map-view`, `calendar-sync`, `share-trip` (3+ items, nobody else on the trip), `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
 #### 23. **Print Studio (Pro feature)**
-- The paid feature: an AI-art-directed printable keepsake itinerary. Entry: "Print Studio" button in the TimelineView toolbar → `PrintStudioDialog` (`src/components/trip/print-studio/`) — Pro members enter an optional theme and generate; free users see the upsell (checkout); anyone with trip access can open existing editions
+- The paid feature: an AI-art-directed printable keepsake itinerary. Entry: one **Print** button in the TimelineView toolbar opens `PrintStudioDialog`, which holds both halves — a free **Simple PDF** section (`SimplePdfSection.tsx`, the pdfmake export of §7) above a **Studio edition** section. Pro members get the theme field; free members see their own trip rendered by `PrintDocument` in the fixed `SAMPLE_TEASER_DESIGN` (`src/lib/printDesign/sample.ts`) — no AI call, no invented prose — with the upgrade button beneath. Anyone with trip access can open existing editions.
 - **Division of labor is the design invariant**: the model (ChatGPT API) is creative director only — it returns a `PrintDesignSpec` (palette, font-pairing id, motif id, editorial copy incl. per-day captions) through a strict json_schema; the renderer draws **every itinerary item from the DB** via the same `fetchPdfTripData` module the PDF export uses, so model output can degrade style, never content
 - **Shared contract**: `src/lib/printDesign/spec.ts` (dependency-free; imported by both client and server) — registries (`FONT_PAIRINGS` → Google Fonts pairs, `MOTIFS`) + `sanitizePrintDesign`, which clamps model output: hex normalization, light-background + WCAG contrast enforcement (ink ≥ 4.5:1, muted/primary ≥ 3:1, falling back to `FALLBACK_PALETTE` members), registry-id fallbacks, copy length clamps, captions restricted to real trip dates
 - **House voice**: `src/lib/printDesign/voice.ts` (shared, dependency-free) holds both halves of the anti-slop rule so they cannot drift — `VOICE_RULES` is injected into the generation prompt, and `findSlop` gates what comes back. Prose fields that break it (banned words, travel clichés, binary contrasts, puffery, recap endings) are **dropped to their fallback rather than printed**; em dashes are repaired to commas first. `cover.subtitle` is exempt — it is the traveler's own place names, not the model's prose. `auditPrintCopy` logs every drop with its reason so voice drift is visible instead of silent
@@ -367,6 +368,7 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 - **Server**: `server/routes/print-design.ts` (`POST /api/trips/:tripId/print-design`) — JWT auth + trip access + `subscription_tier === 'pro'` + 10 generations/user/day (counted from `trip_print_designs`); `server/lib/printDesign.ts` serializes the full trip server-side (clamped: ≤40 days, ≤20 activities/day), calls OpenAI chat completions with `response_format: json_schema (strict)`, sanitizes, stores the row. User theme text is quoted and pinned as "styling preference only" (prompt-injection blast radius = copy text, which is length-clamped)
 - **Output page**: `/trip/:tripId/print/:designId` (`src/pages/PrintItinerary.tsx`, lazy) — loads the design row (RLS: `can_access_trip`) + trip data, injects the pairing's Google Fonts, renders `PrintDocument` (`print-studio/PrintDocument.tsx` + `printDocument.css`, stroke-based SVG `motifs.tsx`). Printing = native browser dialog (`window.print()`); **AppLayout deliberately renders no nav/footer on `/trip/*/print/*`** so app chrome never reaches the printed page. Layout carries structure in type + hairline rules, not background fills, so it survives printers that drop backgrounds
 - Rollout note: designs are stored, so an edition stays openable even if generation is later disabled; deleting is creator-only (RLS)
+- **Landing page**: `components/landing/sections/PrintStudioShowcase.tsx` + `components/landing/print-showcase/` — a five-step demo (timeline → simple PDF → edition → rewritten words → print) that runs the real `PrintDocument` and `EditableCopy` over committed fixtures, so it cannot drift from the product and calls nothing at runtime. The stage is a lazy chunk mounted near the viewport. Regenerate the fixtures with `npm run build:print-showcase` (needs `OPENAI_API_KEY`, three model calls; the PDF-page image step renders page 2 at 2x via `scripts/pdf-page-to-png.swift`, CoreGraphics — needs macOS with the Xcode command line tools); `print-showcase/showcase.test.ts` holds the committed editions to the sanitizer and the house voice
 
 ## Common Development Tasks
 
@@ -425,7 +427,9 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 | `server/lib/printSnapshot.ts` | Frozen-itinerary snapshot for a finalized edition (raw rows, service role) |
 | `src/lib/printDesign/spec.ts` | Print Studio design-spec contract + sanitizer (shared client/server) |
 | `src/lib/printDesign/edits.ts` | Editable-copy contract — override layer, human-copy sanitizer (no slop gate) |
+| `src/lib/printDesign/sample.ts` | Fixed sample design for the free Studio preview (no AI call, no prose) |
 | `components/trip/print-studio/` | Print Studio dialog, document renderer, motifs |
+| `components/landing/print-showcase/` | Landing-page Print Studio demo — fixture, generated editions, interactive stage |
 | `components/trip/calendar/` | FullCalendar view, sync sheet, calendar hooks |
 | `components/trip/map/` | Trip map view — stop model, route playback, geocoding |
 | `components/trip/day/components/timeline-utils.ts` | Pure timeline logic (periods, grouping, categories) |

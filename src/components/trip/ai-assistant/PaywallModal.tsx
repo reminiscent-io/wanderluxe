@@ -187,7 +187,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ open, onOpenChange, usage, 
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-earth-600">
                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span>Print Studio: keepsake itineraries designed by AI</span>
+                <span>Print Studio: your itinerary as a designed edition</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-earth-600">
                 <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
