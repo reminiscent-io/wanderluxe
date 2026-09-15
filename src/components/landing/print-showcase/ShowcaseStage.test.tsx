@@ -17,7 +17,7 @@ vi.mock('framer-motion', async () => {
 let onIntersect: IntersectionObserverCallback | null = null;
 
 class TriggerableIntersectionObserver {
-  readonly root = null;
+  readonly root: Element | Document | null = null;
   readonly rootMargin = '';
   readonly thresholds: number[];
   observe = vi.fn();
