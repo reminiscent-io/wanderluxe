@@ -1,0 +1,83 @@
+[
+  {
+    "themeName": "Sun-Bleached Tokyo",
+    "themeRationale": "Tokyo in early October runs mild and dry, the city’s riverbanks and rooftops catch the late golden sun, and days run at a relaxed, coastal pace, even in the heart of the metropolis.",
+    "palette": {
+      "primary": "#2b261f",
+      "secondary": "#2b261f",
+      "background": "#f8f5ee",
+      "surface": "#f2e6d3",
+      "ink": "#2b261f",
+      "muted": "#71675e",
+      "accent": "#2b261f"
+    },
+    "fontPairing": "elegant",
+    "motif": "waves",
+    "cover": {
+      "title": "Three Tokyo Days in the Light",
+      "subtitle": "Kanda · Toyosu · Shibuya · Tsukiji",
+      "tagline": "Wide rivers, late sun, city air and quiet water."
+    },
+    "intro": "Tokyo feels lighter in October. There’s time to follow a river at dusk, stand barefoot on mirrored floors, and watch the city’s lights flicker on before dinner. This plan keeps to the margins, enough time to walk, watch, and pause, with just a few fixed times.",
+    "dayCaptions": {
+      "2026-10-03": "Arrive at Haneda, then walk beside the Kanda river to Akihabara after dark.",
+      "2026-10-04": "Barefoot at teamLab Planets before lunch, Shibuya Sky for sunset at 17:15.",
+      "2026-10-05": "Egg at the tamagoyaki stand in Tsukiji Market’s second lane before heading west."
+    },
+    "closing": "Keep this for the next quiet day in a different city."
+  },
+  {
+    "themeName": "Tokyo Deco Evenings",
+    "themeRationale": "Tokyo in autumn after dark fits art deco, bold shapes, cool lights, and a graphic pace between quiet walks and city vistas.",
+    "palette": {
+      "primary": "#385066",
+      "secondary": "#385066",
+      "background": "#f7f5f0",
+      "surface": "#e8e5d9",
+      "ink": "#23242b",
+      "muted": "#6b6257",
+      "accent": "#385066"
+    },
+    "fontPairing": "deco",
+    "motif": "deco",
+    "cover": {
+      "title": "Neon Nights & Quiet Mornings",
+      "subtitle": "San Francisco · Tokyo · Tsukiji",
+      "tagline": "Two nights, bright lights, quiet lanes, autumn in Tokyo."
+    },
+    "intro": "The city starts slow on arrival, then brightens up every hour. This is a short stretch, enough time for riverside dusk, digital spectacle, and the first market queue before sunrise. You will notice the light.",
+    "dayCaptions": {
+      "2026-10-03": "19:30: Walk the Kanda river to Akihabara, first neon after landing.",
+      "2026-10-04": "10:00: teamLab Planets, barefoot through mirrors and water. 17:15: Shibuya Sky at sunset.",
+      "2026-10-05": "07:30: Tamagoyaki at Tsukiji, second lane from the left."
+    },
+    "closing": "Keep this for the light and the order of things."
+  },
+  {
+    "themeName": "Autumn Greens: Tokyo Botanical",
+    "themeRationale": "Tokyo in early October is mild and leafy, mixing city edges with garden greens and riverside paths.",
+    "palette": {
+      "primary": "#527a4c",
+      "secondary": "#43726b",
+      "background": "#f7f9f3",
+      "surface": "#e3e8df",
+      "ink": "#2d2d2b",
+      "muted": "#6b6257",
+      "accent": "#43726b"
+    },
+    "fontPairing": "romantic",
+    "motif": "botanical",
+    "cover": {
+      "title": "Green Edges, City Lights: Tokyo in Early October",
+      "subtitle": "Kanda · Toyosu · Shibuya · Tsukiji",
+      "tagline": "Riverside walks, soft moss, high city views."
+    },
+    "intro": "October in Tokyo is gentle, with garden leaves underfoot and new neighborhoods around each turn. The air is easy, the city works at its own pace, perfect for walking, eating, and looking up. This is a short trip, but there is time to see both the quiet and the bright sides of the city.",
+    "dayCaptions": {
+      "2026-10-03": "Evening walk along Kanda river, ending by the lights of Akihabara.",
+      "2026-10-04": "teamLab Planets at 10:00 for mirrored lilies, then Shibuya Sky as the city lights come on.",
+      "2026-10-05": "Tamagoyaki at Tsukiji market just after sunrise, before the train west."
+    },
+    "closing": "Thank you for walking these Tokyo days."
+  }
+]
