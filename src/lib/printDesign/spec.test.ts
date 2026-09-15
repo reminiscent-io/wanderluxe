@@ -306,6 +306,12 @@ describe('font pairings', () => {
       expect(p.googleQuery).toMatch(/^family=/);
     }
   });
+
+  it('offers playful and expressive pairings alongside the editorial ones', () => {
+    for (const id of ['playful', 'poster', 'retro', 'grotesque', 'expanded']) {
+      expect(getFontPairing(id).id).toBe(id);
+    }
+  });
 });
 
 describe('auditPrintPalette', () => {

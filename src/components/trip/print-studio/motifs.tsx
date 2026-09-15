@@ -1,6 +1,6 @@
 // Print Studio decorative motifs — stroke-based SVG pattern bands.
 //
-// Each motif is a small repeating tile drawn with currentColor strokes, so the
+// Each motif is a small repeating tile drawn in currentColor, mostly strokes with the odd small dot, so the
 // same component renders the airy cover band, section dividers, and the
 // closing mark just by varying size/opacity. Stroke-only drawing keeps the
 // document printable even when the browser drops background fills.
@@ -106,6 +106,48 @@ function tileFor(motif: MotifId): TileSpec | null {
             <path d="M6 2 L 10 6 L 6 10 L 2 6 Z" />
             <path d="M18 2 L 22 6 L 18 10 L 14 6 Z" opacity={0.55} />
             <circle cx="12" cy="6" r="0.9" fill="currentColor" stroke="none" opacity={0.6} />
+          </g>
+        ),
+      };
+    case 'confetti':
+      return {
+        w: 40,
+        h: 16,
+        content: (
+          <g fill="none" stroke="currentColor" strokeWidth={STROKE} strokeLinecap="round">
+            <path d="M4 4 L 8 6" />
+            <path d="M17 11 L 19 7" opacity={0.75} />
+            <circle cx="27" cy="4.5" r="1.6" />
+            <path d="M33 12 L 37 11" opacity={0.6} />
+            <circle cx="11" cy="12.5" r="1" fill="currentColor" stroke="none" opacity={0.7} />
+            <path d="M22 13 Q 24 11.5, 25.5 13.5" opacity={0.8} />
+          </g>
+        ),
+      };
+    case 'dots':
+      return {
+        w: 20,
+        h: 12,
+        content: (
+          <g fill="currentColor" stroke="none">
+            <circle cx="5" cy="3.5" r="1.6" />
+            <circle cx="15" cy="8.5" r="1.6" opacity={0.7} />
+          </g>
+        ),
+      };
+    case 'sunburst':
+      return {
+        w: 32,
+        h: 16,
+        content: (
+          <g fill="none" stroke="currentColor" strokeWidth={STROKE} strokeLinecap="round">
+            <path d="M10 14 A 6 6 0 0 1 22 14" />
+            <path d="M16 6 L 16 2.5" />
+            <path d="M10.5 8.5 L 8 6" opacity={0.8} />
+            <path d="M21.5 8.5 L 24 6" opacity={0.8} />
+            <path d="M7.5 12 L 4 11" opacity={0.6} />
+            <path d="M24.5 12 L 28 11" opacity={0.6} />
+            <path d="M0 14.5 L 32 14.5" strokeWidth={STROKE * 0.6} opacity={0.5} />
           </g>
         ),
       };

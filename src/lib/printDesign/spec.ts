@@ -153,6 +153,41 @@ export const FONT_PAIRINGS = [
     body: "'Work Sans', 'Helvetica Neue', sans-serif",
     googleQuery: 'family=Lora:wght@500;600;700&family=Work+Sans:wght@400;500;600',
   },
+  {
+    id: 'playful',
+    label: 'Fredoka & Nunito',
+    display: "'Fredoka', 'Trebuchet MS', sans-serif",
+    body: "'Nunito', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Fredoka:wght@400;600&family=Nunito:wght@400;600;700',
+  },
+  {
+    id: 'poster',
+    label: 'Lilita One & Poppins',
+    display: "'Lilita One', Impact, sans-serif",
+    body: "'Poppins', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Lilita+One&family=Poppins:wght@400;500;600',
+  },
+  {
+    id: 'retro',
+    label: 'Shrikhand & Karla',
+    display: "'Shrikhand', Georgia, serif",
+    body: "'Karla', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Shrikhand&family=Karla:wght@400;500;700',
+  },
+  {
+    id: 'grotesque',
+    label: 'Archivo Black & Archivo',
+    display: "'Archivo Black', 'Arial Black', sans-serif",
+    body: "'Archivo', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Archivo+Black&family=Archivo:wght@400;500;600',
+  },
+  {
+    id: 'expanded',
+    label: 'Unbounded & Work Sans',
+    display: "'Unbounded', 'Arial Black', sans-serif",
+    body: "'Work Sans', 'Helvetica Neue', sans-serif",
+    googleQuery: 'family=Unbounded:wght@400;600&family=Work+Sans:wght@400;500;600',
+  },
 ] as const;
 
 export type FontPairingId = (typeof FONT_PAIRINGS)[number]['id'];
@@ -171,6 +206,9 @@ export const MOTIFS = [
   'stars', // desert nights, northern lights
   'botanical', // gardens, countryside
   'geometric', // modern cities
+  'confetti', // birthdays, parties, celebrations
+  'dots', // playful, retro, pop
+  'sunburst', // sunny, mid-century, festive
   'none', // let the typography carry it
 ] as const;
 
