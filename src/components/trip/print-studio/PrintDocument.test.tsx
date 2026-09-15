@@ -43,3 +43,55 @@ describe('PrintDocument money', () => {
     expect(screen.queryByText('The Ledger')).toBeNull();
   });
 });
+
+describe('PrintDocument layouts', () => {
+  const data = romeTrip();
+  const dates = data.days.map((d) => d.date);
+  const editorial = sanitizePrintDesign({}, dates);
+  const bold = sanitizePrintDesign(
+    { layout: 'bold', palette: { background: '#1b1030', fills: ['#ff00aa', '#00e5ff'] } },
+    dates
+  );
+  const docOf = (container: HTMLElement) => container.querySelector<HTMLElement>('.print-doc')!;
+
+  it('renders a design without a layout as editorial', () => {
+    const { container } = render(<PrintDocument design={editorial} data={data} />);
+    expect(docOf(container).getAttribute('data-layout')).toBe('editorial');
+  });
+
+  it('prints exactly the same words in the bold layout', () => {
+    const plain = render(<PrintDocument design={editorial} data={data} />);
+    const plainText = plain.container.textContent;
+    plain.unmount();
+
+    const loud = render(<PrintDocument design={bold} data={data} />);
+    expect(docOf(loud.container).getAttribute('data-layout')).toBe('bold');
+    expect(loud.container.textContent).toBe(plainText);
+  });
+
+  it('hands the fills to the stylesheet and cycles them through the days', () => {
+    const { container } = render(<PrintDocument design={bold} data={data} />);
+    const doc = docOf(container);
+    expect(doc.style.getPropertyValue('--pd-fill-1')).toBe('#ff00aa');
+    expect(doc.style.getPropertyValue('--pd-fill-2')).toBe('#00e5ff');
+    expect(doc.style.getPropertyValue('--pd-fill-3')).toBe('#ff00aa');
+    expect(doc.style.getPropertyValue('--pd-on-fill-1')).toBe(bold.palette.fills![0].text);
+
+    const days = container.querySelectorAll<HTMLElement>('.pd-day');
+    expect(days[0].style.getPropertyValue('--pd-day-fill')).toBe('#ff00aa');
+    expect(days[1].style.getPropertyValue('--pd-day-fill')).toBe('#00e5ff');
+    expect(days[1].style.getPropertyValue('--pd-day-on-fill')).toBe(bold.palette.fills![1].text);
+  });
+
+  it('borrows fills from the palette for an edition stored without them', () => {
+    const { container } = render(<PrintDocument design={editorial} data={data} />);
+    expect(docOf(container).style.getPropertyValue('--pd-fill-1')).toBe(editorial.palette.primary);
+  });
+
+  it('groups the cover title block so the bold layout can paint it as a panel', () => {
+    const { container } = render(<PrintDocument design={bold} data={data} />);
+    const panel = container.querySelector('.pd-cover-panel');
+    expect(panel?.querySelector('.pd-cover-title')).not.toBeNull();
+    expect(panel?.querySelector('.pd-eyebrow')).not.toBeNull();
+  });
+});

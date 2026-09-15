@@ -9,7 +9,7 @@ import React from 'react';
 import { BedDouble, Compass, UtensilsCrossed, Plane } from 'lucide-react';
 import { fmtDate, fmtMoney } from '@/services/pdf/format';
 import type { PdfTripData, Item } from '@/services/pdf/types';
-import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import { getFontPairing, resolveFills, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import { MotifBand, MotifMark } from './motifs';
 import { hasLedgerData } from './ledger';
 import './printDocument.css';
@@ -64,6 +64,26 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
   const pairing = getFontPairing(design.fontPairing);
   const { palette } = design;
 
+  const layout = design.layout ?? 'editorial';
+
+  // Solid shape colours for the bold layout. Editions stored without fills
+  // borrow primary, accent and secondary. Four slots, cycling when there are
+  // fewer, so the stylesheet can always name --pd-fill-1 through -4.
+  const fills = resolveFills(palette);
+  const fillVars: Record<string, string> = {};
+  for (let i = 0; i < 4; i++) {
+    const fill = fills[i % fills.length];
+    fillVars[`--pd-fill-${i + 1}`] = fill.color;
+    fillVars[`--pd-on-fill-${i + 1}`] = fill.text;
+  }
+
+  // Each day takes the next fill, so the day badges and icon discs step
+  // through the palette down the page.
+  const dayFillVars = (index: number) => {
+    const fill = fills[index % fills.length];
+    return { '--pd-day-fill': fill.color, '--pd-day-on-fill': fill.text } as React.CSSProperties;
+  };
+
   const styleVars = {
     '--pd-primary': palette.primary,
     '--pd-secondary': palette.secondary,
@@ -74,6 +94,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
     '--pd-accent': palette.accent,
     '--pd-display': pairing.display,
     '--pd-body': pairing.body,
+    ...fillVars,
   } as React.CSSProperties;
 
   const diningCount = data.days.reduce((n, d) => n + d.items.filter((i) => i.type === 'dining').length, 0);
@@ -91,22 +112,24 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
   const hasLedger = showBudget && hasLedgerData(data);
 
   return (
-    <article className="print-doc" style={styleVars} lang="en">
+    <article className="print-doc" data-layout={layout} style={styleVars} lang="en">
       <div className="pd-page">
         {/* ------------------------------------------------ cover */}
         <header className="pd-cover">
           <MotifBand motif={design.motif} height={16} className="pd-cover-band" />
-          <p className="pd-eyebrow">WanderLuxe · Print Studio Edition</p>
-          <h1 className="pd-cover-title">{copy('cover.title', design.cover.title)}</h1>
-          {(design.cover.tagline || isEditing) && (
-            <p className="pd-cover-tagline">{copy('cover.tagline', design.cover.tagline)}</p>
-          )}
-          {(design.cover.subtitle || isEditing) && (
-            <div className="pd-cover-route">
-              <span>{copy('cover.subtitle', design.cover.subtitle)}</span>
-            </div>
-          )}
-          {data.dateRange && <p className="pd-cover-dates">{data.dateRange}</p>}
+          <div className="pd-cover-panel">
+            <p className="pd-eyebrow">WanderLuxe · Print Studio Edition</p>
+            <h1 className="pd-cover-title">{copy('cover.title', design.cover.title)}</h1>
+            {(design.cover.tagline || isEditing) && (
+              <p className="pd-cover-tagline">{copy('cover.tagline', design.cover.tagline)}</p>
+            )}
+            {(design.cover.subtitle || isEditing) && (
+              <div className="pd-cover-route">
+                <span>{copy('cover.subtitle', design.cover.subtitle)}</span>
+              </div>
+            )}
+            {data.dateRange && <p className="pd-cover-dates">{data.dateRange}</p>}
+          </div>
           {data.coverImageDataUri && (
             <figure className="pd-cover-photo">
               <img
@@ -149,7 +172,7 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
           {data.days.map((day, i) => {
             const caption = design.dayCaptions[day.date];
             return (
-              <section className="pd-day" key={day.date}>
+              <section className="pd-day" key={day.date} style={dayFillVars(i)}>
                 <header className="pd-day-head">
                   <span className="pd-day-num">{String(i + 1).padStart(2, '0')}</span>
                   <div>
