@@ -35,7 +35,9 @@ describe('TimezoneSelect', () => {
     const onChange = vi.fn();
     render(<TimezoneSelect value={null} onChange={onChange} />);
     await user.click(screen.getByRole('combobox'));
+    expect(screen.getByText('America/New_York')).toBeInTheDocument();
     await user.type(screen.getByPlaceholderText(/search/i), 'Tokyo');
+    expect(screen.queryByText('America/New_York')).not.toBeInTheDocument();
     await user.click(await screen.findByText('Asia/Tokyo'));
     expect(onChange).toHaveBeenCalledWith('Asia/Tokyo');
   });
