@@ -43,4 +43,14 @@ if (globalThis.window !== undefined) {
     rootMargin = '';
     thresholds: number[] = [];
   } as unknown as typeof IntersectionObserver;
+
+  // nwsapi 2.2.27 answers `:modal` by calling element.matches(':modal') again,
+  // which in jsdom is nwsapi itself, so each call recurses to a stack overflow
+  // (~250ms). floating-ui asks while positioning every Radix popover, making one
+  // open take ~10s. jsdom has no top layer, so nothing can match `:modal` anyway.
+  const nativeMatches = Element.prototype.matches;
+  Element.prototype.matches = function matches(this: Element, selector: string) {
+    if (typeof selector === 'string' && selector.trim() === ':modal') return false;
+    return nativeMatches.call(this, selector);
+  };
 }
