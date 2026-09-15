@@ -48,6 +48,16 @@ vi.mock('@/components/trip/details/useTripSubscription', () => ({
   useTripSubscription: (): void => undefined,
 }));
 
+// The page's import graph reaches the real Supabase client, which validates env
+// vars on import and throws in a checkout with no .env. The only render-time
+// query left is RelatedItineraries' public-trips list (public trips); it resolves empty.
+vi.mock('@/integrations/supabase/client', () => {
+  const query: Record<string, () => unknown> = {};
+  query.select = query.eq = query.or = () => query;
+  query.order = () => Promise.resolve({ data: [], error: null });
+  return { supabase: { from: () => query } };
+});
+
 // Heavy children — irrelevant to routing/guard behaviour, stubbed for speed.
 vi.mock('@/components/trip/HeroSection', () => ({ default: () => <div data-testid="hero" /> }));
 vi.mock('@/components/layout/Sidebar', () => ({ default: () => <div /> }));
