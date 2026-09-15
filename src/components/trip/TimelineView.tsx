@@ -383,8 +383,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           {/* Mobile: the same actions as labelled buttons rather than an
               unlabelled overflow icon — nobody taps a menu they can't read.
               Same short labels as the desktop row: one action, one name.
-              `flex-1` rather than a grid so two buttons (no edit rights)
-              split the row as evenly as three do. */}
+              `flex-1` rather than a grid so this row works whether it holds
+              one button (no edit rights) or up to three. */}
           <div className="flex w-full gap-2 sm:hidden">
             {canEdit && onInvite && (
               <Button

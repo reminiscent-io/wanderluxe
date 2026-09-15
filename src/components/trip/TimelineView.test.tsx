@@ -171,7 +171,7 @@ describe('TimelineView print entry point', () => {
     renderView();
     expect(screen.queryByRole('button', { name: /^PDF$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Studio$/ })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^Print$/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /^Print$/ })).toHaveLength(2);
   });
 
   it('opens the dialog on the Studio half for a keepsake deep link', () => {
