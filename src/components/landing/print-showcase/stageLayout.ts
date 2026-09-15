@@ -24,7 +24,9 @@ export const STAGE_STACK_CLASS = 'm-0 space-y-4';
 
 /**
  * The row under the sheet, tall enough for the tallest thing any step puts
- * there at each breakpoint: the edition chips, the editing note and the
- * Finalized line all wrap on narrow screens.
+ * there at each breakpoint. Measured in Chrome: below md the three edition
+ * chips stack into three rows (130px, down to 320px wide); from md to lg they
+ * take two rows (84px); from lg up the editing note's two lines are the
+ * tallest (40px).
  */
-export const STAGE_NOTE_ROW_CLASS = 'min-h-[6.5rem] md:min-h-[5.5rem] lg:min-h-[3rem]';
+export const STAGE_NOTE_ROW_CLASS = 'min-h-[8.125rem] md:min-h-[5.25rem] lg:min-h-[2.5rem]';
