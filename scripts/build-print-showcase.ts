@@ -51,7 +51,9 @@ function toPrintTripRows(rows: typeof TOKYO_ROWS): PrintTripRows {
 
 async function writeTripData() {
   const data = await buildPdfTripData(TOKYO_ROWS, OPTS, CONTENT_WIDTH);
-  // The showcase cover is a local file, not a fetched data URI.
+  // The showcase ships without a cover photograph, so the landing page makes no
+  // image request for it. showImages is off, so buildPdfTripData already leaves
+  // these empty; this pins it.
   data.coverImageDataUri = '';
   data.coverImageRequested = false;
   fs.writeFileSync(path.join(outDir, 'tokyoTrip.json'), `${JSON.stringify(data, null, 2)}\n`);
