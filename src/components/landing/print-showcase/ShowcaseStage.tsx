@@ -17,6 +17,14 @@ import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import { applyCopyOverrides, type PrintCopyOverrides } from '@/lib/printDesign/edits';
 import type { PdfTripData } from '@/services/pdf/types';
 import { cn } from '@/lib/utils';
+import {
+  SHEET_ASPECT,
+  SHEET_BOX_STYLE,
+  STAGE_GRID_CLASS,
+  STAGE_NOTE_ROW_CLASS,
+  STAGE_RAIL_CLASS,
+  STAGE_STACK_CLASS,
+} from './stageLayout';
 import editionsJson from './tokyoEditions.json';
 import tripJson from './tokyoTrip.json';
 
@@ -154,7 +162,7 @@ const ShowcaseStage: React.FC = () => {
   // Every step but the editing one shows the sheet as a picture: scaled to the
   // frame, out of the accessibility tree, with the label standing in for it.
   const sheetPicture = (
-    <PageThumbnail label={SHEET_LABEL} aspect={1.15} className="w-full">
+    <PageThumbnail label={SHEET_LABEL} aspect={SHEET_ASPECT} className="w-full">
       <PrintDocument design={design} data={TRIP} />
     </PageThumbnail>
   );
@@ -163,13 +171,15 @@ const ShowcaseStage: React.FC = () => {
   // that frame is deliberately a picture — aria-hidden, pointer-events-none —
   // so a field inside it could be neither clicked nor heard. So the words step
   // gets the real document at real size, in a frame that scrolls. The type is
-  // legible, the fields take a caret, and the revert button is announced.
+  // legible, the fields take a caret, and the revert button is announced. The
+  // frame fills the sheet box rather than sizing to the document, so opening
+  // the words step moves nothing below it.
   const sheetEditor = (
     <div
       role="region"
       aria-label={`${SHEET_LABEL}, with its words open for editing`}
       tabIndex={0}
-      className="max-h-[32rem] overflow-y-auto rounded-card border border-border bg-background shadow-warm-sm"
+      className="absolute inset-0 overflow-y-auto rounded-card border border-border bg-background"
     >
       {/* isEditing keeps a blanked optional slot on the page. Without it,
           backspacing out the tagline or a caption to rewrite it would unmount
@@ -178,8 +188,15 @@ const ShowcaseStage: React.FC = () => {
     </div>
   );
 
+  // The PDF step is a picture with a caption, so there the two parts are a
+  // figure and its figcaption. Every other step uses plain boxes of the same
+  // shape.
+  const isPdf = step === 'pdf';
+  const Stack: React.ElementType = isPdf ? 'figure' : 'div';
+  const NoteRow: React.ElementType = isPdf ? 'figcaption' : 'div';
+
   return (
-    <div className="grid gap-6 md:grid-cols-[14rem_1fr] md:gap-10">
+    <div className={STAGE_GRID_CLASS}>
       {/* Mobile: a snap rail — five steps will not fit a segmented control at
           375px. sm+: a column beside the sheet. */}
       <div
@@ -192,7 +209,10 @@ const ShowcaseStage: React.FC = () => {
         onFocus={() => {
           tookOver.current = true;
         }}
-        className="-mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0"
+        className={cn(
+          '-mx-6 flex min-w-0 snap-x gap-2 overflow-x-auto px-6 md:mx-0 md:flex-col md:gap-1 md:overflow-visible md:px-0',
+          STAGE_RAIL_CLASS
+        )}
       >
         {SHOWCASE_STEPS.map((s, i) => {
           const selected = s.id === step;
@@ -227,26 +247,37 @@ const ShowcaseStage: React.FC = () => {
       </div>
 
       <div id={PANEL_ID} role="tabpanel" className="min-w-0" aria-label={SHOWCASE_STEPS.find((s) => s.id === step)!.label}>
-        {step === 'timeline' && <TimelineRows />}
+        {/* Every step fills the same two parts: a sheet-shaped box and a note
+            row under it. Neither sizes to what a step puts in it, so the
+            stage keeps one height and nothing below it moves. */}
+        <Stack className={STAGE_STACK_CLASS}>
+          <div
+            className={cn(
+              'relative w-full overflow-hidden',
+              step !== 'timeline' && 'rounded-card shadow-warm-sm',
+              isPdf && 'border border-border bg-sand-50'
+            )}
+            style={SHEET_BOX_STYLE}
+          >
+            {step === 'timeline' && <TimelineRows />}
 
-        {step === 'pdf' && (
-          <figure className="m-0">
-            <img
-              src="/images/print-showcase-simple-pdf.png"
-              alt="A page of a simple PDF itinerary for a trip to Tokyo: three days of times, places and costs, followed by a budget summary"
-              className="block h-auto w-full rounded-card border border-border shadow-warm-sm"
-              loading="lazy"
-              decoding="async"
-            />
-            <figcaption className="mt-3 font-sans text-sm text-earth-500">
-              Free on every trip: the whole itinerary, typeset and ready to print.
-            </figcaption>
-          </figure>
-        )}
+            {isPdf && (
+              <img
+                src="/images/print-showcase-simple-pdf.png"
+                alt="A page of a simple PDF itinerary for a trip to Tokyo: three days of times, places and costs, followed by a budget summary"
+                className="absolute inset-0 h-full w-full object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+            )}
 
-        {step !== 'timeline' && step !== 'pdf' && (
-          <div className="space-y-4">
-            {step === 'words' ? sheetEditor : sheetPicture}
+            {(step === 'edition' || step === 'print') && sheetPicture}
+
+            {step === 'words' && sheetEditor}
+          </div>
+
+          <NoteRow className={cn(STAGE_NOTE_ROW_CLASS, isPdf && 'font-sans text-sm text-earth-500')}>
+            {isPdf && 'Free on every trip: the whole itinerary, typeset and ready to print.'}
 
             {step === 'edition' && (
               <div role="group" aria-label="Sample editions" className="flex flex-wrap gap-2">
@@ -294,8 +325,8 @@ const ShowcaseStage: React.FC = () => {
                 </span>
               </div>
             )}
-          </div>
-        )}
+          </NoteRow>
+        </Stack>
       </div>
     </div>
   );

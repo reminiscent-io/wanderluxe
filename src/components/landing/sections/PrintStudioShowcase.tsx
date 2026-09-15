@@ -10,8 +10,31 @@ import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  SHEET_BOX_STYLE,
+  STAGE_GRID_CLASS,
+  STAGE_NOTE_ROW_CLASS,
+  STAGE_RAIL_CLASS,
+  STAGE_STACK_CLASS,
+} from '../print-showcase/stageLayout';
 
 const ShowcaseStage = lazy(() => import('../print-showcase/ShowcaseStage'));
+
+// Holds the stage's footprint until its chunk arrives: the same grid, a rail
+// one chip row tall on a phone, a sheet-shaped box and the note row. It is
+// built from stageLayout alone. Importing the stage here would pull the
+// renderer into the landing page's first paint.
+const StagePlaceholder = () => (
+  <div data-testid="showcase-placeholder" className={STAGE_GRID_CLASS}>
+    <div className={`min-w-0 ${STAGE_RAIL_CLASS}`} />
+    <div className="min-w-0">
+      <div className={STAGE_STACK_CLASS}>
+        <div className="w-full" style={SHEET_BOX_STYLE} />
+        <div className={STAGE_NOTE_ROW_CLASS} />
+      </div>
+    </div>
+  </div>
+);
 
 const PrintStudioShowcase = () => {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -56,12 +79,12 @@ const PrintStudioShowcase = () => {
 
         <div ref={hostRef} className="mt-10" data-testid="showcase-host">
           {nearViewport ? (
-            <Suspense fallback={<div data-testid="showcase-placeholder" className="min-h-[28rem]" />}>
+            <Suspense fallback={<StagePlaceholder />}>
               <ShowcaseStage />
             </Suspense>
           ) : (
-            // Reserves the stage's height so arriving at it shifts nothing.
-            <div data-testid="showcase-placeholder" className="min-h-[28rem]" />
+            // Reserves the stage's exact height so arriving at it shifts nothing.
+            <StagePlaceholder />
           )}
         </div>
 
