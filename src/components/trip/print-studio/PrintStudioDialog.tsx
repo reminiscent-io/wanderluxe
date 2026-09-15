@@ -1,11 +1,14 @@
-// Print Studio dialog — the entry point for the Pro keepsake-itinerary
-// feature. Pro members describe a theme (or let the AI decide) and generate;
-// everyone can open editions that already exist on the trip (RLS allows any
-// trip member to read them — only generation is gated).
+// Print dialog: the single Print entry point for a trip. The body holds the
+// free Simple PDF section (pdfmake export) above the Studio edition section.
+// The Studio half shows Pro members the theme field, free users the
+// StudioTeaser preview of their own trip, and anyone the generating panel
+// while an edition is being made, followed by the trip's earlier editions
+// (RLS lets any trip member read them; only generation is gated).
+// `initialSection="studio"` scrolls the body to the Studio half on open.
 //
 // Layout contract: header and footer are fixed, the middle region is the only
 // scroller. The dialog is height-capped by DialogContent, so without that
-// middle scroller a tall body (upsell card + a trip's editions) pushes the
+// middle scroller a tall body (both sections plus a trip's editions) pushes the
 // primary action off-screen on short viewports with no way to reach it.
 
 import React, { useEffect, useRef, useState } from 'react';
