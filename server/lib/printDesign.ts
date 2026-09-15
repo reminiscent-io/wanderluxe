@@ -138,7 +138,7 @@ export function buildDesignMessages(
     '  - background is the page. Any color works. Light paper is the classic keepsake and the right default; go saturated or dark when the theme asks for it.',
     '  - ink (body text), muted (item details and times at small sizes), secondary (day dates and confirmation codes, small) and primary (titles, day numerals and small section labels) are all text on that page, and each needs 4.5:1 contrast against it. accent draws the item icons and hairlines and needs 3:1. Pastel text colors cannot pass on a light page, and dark text colors cannot pass on a dark one.',
     '  - A text color that misses its floor is moved lighter or darker at the same hue, so choose colors that already clear it.',
-    '  - muted is a toned color from the theme, not a plain grey. Give primary, secondary and accent clearly different hues or depths.',
+    '  - muted is a toned color from the theme, not a plain grey. Give primary, secondary, accent and the fills clearly different hues or depths.',
     '  - surface is a mat behind the cover photo and never carries text.',
     '  - fills are 2 to 4 colors for solid shapes: cover and closing panels, section bands, day-number badges. They have no contrast requirement against the page, so any brightness works, including neon when the theme calls for it. Text placed on a fill is colored automatically so it stays legible.',
     '- a layout: "editorial" (structure in type and hairline rules; quiet, and right for most trips) or "bold" (color panels, bands and badges built from the fills; for parties, pop, poster, playful, or anything loud).',

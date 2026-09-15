@@ -134,6 +134,7 @@ describe('the palette brief', () => {
     expect(system).toContain('fills');
     expect(system).toContain('"editorial"');
     expect(system).toContain('"bold"');
+    expect(system).toContain('primary, secondary, accent and the fills clearly different hues or depths');
   });
 
   it('still states the text floors', () => {
