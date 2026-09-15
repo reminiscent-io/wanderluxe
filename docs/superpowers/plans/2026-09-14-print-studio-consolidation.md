@@ -2000,7 +2000,7 @@ const ShowcaseStage: React.FC = () => {
           <figure className="m-0">
             <img
               src="/images/print-showcase-simple-pdf.png"
-              alt="The first page of a simple PDF itinerary for a trip to Tokyo, typeset in two columns"
+              alt="A page of a simple PDF itinerary for a trip to Tokyo: three days of times, places and costs, followed by a budget summary"
               className="block h-auto w-full rounded-card border border-border shadow-warm-sm"
               loading="lazy"
               decoding="async"
