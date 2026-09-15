@@ -34,6 +34,15 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
 
+vi.mock('./SimplePdfSection', () => ({
+  default: ({ tripId }: { tripId: string }) => <div data-testid="simple-pdf">{tripId}</div>,
+}));
+vi.mock('./StudioTeaser', () => ({
+  default: ({ destination }: { destination?: string }) => (
+    <div data-testid="studio-teaser">{destination}</div>
+  ),
+}));
+
 const renderDialog = (onOpenChange = vi.fn()) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -152,5 +161,56 @@ describe('PrintStudioDialog — non-Pro', () => {
     const edition = await screen.findByRole('button', { name: /costiera/i });
     fireEvent.click(edition);
     expect(navigate).toHaveBeenCalledWith('/trip/trip-1/print/design-1');
+  });
+});
+
+describe('PrintStudioDialog — one door, two tiers', () => {
+  it('offers the Simple PDF to a Pro member alongside the theme field', async () => {
+    tier = 'pro';
+    renderDialog();
+    expect(screen.getByTestId('simple-pdf')).toBeInTheDocument();
+    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('studio-teaser')).not.toBeInTheDocument();
+  });
+
+  it('offers a free member the Simple PDF and a preview of their own trip', async () => {
+    tier = 'free';
+    renderDialog();
+    expect(screen.getByTestId('simple-pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('studio-teaser')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/theme/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /unlock the print studio/i })).toBeInTheDocument();
+  });
+
+  it('keeps the Simple PDF reachable while an edition is generating', async () => {
+    tier = 'pro';
+    renderDialog();
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    fireEvent.click(screen.getByRole('button', { name: /design my edition/i }));
+    // The same text is announced twice — once visibly in the checklist, once
+    // in the sr-only status region — so scope to the accessible status role
+    // rather than screen.getByText, which would find both and throw.
+    const status = await screen.findByRole('status');
+    await waitFor(() => expect(status).toHaveTextContent(/reading every day of your trip/i));
+    expect(screen.getByTestId('simple-pdf')).toBeInTheDocument();
+  });
+
+  it('scrolls to the Studio half when that is what the deep link asked for', () => {
+    tier = 'free';
+    // jsdom has no scrollIntoView, which is why the component guards the call.
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView as unknown as typeof Element.prototype.scrollIntoView;
+    try {
+      render(
+        <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+          <MemoryRouter>
+            <PrintStudioDialog tripId="trip-1" open onOpenChange={vi.fn()} initialSection="studio" />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+      expect(scrollIntoView).toHaveBeenCalled();
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
   });
 });

@@ -1,14 +1,17 @@
-// Print Studio dialog — the entry point for the Pro keepsake-itinerary
-// feature. Pro members describe a theme (or let the AI decide) and generate;
-// everyone can open editions that already exist on the trip (RLS allows any
-// trip member to read them — only generation is gated).
+// Print dialog: the single Print entry point for a trip. The body holds the
+// free Simple PDF section (pdfmake export) above the Studio edition section.
+// The Studio half shows Pro members the theme field, free users the
+// StudioTeaser preview of their own trip, and anyone the generating panel
+// while an edition is being made, followed by the trip's earlier editions
+// (RLS lets any trip member read them; only generation is gated).
+// `initialSection="studio"` scrolls the body to the Studio half on open.
 //
 // Layout contract: header and footer are fixed, the middle region is the only
 // scroller. The dialog is height-capped by DialogContent, so without that
-// middle scroller a tall body (upsell card + a trip's editions) pushes the
+// middle scroller a tall body (both sections plus a trip's editions) pushes the
 // primary action off-screen on short viewports with no way to reach it.
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -35,11 +38,17 @@ import {
   sanitizeCopyOverrides,
   type PrintCopyOverrides,
 } from '@/lib/printDesign/edits';
+import SimplePdfSection from './SimplePdfSection';
+import StudioTeaser from './StudioTeaser';
 
 interface PrintStudioDialogProps {
   tripId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Titles the free preview's cover. */
+  tripDestination?: string;
+  /** Which half the traveler asked for. Deep links from the guide set this. */
+  initialSection?: 'pdf' | 'studio';
 }
 
 interface DesignListRow {
@@ -83,13 +92,6 @@ const THEME_SUGGESTIONS = [
   'Desert night sky',
 ];
 
-const PRO_FEATURES = [
-  'A custom theme designed for each trip',
-  'Every activity, stay, and reservation included',
-  'Print it, or save it as a PDF',
-  'Cancel anytime',
-];
-
 /** Past this, the 300-character limit starts silently eating keystrokes. */
 const THEME_MAX = 300;
 const THEME_COUNTER_FROM = 240;
@@ -118,7 +120,13 @@ const PaletteSwatch: React.FC<{ palette?: Partial<PrintDesignSpec['palette']> }>
   </span>
 );
 
-const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onOpenChange }) => {
+const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
+  tripId,
+  open,
+  onOpenChange,
+  tripDestination,
+  initialSection = 'pdf',
+}) => {
   const { subscriptionTier, user } = useAuth();
   const isPro = subscriptionTier === 'pro';
   const navigate = useNavigate();
@@ -129,6 +137,20 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
   const [generatingStep, setGeneratingStep] = useState(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  // A state-backed ref rather than a plain useRef: Radix's Portal defers its
+  // very first real DOM mount by one extra internal commit (its own
+  // `mounted` flag starts false and flips via a layout effect, independent
+  // of `open`), so a plain useRef read from this component's own effect can
+  // still be null the first time this effect runs. Tracking the node in
+  // state re-fires this effect once Radix actually attaches it.
+  const [studioEl, setStudioEl] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open || initialSection !== 'studio' || !studioEl) return;
+    if (typeof studioEl.scrollIntoView === 'function') {
+      studioEl.scrollIntoView({ block: 'start' });
+    }
+  }, [open, initialSection, studioEl]);
 
   const {
     data: designs,
@@ -223,6 +245,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
       return;
     }
     setIsUpgrading(true);
+    track('print_studio_upgrade_click', { trip_id: tripId, source: 'print_dialog' });
     try {
       const resp = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
@@ -384,25 +407,6 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
     </div>
   );
 
-  const upsellPanel = (
-    <div className="rounded-card border border-border bg-sand-50 p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <span className="text-base font-semibold text-foreground">WanderLuxe Pro</span>
-        <span className="shrink-0 text-sm text-muted-foreground">
-          <span className="text-lg font-semibold tabular-nums text-foreground">$3.99</span> / month
-        </span>
-      </div>
-      <ul className="m-0 list-none space-y-2 p-0">
-        {PRO_FEATURES.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-earth-600">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent mobileSheet className="sm:max-w-md">
@@ -411,9 +415,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
             Print Studio
           </DialogTitle>
           <DialogDescription>
-            {isPro
-              ? 'The AI reads everything on this trip and designs a printable keepsake edition — theme, palette, typefaces, and a caption for every day.'
-              : 'A keepsake itinerary, designed by AI around this trip — with its own palette, typefaces, and a caption for every day.'}
+            Download a simple PDF of this trip, or have the Studio design an edition of it.
           </DialogDescription>
         </DialogHeader>
 
@@ -424,14 +426,30 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({ tripId, open, onO
         {/* The only scroll region: header and footer stay put, so the primary
             action is reachable on a short viewport. */}
         <div className="-mx-4 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 sm:-mx-6 sm:px-6">
-          {isGenerating ? (
-            generatingPanel
-          ) : (
-            <>
-              {isPro ? themeField : upsellPanel}
-              {editionList}
-            </>
-          )}
+          <SimplePdfSection tripId={tripId} />
+
+          <div ref={setStudioEl} className="border-t border-border pt-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="text-sm font-semibold text-foreground">Studio edition</h3>
+              <span className="shrink-0 text-xs uppercase tracking-wider text-muted-foreground">
+                Pro
+              </span>
+            </div>
+            <p className="mt-1 mb-3 text-sm text-muted-foreground">
+              The same itinerary, art-directed: a palette, typefaces, a motif, and a line for every
+              day.
+            </p>
+
+            {isGenerating ? (
+              generatingPanel
+            ) : isPro ? (
+              themeField
+            ) : (
+              <StudioTeaser tripId={tripId} destination={tripDestination} enabled={open} />
+            )}
+          </div>
+
+          {!isGenerating && editionList}
         </div>
 
         {/* Full-bleed rule marks where the scroll region ends, so a list that

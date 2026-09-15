@@ -173,7 +173,7 @@ const UpgradeSection: React.FC<{ onUpgrade: () => Promise<void> }> = ({ onUpgrad
     <ul className="grid gap-2.5 text-sm text-earth-700 sm:grid-cols-2">
       <li className="flex items-start gap-2">
         <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-        Print Studio: keepsake itineraries designed by AI
+        Print Studio: your itinerary as a designed edition
       </li>
       <li className="flex items-start gap-2">
         <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
