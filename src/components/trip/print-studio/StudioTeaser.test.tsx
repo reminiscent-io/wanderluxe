@@ -3,13 +3,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import StudioTeaser from './StudioTeaser';
 import { PRO_FEATURES } from './ProFeatureList';
+import type { PdfTripData } from '@/services/pdf/types';
 
 const fetchPdfTripData = vi.fn();
 vi.mock('@/services/pdf/data', () => ({
   fetchPdfTripData: (...args: unknown[]) => fetchPdfTripData(...args),
 }));
 
-const tripData = {
+const tripData: PdfTripData = {
   destination: 'Lisbon',
   dateRange: 'May 4 – May 11',
   coverImageDataUri: '',
