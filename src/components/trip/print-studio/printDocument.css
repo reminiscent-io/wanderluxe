@@ -971,11 +971,12 @@
     break-inside: avoid;
   }
 
-  /* The panel editing rules above outrank the print reset in the editing
-     block, so repeat it here: words print as words. */
+  /* The panel editing rules above outrank any plain print reset (their
+     edited and focus states most of all), so on paper this one is final:
+     words print as words. */
   .print-doc[data-layout='bold'] .pd-edit-input {
-    box-shadow: none;
-    background: transparent;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 }
 
