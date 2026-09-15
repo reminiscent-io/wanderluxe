@@ -80,6 +80,18 @@ describe('ShowcaseStage', () => {
     expect(step(/simple pdf/i)).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('carries focus with the selection, so repeated arrow presses keep moving', () => {
+    // With a roving tabindex the tab just left drops out of the tab order. If
+    // focus stayed on it, the second press would start from the same step and
+    // select the one already showing.
+    render(<ShowcaseStage />);
+    act(() => step(/your timeline/i).focus());
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(step(/studio edition/i)).toHaveAttribute('aria-selected', 'true');
+    expect(document.activeElement).toBe(step(/studio edition/i));
+  });
+
   it('keeps every itinerary item when the edition changes', () => {
     // The whole plan, in order, straight from the fixture. Comparing the full
     // ordered list is what makes a dropped or reordered item fail; counting one
