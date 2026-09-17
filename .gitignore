@@ -51,3 +51,13 @@ evals/results/
 
 # impeccable design-hook caches
 .impeccable/
+
+# /brag launch-video compositions: Hyperframes Studio caches, the scaffold's
+# generic agent docs, and the bundled third-party music track (restore it
+# before re-rendering; see brag-output/README.md)
+brag-output*/composition/.thumbnails/
+brag-output*/composition/snapshots/
+brag-output*/composition/renders/
+brag-output*/composition/CLAUDE.md
+brag-output*/composition/AGENTS.md
+brag-output*/composition/assets/music/*.mp3

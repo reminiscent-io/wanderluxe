@@ -1,0 +1,1516 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>WanderLuxe — brag (vertical)</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "DM Serif Display";
+        src: url("assets/fonts/DMSerifDisplay-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Serif Display";
+        src: url("assets/fonts/DMSerifDisplay-Italic.ttf") format("truetype");
+        font-weight: 400;
+        font-style: italic;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Sans";
+        src: url("assets/fonts/DMSans-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Sans";
+        src: url("assets/fonts/DMSans-Medium.ttf") format("truetype");
+        font-weight: 500;
+        font-style: normal;
+        font-display: block;
+      }
+
+      /* WanderLuxe tokens (DESIGN.md) */
+      :root {
+        --cream: #fdfcf8;
+        --vellum: #faf8f5;
+        --sand-50: #faf9f7;
+        --linen: #eee7da;
+        --tea: #eddcc8;
+        --edge: #ddd4c8;
+        --ink: #211f1b;
+        --earth-600: #5c544a;
+        --earth-500: #6b6354;
+        --earth-400: #8a7f6c;
+        --earth-200: #c7beb6;
+        --earth-100: #e6e2de;
+        --bronze: #603d2e;
+        --rust: #c2410c;
+        --clay-fire: #9a3412;
+        --danger-ink: #a93e32;
+        --cat-slate: #535b6c;
+        --cat-sage: #476348;
+        --cat-clay: #7e4d36;
+        --shadow-sm: 0 2px 6px 0 rgba(139, 119, 93, 0.12), 0 2px 4px -2px rgba(139, 119, 93, 0.1);
+        --shadow: 0 10px 28px -6px rgba(139, 119, 93, 0.2), 0 4px 12px -4px rgba(139, 119, 93, 0.12);
+        --shadow-lg: 0 24px 60px -12px rgba(139, 119, 93, 0.28), 0 10px 24px -8px rgba(139, 119, 93, 0.14);
+        --serif: "DM Serif Display", serif;
+        --sans: "DM Sans", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--cream);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .abs {
+        position: absolute;
+      }
+      .serif {
+        font-family: var(--serif);
+        font-weight: 400;
+      }
+      /* Masked line reveal: each line rises out of its own box. */
+      .line {
+        display: block;
+        overflow: hidden;
+        padding-bottom: 0.1em;
+        margin-bottom: -0.1em;
+      }
+      .line-in {
+        display: block;
+        will-change: transform;
+      }
+
+      /* ---------- persistent paper ---------- */
+      #light {
+        position: absolute;
+        left: 150px;
+        top: -350px;
+        width: 1400px;
+        height: 1300px;
+        pointer-events: none;
+      }
+      #light-core {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(237, 220, 200, 0.95), rgba(237, 220, 200, 0.45) 55%, rgba(237, 220, 200, 0) 100%);
+        opacity: 0.5;
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-repeat: repeat;
+      }
+      #paper-grain {
+        opacity: 0.055;
+        mix-blend-mode: multiply;
+        z-index: 50;
+      }
+
+      /* ---------- running head ---------- */
+      .rh-label {
+        top: 150px;
+        font-family: var(--sans);
+        font-weight: 500;
+        font-size: 22px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+        line-height: 28px;
+      }
+      #rh-left {
+        left: 72px;
+      }
+      #rh-right {
+        right: 72px;
+        display: flex;
+        gap: 10px;
+        font-variant-numeric: tabular-nums;
+      }
+      #folio {
+        position: relative;
+        width: 34px;
+        height: 28px;
+      }
+      #folio span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+      }
+      #folio #f1 {
+        opacity: 1;
+      }
+      #rh-rule {
+        left: 72px;
+        top: 196px;
+        width: 936px;
+        height: 2px;
+        background: var(--edge);
+        transform-origin: left center;
+      }
+
+      /* ---------- scene 1: the spreadsheet ---------- */
+      #chat {
+        left: 72px;
+        top: 250px;
+        width: 700px;
+      }
+      #chat-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+      }
+      .avatar {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+        border-radius: 50%;
+        background: var(--tea);
+        border: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 28px;
+        color: var(--earth-600);
+      }
+      .bubble {
+        background: var(--linen);
+        color: var(--ink);
+        font-size: 36px;
+        line-height: 1.3;
+        padding: 22px 32px 24px;
+        border-radius: 34px 34px 34px 8px;
+        max-width: 560px;
+      }
+      #typing {
+        margin: 16px 0 0 80px;
+        width: 120px;
+        height: 60px;
+        border-radius: 30px 30px 30px 8px;
+        background: var(--linen);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transform-origin: left bottom;
+      }
+      .tdot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--earth-400);
+      }
+
+      #sheet-wrap {
+        left: 72px;
+        top: 500px;
+        width: 936px;
+        height: 548px;
+      }
+      #sheet {
+        width: 100%;
+        height: 100%;
+        background: var(--vellum);
+        border: 2px solid var(--edge);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .sheet-bar {
+        height: 56px;
+        background: var(--linen);
+        border-bottom: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 22px;
+      }
+      .win-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--edge);
+      }
+      .sheet-name {
+        margin-left: 14px;
+        font-weight: 500;
+        font-size: 23px;
+        color: var(--ink);
+      }
+      .grid-head,
+      .grid-row {
+        display: grid;
+        grid-template-columns: 44px 270px 206px 1fr;
+      }
+      .grid-head {
+        height: 40px;
+        background: var(--linen);
+        border-bottom: 2px solid var(--edge);
+        font-weight: 500;
+        font-size: 18px;
+        color: var(--earth-500);
+      }
+      .grid-head > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 2px solid var(--edge);
+      }
+      #grid-body {
+        position: relative;
+      }
+      .grid-row {
+        height: 64px;
+        border-bottom: 2px solid var(--edge);
+      }
+      .grid-row > div {
+        border-right: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 25px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .grid-row > .rn {
+        justify-content: center;
+        padding: 0;
+        background: var(--linen);
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--earth-500);
+      }
+      .grid-row.hdr > div:not(.rn) {
+        font-weight: 500;
+        color: var(--earth-600);
+      }
+      .cell-t {
+        display: block;
+        will-change: clip-path;
+      }
+      .qq {
+        color: var(--danger-ink);
+        font-weight: 500;
+      }
+      .hl {
+        background: var(--tea);
+        border-radius: 6px;
+        padding: 2px 8px;
+        margin-left: -8px;
+      }
+      #cell-cursor {
+        left: 520px;
+        top: 128px;
+        width: 412px;
+        height: 64px;
+        border: 3px solid var(--bronze);
+        border-radius: 3px;
+        pointer-events: none;
+      }
+
+      #hook {
+        left: 72px;
+        top: 1110px;
+        width: 936px;
+        font-size: 108px;
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+
+      .ghost {
+        width: 892px;
+        height: 100px;
+        left: 94px;
+        border-radius: 12px;
+        background: var(--tea);
+        opacity: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+      #ghost3 {
+        top: 1170px;
+      }
+      #ghost4 {
+        top: 1278px;
+      }
+
+      /* ---------- scene 2: paste a confirmation ---------- */
+      #capA {
+        opacity: 0;
+        left: 72px;
+        top: 236px;
+        width: 936px;
+        font-size: 84px;
+        line-height: 1.03;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #assistant {
+        left: 72px;
+        top: 528px;
+        width: 936px;
+        height: 452px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        border-radius: 24px;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
+      .as-head {
+        height: 96px;
+        padding: 12px 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-bottom: 2px solid var(--edge);
+        background: var(--vellum);
+      }
+      .as-title {
+        font-size: 36px;
+        line-height: 1.1;
+        color: var(--ink);
+      }
+      .as-sub {
+        margin-top: 2px;
+        font-size: 21px;
+        color: var(--earth-500);
+      }
+      #msg-user {
+        right: 32px;
+        top: 116px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 26px 0 20px;
+        border-radius: 29px 29px 8px 29px;
+        background: var(--earth-500);
+        color: var(--cream);
+        font-weight: 500;
+        font-size: 23px;
+      }
+      #msg-user svg {
+        width: 26px;
+        height: 26px;
+      }
+      #msg-typing {
+        left: 32px;
+        top: 192px;
+        width: 112px;
+        height: 56px;
+        border-radius: 8px 28px 28px 28px;
+        background: var(--sand-50);
+        border: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        opacity: 0;
+      }
+      #msg-typing .tdot {
+        width: 11px;
+        height: 11px;
+      }
+      #msg-extract {
+        left: 32px;
+        top: 192px;
+        width: 872px;
+        height: 240px;
+        background: var(--sand-50);
+        border: 2px solid var(--edge);
+        border-radius: 6px 22px 22px 22px;
+        overflow: hidden;
+        opacity: 0;
+      }
+      .ex-head {
+        position: relative;
+        height: 72px;
+        background: var(--cream);
+        border-bottom: 2px solid var(--edge);
+      }
+      .palm {
+        left: 20px;
+        top: 15px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--earth-500);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .palm svg {
+        width: 22px;
+        height: 22px;
+      }
+      .ex-hdr {
+        left: 76px;
+        top: 8px;
+        font-weight: 500;
+        font-size: 23px;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .ex-sub {
+        left: 76px;
+        top: 40px;
+        font-size: 19px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+      .item-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 840px;
+        height: 82px;
+        padding: 0 18px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        border-radius: 14px;
+      }
+      #item-card {
+        left: 16px;
+        top: 84px;
+      }
+      .ic-icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 50%;
+        background: var(--linen);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cat-slate);
+      }
+      .ic-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+      .ic-title {
+        font-weight: 500;
+        font-size: 25px;
+        line-height: 1.2;
+        color: var(--ink);
+      }
+      .ic-sub {
+        margin-top: 2px;
+        font-size: 19px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+      .ex-actions {
+        left: 16px;
+        top: 178px;
+        display: flex;
+        gap: 14px;
+      }
+      .btn {
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 500;
+        font-size: 23px;
+      }
+      #btn-import {
+        position: relative;
+        width: 190px;
+        background: var(--bronze);
+        color: var(--cream);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .imp-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      #imp-label-2 {
+        opacity: 0;
+      }
+      #imp-label-2 svg {
+        width: 22px;
+        height: 22px;
+      }
+      .btn-outline {
+        width: 222px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        color: var(--ink);
+      }
+      .btn-outline svg {
+        width: 20px;
+        height: 20px;
+      }
+      #hdr-added {
+        opacity: 0;
+      }
+
+      #daycard {
+        left: 72px;
+        top: 1012px;
+        width: 936px;
+        height: 500px;
+        background: var(--vellum);
+        border: 2px solid var(--edge);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+      #dc-date {
+        left: 40px;
+        top: 24px;
+        font-weight: 500;
+        font-size: 21px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+      }
+      #dc-title {
+        left: 40px;
+        top: 64px;
+        font-size: 56px;
+        line-height: 1.1;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      #dc-divider {
+        left: 40px;
+        right: 40px;
+        top: 143px;
+        height: 2px;
+        background: var(--edge);
+        transform-origin: left center;
+      }
+      #rail {
+        left: 168px;
+        top: 187px;
+        width: 2px;
+        height: 108px;
+        background: var(--edge);
+        transform-origin: top center;
+      }
+      .row {
+        left: 20px;
+        width: 892px;
+        height: 100px;
+      }
+      #rowF {
+        top: 156px;
+      }
+      #rowA {
+        top: 156px;
+      }
+      #rowB {
+        top: 264px;
+      }
+      .flash {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        background: var(--tea);
+        opacity: 0;
+      }
+      .row-in {
+        position: absolute;
+        inset: 0;
+      }
+      .r-time {
+        left: 8px;
+        top: 14px;
+        width: 118px;
+        text-align: right;
+        font-size: 27px;
+        line-height: 1.25;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .r-time small {
+        display: block;
+        font-size: 23px;
+        color: var(--earth-500);
+      }
+      .r-node {
+        left: 142px;
+        top: 24px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--earth-400);
+      }
+      .r-icon {
+        left: 174px;
+        top: 12px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .r-icon svg {
+        width: 32px;
+        height: 32px;
+      }
+      .r-title {
+        left: 236px;
+        top: 10px;
+        font-size: 31px;
+        line-height: 1.25;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .r-sub {
+        left: 236px;
+        top: 54px;
+        font-size: 23px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+
+      #flyer {
+        left: 124px;
+        top: 808px;
+        opacity: 0;
+        transform-origin: 0 0;
+        box-shadow: var(--shadow-lg);
+        will-change: transform;
+      }
+      #cursor {
+        left: 0;
+        top: 0;
+        width: 48px;
+        height: 48px;
+        opacity: 0;
+        z-index: 40;
+        will-change: transform;
+      }
+      #cursor-in {
+        width: 48px;
+        height: 48px;
+        transform-origin: 6px 4px;
+      }
+      #ripple {
+        left: 169px;
+        top: 876px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid var(--bronze);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ---------- scene 3: plan together ---------- */
+      #b-head {
+        opacity: 0;
+        left: 72px;
+        top: 250px;
+        width: 936px;
+        font-size: 124px;
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #b-live {
+        left: 76px;
+        top: 540px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .avs {
+        display: flex;
+      }
+      .av {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        border: 4px solid var(--cream);
+        margin-left: -18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 30px;
+      }
+      .av:first-child {
+        margin-left: 0;
+      }
+      .av1 {
+        background: var(--bronze);
+        color: var(--cream);
+      }
+      .av2 {
+        background: var(--tea);
+        color: var(--earth-600);
+      }
+      .av3 {
+        background: var(--earth-500);
+        color: var(--cream);
+      }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        font-size: 28px;
+        color: var(--earth-600);
+      }
+      .live-dot {
+        position: relative;
+        width: 16px;
+        height: 16px;
+      }
+      .live-dot i,
+      #live-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: #3f8f5a;
+      }
+      .phone {
+        width: 340px;
+        height: 658px;
+        will-change: transform;
+      }
+      .phone .float {
+        width: 100%;
+        height: 100%;
+      }
+      .phone img {
+        display: block;
+        width: 340px;
+        height: 658px;
+        border-radius: 32px;
+        border: 2px solid var(--earth-100);
+        box-shadow: 0 30px 70px -18px rgba(139, 119, 93, 0.42), 0 12px 26px -10px rgba(139, 119, 93, 0.2);
+        filter: saturate(1.05) contrast(1.02) brightness(1.01);
+      }
+      #p1 {
+        left: 110px;
+        top: 720px;
+        z-index: 1;
+      }
+      #p2 {
+        left: 370px;
+        top: 690px;
+        z-index: 3;
+      }
+      #p3 {
+        left: 630px;
+        top: 720px;
+        z-index: 2;
+      }
+      .plabel {
+        top: 1418px;
+        width: 240px;
+        text-align: center;
+        font-weight: 500;
+        font-size: 30px;
+        color: var(--earth-600);
+      }
+      #l1 {
+        left: 160px;
+      }
+      #l2 {
+        left: 420px;
+      }
+      #l3 {
+        left: 680px;
+      }
+
+      /* ---------- scene 4: print studio ---------- */
+      #c-eyebrow {
+        left: 72px;
+        top: 236px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-weight: 500;
+        font-size: 24px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+      }
+      #c-eyebrow i {
+        display: block;
+        width: 44px;
+        height: 2px;
+        background: var(--bronze);
+      }
+      #c-head {
+        opacity: 0;
+        left: 72px;
+        top: 282px;
+        width: 936px;
+        font-size: 84px;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #c-chips {
+        left: 72px;
+        top: 494px;
+        width: 936px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 56px;
+        padding: 0 22px 0 18px;
+        border-radius: 28px;
+        border: 2px solid var(--edge);
+        background: var(--cream);
+        color: var(--earth-500);
+        font-weight: 500;
+        font-size: 24px;
+        white-space: nowrap;
+      }
+      .sw {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+      }
+      #c-step {
+        left: 72px;
+        top: 656px;
+        width: 400px;
+        height: 32px;
+        font-weight: 500;
+        font-size: 24px;
+        line-height: 32px;
+        color: var(--earth-500);
+      }
+      #c-step > span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        white-space: nowrap;
+      }
+      #c-step #st2 {
+        opacity: 0;
+      }
+      #c-step b {
+        font-weight: 500;
+        color: var(--earth-600);
+        margin-right: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      #c-pdf {
+        left: 560px;
+        top: 760px;
+        width: 420px;
+        will-change: transform;
+      }
+      #c-pdf img,
+      .sheet-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        border: 2px solid var(--edge);
+        box-shadow: 0 26px 60px -14px rgba(139, 119, 93, 0.36), 0 10px 22px -10px rgba(139, 119, 93, 0.2);
+      }
+      .ed-cover {
+        left: 72px;
+        top: 730px;
+        width: 600px;
+        will-change: transform;
+      }
+      .ed-day {
+        left: 428px;
+        top: 990px;
+        width: 580px;
+        will-change: transform;
+      }
+      .ed {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+      }
+
+      /* ---------- scene 5: outro ---------- */
+      #d-wipe {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+      #d-band {
+        position: absolute;
+        inset: 0;
+        background: var(--earth-500);
+      }
+      #d-band .grain {
+        opacity: 0.09;
+        mix-blend-mode: multiply;
+      }
+      #d-glow {
+        left: -110px;
+        top: 330px;
+        width: 1300px;
+        height: 1000px;
+        pointer-events: none;
+      }
+      #d-glow-core {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(237, 220, 200, 0.34), rgba(237, 220, 200, 0.12) 55%, rgba(237, 220, 200, 0) 100%);
+        opacity: 0.4;
+      }
+      #d-lock {
+        left: 0;
+        top: 640px;
+        width: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 40%;
+      }
+      #d-word {
+        font-size: 164px;
+        line-height: 1;
+        letter-spacing: -0.015em;
+        color: var(--cream);
+        white-space: nowrap;
+      }
+      #d-rule {
+        margin-top: 34px;
+        width: 150px;
+        height: 2px;
+        background: var(--earth-200);
+      }
+      #d-line {
+        margin-top: 34px;
+        font-size: 66px;
+        line-height: 1.1;
+        color: var(--earth-100);
+      }
+      #d-cta {
+        margin-top: 54px;
+        height: 88px;
+        padding: 0 52px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, var(--rust), var(--clay-fire));
+        color: #ffffff;
+        font-weight: 500;
+        font-size: 36px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 18px 40px -14px rgba(33, 31, 27, 0.35);
+      }
+      #d-url {
+        margin-top: 32px;
+        font-weight: 500;
+        font-size: 28px;
+        letter-spacing: 0.12em;
+        color: var(--earth-100);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21.6" data-fps="30" data-width="1080" data-height="1920">
+      <!-- Persistent paper: warm light (audio-reactive) -->
+      <div id="light" data-layout-ignore><div id="light-core"></div></div>
+
+      <!-- Running head, scenes 1-4 -->
+      <div id="runhead" class="clip" data-start="0" data-duration="17.4" data-track-index="1">
+        <div id="rh-left" class="abs rh-label">Tokyo · Oct 3 – Oct 5</div>
+        <div id="rh-right" class="abs rh-label">
+          <div id="folio"><span id="f1">01</span><span id="f2">02</span><span id="f3">03</span><span id="f4">04</span></div>
+          <span>/ 04</span>
+        </div>
+        <div id="rh-rule" class="abs"></div>
+      </div>
+
+      <!-- Scene 1 + 2: the spreadsheet, then paste a confirmation -->
+      <section id="sceneA" class="clip" data-start="0" data-duration="9.7" data-track-index="2">
+        <!-- 1: group chat -->
+        <div id="chat" class="abs">
+          <div id="chat-row">
+            <div class="avatar">J</div>
+            <div class="bubble">wait, where are we staying again?</div>
+          </div>
+          <div id="typing"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
+        </div>
+
+        <!-- 1: the spreadsheet -->
+        <div id="sheet-wrap" class="abs">
+          <div id="sheet">
+            <div class="sheet-bar">
+              <span class="win-dot"></span><span class="win-dot"></span><span class="win-dot"></span>
+              <span class="sheet-name">tokyo trip FINAL (2).xlsx</span>
+            </div>
+            <div class="grid-head"><div></div><div>A</div><div>B</div><div>C</div></div>
+            <div id="grid-body">
+              <div class="grid-row hdr"><div class="rn">1</div><div><span class="cell-t">what</span></div><div><span class="cell-t">when</span></div><div><span class="cell-t">notes</span></div></div>
+              <div class="grid-row"><div class="rn">2</div><div><span class="cell-t">flight<span class="qq">??</span> ANA 175</span></div><div><span class="cell-t">Oct 3, 11:05<span class="qq">?</span></span></div><div><span class="cell-t">SFO to HND, bags<span class="qq">?</span></span></div></div>
+              <div class="grid-row"><div class="rn">3</div><div><span class="cell-t">hotel</span></div><div><span class="cell-t">Oct 3 to 5</span></div><div><span class="cell-t"><span class="hl">conf # in email somewhere</span></span></div></div>
+              <div class="grid-row"><div class="rn">4</div><div><span class="cell-t">walk to Akihabara</span></div><div><span class="cell-t">night 1<span class="qq">??</span></span></div><div><span class="cell-t">along the Kanda river</span></div></div>
+              <div class="grid-row"><div class="rn">5</div><div><span class="cell-t">Sushi Sho</span></div><div><span class="cell-t">Oct 4, 8pm<span class="qq">??</span></span></div><div><span class="cell-t">who booked<span class="qq">??</span></span></div></div>
+              <div class="grid-row"><div class="rn">6</div><div><span class="cell-t">teamLab</span></div><div><span class="cell-t">10am</span></div><div><span class="cell-t">barefoot! socks<span class="qq">?</span></span></div></div>
+              <div class="grid-row"><div class="rn">7</div><div><span class="cell-t">Tsukiji</span></div><div><span class="cell-t">early</span></div><div><span class="cell-t">tamagoyaki, 2nd lane</span></div></div>
+              <div id="cell-cursor" class="abs"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1: the hook -->
+        <h1 id="hook" class="abs serif">
+          <span class="line" data-layout-allow-overflow><span class="line-in">Your journey</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">deserves more</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">than a spreadsheet.</span></span>
+        </h1>
+
+        <!-- 2: caption -->
+        <h2 id="capA" class="abs serif">
+          <span class="line" data-layout-allow-overflow><span class="line-in">Paste a confirmation</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">and it lands on</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">the right day.</span></span>
+        </h2>
+
+        <!-- 2: the day card (timeline) -->
+        <div id="daycard" class="abs">
+          <div id="dc-date" class="abs">Saturday · October 3</div>
+          <div id="dc-title" class="abs serif">Landing, and a first walk</div>
+          <div id="dc-divider" class="abs"></div>
+          <div id="rail" class="abs"></div>
+
+          <div id="rowF" class="abs row">
+            <div class="flash"></div>
+            <div class="row-in">
+              <div class="abs r-time">11:05a<small>3:40p</small></div>
+              <div class="abs r-node"></div>
+              <div class="abs r-icon" style="color: var(--cat-slate)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+              </div>
+              <div class="abs r-title">Flight: ANA 175</div>
+              <div class="abs r-sub">San Francisco (SFO) → Tokyo (HND)</div>
+            </div>
+          </div>
+
+          <div id="rowA" class="abs row">
+            <div class="row-in">
+              <div class="abs r-time">6:00p</div>
+              <div class="abs r-node"></div>
+              <div class="abs r-icon" style="color: var(--cat-clay)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" /><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" /><path d="M12 4v6" /><path d="M2 18h20" /></svg>
+              </div>
+              <div class="abs r-title">Check-in: Hotel Ryumeikan Ochanomizu</div>
+              <div class="abs r-sub">Corner room, city side</div>
+            </div>
+          </div>
+
+          <div id="rowB" class="abs row">
+            <div class="row-in">
+              <div class="abs r-time">7:30p</div>
+              <div class="abs r-node"></div>
+              <div class="abs r-icon" style="color: var(--cat-sage)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /><circle cx="12" cy="12" r="10" /></svg>
+              </div>
+              <div class="abs r-title">Walk the Kanda river to Akihabara</div>
+              <div class="abs r-sub">Slow first evening, no tickets, no plan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1 -> 2: selected spreadsheet rows lift into the day card -->
+        <div id="ghost3" class="abs ghost" data-layout-ignore></div>
+        <div id="ghost4" class="abs ghost" data-layout-ignore></div>
+
+        <!-- 2: the Trip Assistant -->
+        <div id="assistant" class="abs">
+          <div class="as-head">
+            <div class="as-title serif">Trip Assistant</div>
+            <div class="as-sub">Private to you, not shared with co-travelers</div>
+          </div>
+
+          <div id="msg-user" class="abs">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>
+            <span>ANA 175 confirmation.pdf</span>
+          </div>
+
+          <div id="msg-typing" class="abs"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
+
+          <div id="msg-extract" class="abs">
+            <div class="ex-head">
+              <div class="abs palm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fdfcf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4" /><path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3" /><path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35" /><path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14" /></svg>
+              </div>
+              <div id="hdr-found" class="abs ex-hdr" data-layout-allow-overlap>Found 1 item</div>
+              <div id="hdr-added" class="abs ex-hdr" data-layout-allow-overlap>Added 1 item</div>
+              <div class="abs ex-sub">From ANA 175 confirmation.pdf · 1 transport</div>
+            </div>
+            <div id="item-card" class="abs item-card">
+              <div class="ic-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+              </div>
+              <div>
+                <div class="ic-title">Flight: ANA 175</div>
+                <div class="ic-sub">San Francisco (SFO) → Tokyo (HND) • Oct 3 • 11:05</div>
+              </div>
+            </div>
+            <div class="abs ex-actions">
+              <div id="btn-import" class="btn">
+                <span id="imp-label-1" class="imp-label" data-layout-allow-overlap>Import</span>
+                <span id="imp-label-2" class="imp-label" data-layout-allow-overlap>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                  Imported
+                </span>
+              </div>
+              <div class="btn btn-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg>
+                Review &amp; edit
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2: the extracted card dropping into its day -->
+        <div id="flyer" class="abs item-card" data-layout-ignore>
+          <div class="ic-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+          </div>
+          <div>
+            <div class="ic-title">Flight: ANA 175</div>
+            <div class="ic-sub">San Francisco (SFO) → Tokyo (HND) • Oct 3 • 11:05</div>
+          </div>
+        </div>
+
+        <div id="ripple" class="abs" data-layout-ignore></div>
+        <div id="cursor" class="abs" data-layout-ignore>
+          <svg id="cursor-in" viewBox="0 0 44 44"><path d="M8 4 L8 36 L16.5 28.5 L22 40.5 L27.5 38 L22 26.5 L33 26 Z" fill="#211f1b" stroke="#fdfcf8" stroke-width="2.5" stroke-linejoin="round" /></svg>
+        </div>
+      </section>
+
+      <!-- Scene 3: plan together -->
+      <section id="sceneB" class="clip" data-start="9.45" data-duration="3.85" data-track-index="3">
+        <h2 id="b-head" class="abs serif">
+          <span class="line" data-layout-allow-overflow><span class="line-in">Plan together,</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">in real time.</span></span>
+        </h2>
+        <div id="b-live" class="abs">
+          <div class="avs"><div class="av av1"><span>K</span></div><div class="av av2"><span>A</span></div><div class="av av3"><span>M</span></div></div>
+          <div class="live"><span class="live-dot"><span id="live-ring"></span><i></i></span>Live</div>
+        </div>
+
+        <div id="p1" class="abs phone"><div class="float"><img src="assets/img/app-timeline.jpg" alt="WanderLuxe timeline view of the Tokyo trip" /></div></div>
+        <div id="p2" class="abs phone"><div class="float"><img src="assets/img/app-calendar.jpg" alt="WanderLuxe calendar view of the Tokyo trip" /></div></div>
+        <div id="p3" class="abs phone"><div class="float"><img src="assets/img/app-map.jpg" alt="WanderLuxe map view of the Tokyo trip" /></div></div>
+        <div id="l1" class="abs plabel">Timeline</div>
+        <div id="l2" class="abs plabel">Calendar</div>
+        <div id="l3" class="abs plabel">Map</div>
+      </section>
+
+      <!-- Scene 4: print studio -->
+      <section id="sceneC" class="clip" data-start="12.95" data-duration="4.5" data-track-index="4">
+        <div id="c-eyebrow" class="abs"><i></i>Print Studio</div>
+        <h2 id="c-head" class="abs serif">
+          <span class="line" data-layout-allow-overflow><span class="line-in">The plan you made,</span></span>
+          <span class="line" data-layout-allow-overflow><span class="line-in">set as something to keep</span></span>
+        </h2>
+        <div id="c-chips" class="abs">
+          <div id="chip0" class="chip"><span class="sw" style="background: #3771a6"></span>Edo Blue October</div>
+          <div id="chip1" class="chip"><span class="sw" style="background: #01628f"></span>Tokyo Deco Evenings</div>
+          <div id="chip2" class="chip"><span class="sw" style="background: #709257"></span>Autumn Greens: Tokyo in October</div>
+        </div>
+
+        <div id="c-step" class="abs"><span id="st1"><b>02</b>Simple PDF</span><span id="st2"><b>03</b>Studio edition</span></div>
+
+        <div id="c-pdf" class="abs"><img src="assets/img/print-showcase-simple-pdf.png" alt="The free simple PDF itinerary page" /></div>
+
+        <div id="ed0" class="ed">
+          <div class="abs ed-cover"><img class="sheet-img" src="assets/img/edition-0-cover.png" alt="Edo Blue October edition cover" /></div>
+          <div class="abs ed-day"><img class="sheet-img" src="assets/img/edition-0-day1.png" alt="Edo Blue October edition, day one" /></div>
+        </div>
+        <div id="ed1" class="ed">
+          <div class="abs ed-cover"><img class="sheet-img" src="assets/img/edition-1-cover.png" alt="Tokyo Deco Evenings edition cover" /></div>
+          <div class="abs ed-day"><img class="sheet-img" src="assets/img/edition-1-day1.png" alt="Tokyo Deco Evenings edition, day one" /></div>
+        </div>
+        <div id="ed2" class="ed">
+          <div class="abs ed-cover"><img class="sheet-img" src="assets/img/edition-2-cover.png" alt="Autumn Greens edition cover" /></div>
+          <div class="abs ed-day"><img class="sheet-img" src="assets/img/edition-2-day1.png" alt="Autumn Greens edition, day one" /></div>
+        </div>
+      </section>
+
+      <!-- Scene 5: outro -->
+      <section id="sceneD" class="clip" data-start="16.9" data-duration="4.7" data-track-index="5">
+        <div id="d-wipe" data-layout-allow-overflow>
+          <div id="d-band"><div class="grain"></div></div>
+          <div id="d-glow" class="abs" data-layout-ignore><div id="d-glow-core"></div></div>
+          <div id="d-lock" class="abs">
+            <div id="d-word" class="serif">WanderLuxe</div>
+            <div id="d-rule"></div>
+            <div id="d-line" class="serif">Plan the trip together.</div>
+            <div id="d-cta">Start planning, free</div>
+            <div id="d-url">wanderluxe.io</div>
+          </div>
+        </div>
+      </section>
+
+      <div id="paper-grain" class="grain" data-layout-ignore></div>
+
+      <!-- Audio: identical to the landscape cut -->
+      <audio
+        id="bgm"
+        src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"
+        data-start="0"
+        data-duration="21.6"
+        data-track-index="10"
+        data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:0.4,&quot;v&quot;:0.3},{&quot;t&quot;:20.4,&quot;v&quot;:0.3},{&quot;t&quot;:21.6,&quot;v&quot;:0}]}]}"
+      ></audio>
+      <audio id="sfx-key1" src="assets/sfx/keyboard/keypress-004.wav" data-start="0.34" data-duration="0.25" data-track-index="11" data-volume="0.28"></audio>
+      <audio id="sfx-key2" src="assets/sfx/keyboard/keypress-011.wav" data-start="0.66" data-duration="0.25" data-track-index="12" data-volume="0.24"></audio>
+      <audio id="sfx-key3" src="assets/sfx/keyboard/keypress-019.wav" data-start="1.02" data-duration="0.25" data-track-index="13" data-volume="0.28"></audio>
+      <audio id="sfx-drop" src="assets/sfx/interface/drop_002.ogg" data-start="5.28" data-duration="0.19" data-track-index="14" data-volume="0.5"></audio>
+      <audio id="sfx-click" src="assets/sfx/ui/click2.ogg" data-start="7.9" data-duration="0.06" data-track-index="15" data-volume="0.34"></audio>
+      <audio id="sfx-land" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="8.72" data-duration="0.18" data-track-index="16" data-volume="0.38"></audio>
+      <audio id="sfx-slide1" src="assets/sfx/casino/card-slide-1.ogg" data-start="14.04" data-duration="0.6" data-track-index="17" data-volume="0.3"></audio>
+      <audio id="sfx-slide2" src="assets/sfx/casino/card-slide-1.ogg" data-start="16.22" data-duration="0.6" data-track-index="18" data-volume="0.26"></audio>
+      <audio id="sfx-bell" src="assets/sfx/impact/impactBell_heavy_000.ogg" data-start="17.45" data-duration="1.48" data-track-index="19" data-volume="0.42"></audio>
+    </div>
+
+    <script>
+      // Pre-extracted with hyperframes-creative/scripts/extract-audio-data.py from the first 22s of the bed,
+      // RMS, smoothed and normalized, sampled at 15 per second (index = floor(t * 15)).
+      const AUDIO_REACTIVE = { fps: 15, rms: [0.52,0.48,0.41,0.32,0.19,0.18,0.11,0.2,0.23,0.19,0.08,0.03,0.0,0.12,0.19,0.17,0.11,0.07,0.09,0.13,0.15,0.09,0.12,0.25,0.36,0.33,0.3,0.18,0.19,0.17,0.15,0.13,0.13,0.16,0.26,0.24,0.27,0.21,0.22,0.19,0.27,0.25,0.2,0.05,0.12,0.22,0.34,0.33,0.18,0.03,0.06,0.1,0.16,0.18,0.14,0.14,0.21,0.23,0.2,0.23,0.25,0.21,0.2,0.18,0.22,0.3,0.34,0.3,0.22,0.24,0.25,0.26,0.3,0.25,0.26,0.25,0.13,0.14,0.14,0.13,0.11,0.13,0.16,0.14,0.2,0.2,0.22,0.24,0.2,0.21,0.24,0.2,0.26,0.28,0.26,0.25,0.25,0.25,0.31,0.3,0.26,0.28,0.29,0.28,0.24,0.17,0.13,0.09,0.13,0.14,0.14,0.18,0.18,0.23,0.27,0.28,0.34,0.4,0.48,0.49,0.52,0.51,0.51,0.55,0.55,0.56,0.54,0.52,0.55,0.53,0.54,0.54,0.56,0.55,0.56,0.54,0.56,0.54,0.54,0.56,0.58,0.59,0.59,0.6,0.61,0.6,0.57,0.58,0.62,0.62,0.61,0.59,0.57,0.57,0.52,0.51,0.51,0.54,0.53,0.53,0.51,0.51,0.52,0.54,0.53,0.54,0.57,0.58,0.55,0.53,0.56,0.58,0.59,0.61,0.59,0.62,0.61,0.58,0.61,0.6,0.61,0.6,0.57,0.53,0.56,0.54,0.51,0.51,0.53,0.53,0.55,0.55,0.59,0.59,0.59,0.57,0.56,0.54,0.53,0.54,0.54,0.54,0.57,0.58,0.58,0.62,0.66,0.69,0.71,0.71,0.72,0.74,0.73,0.67,0.61,0.58,0.59,0.6,0.62,0.64,0.62,0.65,0.67,0.67,0.67,0.67,0.68,0.68,0.64,0.63,0.66,0.66,0.66,0.66,0.64,0.63,0.58,0.53,0.53,0.52,0.51,0.51,0.51,0.51,0.51,0.53,0.52,0.51,0.51,0.53,0.54,0.53,0.52,0.49,0.47,0.45,0.43,0.46,0.47,0.46,0.46,0.47,0.52,0.6,0.63,0.62,0.63,0.65,0.67,0.7,0.74,0.76,0.77,0.77,0.79,0.8,0.8,0.8,0.79,0.78,0.72,0.64,0.58,0.53,0.53,0.53,0.58,0.64,0.68,0.73,0.74,0.77,0.78,0.81,0.85,0.86,0.87,0.84,0.83,0.85,0.88,0.89,0.9,0.9,0.91,0.91,0.87,0.89,0.9,0.9,0.93,0.96,0.95] };
+    </script>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const STEP = 1 / AUDIO_REACTIVE.fps;
+
+      // Stage geometry (px, 1080x1920). Borders are included so moves land exactly on their targets.
+      const G = {
+        rowStep: 108, // day-card slot height
+        ghostX: 118 - 94, // sheet row left − day-card row left
+        ghost3Y: 716 - 1170, // sheet row 3 (after the 10px drift) − slot 1
+        ghost4Y: 780 - 1278, // sheet row 4 − slot 2
+        ghostSX: 888 / 892,
+        ghostSY: 64 / 100,
+        flyerDX: 251 - 124, // lands with its icon on the row icon
+        flyerDY: 1184 - 808,
+        flyerScale: 0.84,
+        cursorFrom: { x: 860, y: 1960 },
+        cursorTo: { x: 214, y: 922 }, // arrow tip on Import (219, 926)
+      };
+
+      // ---------------- persistent paper light (audio-reactive, subtle) ----------------
+      tl.fromTo("#light", { x: 0, y: 0 }, { x: -200, y: 260, duration: 21.6, ease: "sine.inOut" }, 0);
+      tl.to(
+        "#light-core",
+        {
+          keyframes: AUDIO_REACTIVE.rms.map((v) => ({ opacity: 0.4 + v * 0.42, scale: 1 + v * 0.05, duration: STEP, ease: "sine.inOut" })),
+        },
+        0,
+      );
+
+      // ---------------- running head ----------------
+      tl.fromTo("#rh-rule", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "power2.out" }, 0.12);
+      tl.fromTo("#rh-left", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.22);
+      tl.fromTo("#rh-right", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.3);
+      const swap = (out, inn, t) => {
+        tl.to(out, { opacity: 0, y: -10, duration: 0.18, ease: "power1.in" }, t);
+        tl.fromTo(inn, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.26, ease: "power2.out", immediateRender: false }, t + 0.18);
+      };
+      swap("#f1", "#f2", 4.2);
+      swap("#f2", "#f3", 9.6);
+      swap("#f3", "#f4", 13.11);
+
+      // ================= SCENE 1 — the spreadsheet (0.00–4.20) =================
+      tl.fromTo("#sheet", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0.1);
+      tl.fromTo("#sheet-wrap", { y: 0 }, { y: -10, duration: 3.2, ease: "sine.inOut" }, 0.7); // at rest (y -10) by 3.90 for the morph
+      // Cells "typed" in a hurry: texture, not a read.
+      tl.fromTo(".cell-t", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.16, ease: "none", stagger: 0.036 }, 0.3);
+      // The active cell hops down column C as rows are filled.
+      tl.set("#cell-cursor", { y: -64, opacity: 0 }, 0);
+      tl.to("#cell-cursor", { y: 0, duration: 0.14, ease: "power2.out" }, 0.62);
+      tl.to("#cell-cursor", { y: 128, duration: 0.14, ease: "power2.out" }, 0.98);
+      tl.to("#cell-cursor", { y: 256, duration: 0.14, ease: "power2.out" }, 1.24);
+      tl.to("#cell-cursor", { y: 0, duration: 0.18, ease: "power2.out" }, 2.1);
+      tl.to("#cell-cursor", { opacity: 1, duration: 0.12 }, 0.6);
+
+      // Group chat
+      tl.fromTo("#chat-row", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.45);
+      tl.fromTo("#typing", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 1.15);
+      tl.fromTo("#typing .tdot", { opacity: 0.3 }, { opacity: 1, duration: 0.32, ease: "sine.inOut", stagger: { each: 0.16, repeat: 5, yoyo: true } }, 1.3);
+
+      // Hook line
+      tl.fromTo("#hook .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.12 }, 1.05);
+
+      // Exit: the chat and hook clear, two rows lift off the grid and drop into the day card
+      tl.to("#chat", { opacity: 0, x: -32, duration: 0.38, ease: "power2.in" }, 3.86);
+      tl.to("#hook", { opacity: 0, y: 30, duration: 0.4, ease: "power2.in" }, 3.9);
+      tl.fromTo(["#ghost3", "#ghost4"], { opacity: 0 }, { opacity: 0.92, duration: 0.18, ease: "power1.out", stagger: 0.05 }, 3.82);
+      tl.fromTo("#ghost3", { x: G.ghostX, y: G.ghost3Y, scaleX: G.ghostSX, scaleY: G.ghostSY }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.74, ease: "power3.inOut" }, 4.02);
+      tl.fromTo("#ghost4", { x: G.ghostX, y: G.ghost4Y, scaleX: G.ghostSX, scaleY: G.ghostSY }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.74, ease: "power3.inOut" }, 4.08);
+      tl.to("#sheet", { opacity: 0, y: -30, scale: 0.985, duration: 0.5, ease: "power2.in" }, 3.98);
+      tl.to(["#ghost3", "#ghost4"], { opacity: 0, duration: 0.4, ease: "power1.inOut", stagger: 0.05 }, 4.8);
+
+      // ================= SCENE 2 — paste a confirmation (4.20–9.60) =================
+      tl.fromTo("#daycard", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 4.3);
+      tl.fromTo(["#dc-date", "#dc-title"], { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.08 }, 4.46);
+      tl.fromTo("#dc-divider", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, 4.56);
+      tl.fromTo(["#rowA .row-in", "#rowB .row-in"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, 4.74);
+      tl.fromTo("#rail", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power2.out" }, 4.84);
+
+      tl.fromTo("#assistant", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.85, ease: "expo.out" }, 4.56);
+      tl.set("#capA", { opacity: 1 }, 4.7);
+      tl.fromTo("#capA .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.9, ease: "expo.out", stagger: 0.1 }, 4.7);
+
+      // Attach → the assistant reads it
+      tl.fromTo("#msg-user", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 5.28);
+      tl.fromTo("#msg-typing", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 5.64);
+      tl.fromTo("#msg-typing .tdot", { opacity: 0.3 }, { opacity: 1, duration: 0.22, ease: "sine.inOut", stagger: { each: 0.1, repeat: 1, yoyo: true } }, 5.72);
+      tl.to("#msg-typing", { opacity: 0, duration: 0.14, ease: "power1.in" }, 6.3);
+      tl.fromTo("#msg-extract", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 6.44); // beat-grid: lands ~6.56s
+
+      // Cursor rises from the bottom to Import
+      tl.set("#cursor", { x: G.cursorFrom.x, y: G.cursorFrom.y, opacity: 0 }, 0);
+      tl.to("#cursor", { opacity: 1, duration: 0.18, ease: "power1.out" }, 6.8);
+      tl.to("#cursor", { x: G.cursorTo.x, duration: 0.95, ease: "power2.inOut" }, 6.8);
+      tl.to("#cursor", { y: G.cursorTo.y, duration: 0.95, ease: "power3.out" }, 6.8);
+      tl.to("#cursor-in", { scale: 0.84, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 7.9);
+      tl.to("#btn-import", { scale: 0.95, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 7.9);
+      tl.fromTo("#ripple", { scale: 0.2, opacity: 0.6 }, { scale: 2.6, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 7.93);
+      tl.to("#imp-label-1", { opacity: 0, y: -12, duration: 0.18, ease: "power1.in" }, 8.0);
+      tl.fromTo("#imp-label-2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.26, ease: "power2.out" }, 8.17);
+      tl.to("#hdr-found", { opacity: 0, duration: 0.16, ease: "power1.in" }, 8.3);
+      tl.fromTo("#hdr-added", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, 8.46);
+
+      // The extracted card drops into Saturday and slots in as the 11:05 row
+      tl.set("#flyer", { x: 0, y: 0, scale: 1, opacity: 0 }, 0);
+      tl.to("#flyer", { opacity: 1, duration: 0.06 }, 8.06);
+      tl.to("#item-card", { opacity: 0.4, duration: 0.3, ease: "power1.out" }, 8.08);
+      tl.to("#flyer", { x: G.flyerDX, duration: 0.66, ease: "power3.out" }, 8.08);
+      tl.to("#flyer", { y: G.flyerDY, scale: G.flyerScale, duration: 0.66, ease: "power2.inOut" }, 8.08);
+      tl.to(["#rowA", "#rowB"], { y: G.rowStep, duration: 0.5, ease: "power2.inOut" }, 8.14);
+      tl.to("#rail", { scaleY: 2, duration: 0.5, ease: "power2.inOut" }, 8.14);
+      tl.to("#flyer", { opacity: 0, duration: 0.2, ease: "power1.in" }, 8.72);
+      tl.fromTo("#rowF .row-in", { opacity: 0 }, { opacity: 1, duration: 0.24, ease: "power1.out" }, 8.7); // beat-locked: 8.74s (groove enters)
+      tl.fromTo("#rowF .flash", { opacity: 0 }, { opacity: 0.75, duration: 0.16, ease: "power1.out" }, 8.74);
+      tl.to("#rowF .flash", { opacity: 0, duration: 0.6, ease: "power1.inOut" }, 9.0);
+      tl.to("#cursor", { opacity: 0, duration: 0.25, ease: "power1.in" }, 8.9);
+
+      // Exit
+      tl.to("#capA", { opacity: 0, y: -26, duration: 0.34, ease: "power2.in" }, 9.22);
+      tl.to("#assistant", { opacity: 0, y: -30, duration: 0.34, ease: "power2.in" }, 9.22);
+      tl.to("#daycard", { opacity: 0, y: 30, scale: 0.97, duration: 0.36, ease: "power2.in" }, 9.2);
+
+      // ================= SCENE 3 — plan together (9.60–13.10) =================
+      tl.set("#b-head", { opacity: 1 }, 9.6);
+      tl.fromTo("#b-head .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.12 }, 9.6);
+      tl.fromTo(".av", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.08 }, 10.3);
+      tl.fromTo("#b-live .live", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 10.55);
+      tl.fromTo("#live-ring", { scale: 1, opacity: 0.55 }, { scale: 2.6, opacity: 0, duration: 0.9, ease: "power1.out", repeat: 2 }, 10.6);
+
+      // Phones dealt on consecutive beats: left, right, then the center card lands on top
+      [
+        ["#p1", -7, 9.72, "#l1"], // beat-grid: 9.83s
+        ["#p3", 7, 10.26, "#l3"], // beat-grid: 10.37s
+        ["#p2", 0, 10.82, "#l2"], // beat-grid: 10.93s
+      ].forEach(([sel, rot, t, label]) => {
+        tl.fromTo(sel, { opacity: 0, y: 200, rotation: rot * 2.2 + (rot === 0 ? 4 : 0) }, { opacity: 1, y: 0, rotation: rot, duration: 0.9, ease: "expo.out" }, t);
+        tl.fromTo(label, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t + 0.2);
+      });
+      tl.fromTo("#p1 .float", { y: 0 }, { y: -10, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 10.7);
+      tl.fromTo("#p3 .float", { y: 0 }, { y: -10, duration: 1.0, ease: "sine.inOut", yoyo: true, repeat: 1 }, 11.1);
+      tl.fromTo("#p2 .float", { y: 0 }, { y: -10, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1 }, 11.5);
+
+      tl.to(["#p1", "#p3", "#p2"], { opacity: 0, y: 60, duration: 0.3, ease: "power2.in", stagger: 0.04 }, 12.94);
+      tl.to(["#b-head", "#b-live", "#l1", "#l2", "#l3"], { opacity: 0, duration: 0.26, ease: "power1.in" }, 12.96);
+
+      // ================= SCENE 4 — print studio (13.10–17.40) =================
+      tl.fromTo("#c-eyebrow", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" }, 13.11); // beat-locked: 13.11s
+      tl.set("#c-head", { opacity: 1 }, 13.24);
+      tl.fromTo("#c-head .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.1 }, 13.24);
+      tl.fromTo("#c-pdf", { opacity: 0, x: 150, rotation: 13 }, { opacity: 1, x: 0, rotation: 6, duration: 0.95, ease: "expo.out" }, 13.14);
+      tl.fromTo("#c-step", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 13.36);
+      tl.fromTo(".chip", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, 13.8);
+      swap("#st1", "#st2", 14.04);
+
+      // Three editions of the same trip, one every other beat
+      [
+        [0, 14.2, -3, 2.5], // beat-grid: 14.20s
+        [1, 15.29, -2, 3], // beat-grid: 15.29s
+        [2, 16.38, -3.5, 2], // beat-grid: 16.38s
+      ].forEach(([i, beat, rc, rd]) => {
+        const t = beat - 0.16;
+        // Opaque almost at once, so the new prints slide over the old ones instead of ghosting through them.
+        tl.fromTo(`#ed${i}`, { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "power1.out" }, t);
+        tl.fromTo(`#ed${i} .ed-cover`, { x: 200, y: 30, rotation: rc + 9 }, { x: 0, y: 0, rotation: rc, duration: 0.8, ease: "expo.out" }, t);
+        tl.fromTo(`#ed${i} .ed-day`, { x: 240, y: 90, rotation: rd + 11 }, { x: 0, y: 0, rotation: rd, duration: 0.85, ease: "expo.out" }, t + 0.07);
+        tl.to(`#chip${i}`, { backgroundColor: "#eee7da", borderColor: "#5c544a", color: "#5c544a", duration: 0.25, ease: "power1.out" }, beat);
+        if (i > 0) {
+          tl.to(`#chip${i - 1}`, { backgroundColor: "#fdfcf8", borderColor: "#ddd4c8", color: "#6b6354", duration: 0.25, ease: "power1.out" }, beat);
+          // The previous edition leaves only once the new one has covered it.
+          tl.to(`#ed${i - 1}`, { opacity: 0, duration: 0.2, ease: "power1.in" }, beat + 0.32);
+        }
+      });
+      tl.to("#c-pdf", { y: 18, duration: 3.0, ease: "sine.inOut" }, 14.2);
+
+      // ================= SCENE 5 — outro (17.40–21.60) =================
+      tl.fromTo("#d-wipe", { yPercent: 100 }, { yPercent: 0, duration: 0.52, ease: "power3.inOut" }, 16.9);
+      tl.fromTo("#d-word", { opacity: 0, y: 42, scale: 1.06 }, { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "expo.out" }, 17.38); // beat-locked: 17.47s
+      tl.fromTo("#d-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, 17.9);
+      tl.fromTo("#d-line", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 18.0);
+      tl.fromTo("#d-cta", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.75, ease: "expo.out" }, 18.5); // beat-grid: 18.56s
+      tl.fromTo("#d-url", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out" }, 19.1);
+      tl.fromTo("#d-lock", { scale: 1 }, { scale: 1.028, duration: 4.2, ease: "none" }, 17.4);
+      tl.fromTo("#d-glow", { y: 0 }, { y: 40, duration: 4.7, ease: "sine.inOut" }, 16.9);
+      tl.to(
+        "#d-glow-core",
+        {
+          keyframes: AUDIO_REACTIVE.rms.slice(Math.round(17.4 * AUDIO_REACTIVE.fps)).map((v) => ({ opacity: 0.3 + v * 0.7, scale: 1 + v * 0.07, duration: STEP, ease: "sine.inOut" })),
+        },
+        17.4,
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
