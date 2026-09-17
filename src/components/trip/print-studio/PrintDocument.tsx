@@ -9,7 +9,12 @@ import React from 'react';
 import { BedDouble, Compass, UtensilsCrossed, Plane } from 'lucide-react';
 import { fmtDate, fmtMoney } from '@/services/pdf/format';
 import type { PdfTripData, Item } from '@/services/pdf/types';
-import { getFontPairing, resolveFills, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import {
+  getFontPairing,
+  resolveFills,
+  themeNameEndsInEdition,
+  type PrintDesignSpec,
+} from '@/lib/printDesign/spec';
 import { MotifBand, MotifMark } from './motifs';
 import { hasLedgerData } from './ledger';
 import './printDocument.css';
@@ -140,7 +145,10 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
           )}
           <div className="pd-cover-foot">
             <div className="pd-theme-plate">
-              <strong>The {copy('themeName', design.themeName)} Edition</strong>
+              <strong>
+                The {copy('themeName', design.themeName)}
+                {themeNameEndsInEdition(design.themeName) ? null : ' Edition'}
+              </strong>
               {(design.themeRationale || isEditing) && (
                 <em>{copy('themeRationale', design.themeRationale)}</em>
               )}

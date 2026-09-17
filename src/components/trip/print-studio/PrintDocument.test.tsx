@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import PrintDocument from './PrintDocument';
 import { romeTrip } from '@/services/pdf/fixtures';
 import { sanitizePrintDesign } from '@/lib/printDesign/spec';
+import { applyCopyOverrides } from '@/lib/printDesign/edits';
 import type { PdfTripData } from '@/services/pdf/types';
 
 // The fixture's items carry prices (€110.00, $1,240.00, …) and the trip has a
@@ -41,6 +42,37 @@ describe('PrintDocument money', () => {
     const design = sanitizePrintDesign({}, data.days.map((d) => d.date));
     render(<PrintDocument design={design} data={data} showBudget />);
     expect(screen.queryByText('The Ledger')).toBeNull();
+  });
+});
+
+describe('PrintDocument theme plate', () => {
+  const data = romeTrip();
+  const base = sanitizePrintDesign({}, data.days.map((d) => d.date));
+  const plateOf = (container: HTMLElement) =>
+    container.querySelector('.pd-theme-plate strong')?.textContent;
+
+  it('reads as one edition for the fallback theme name', () => {
+    const { container } = render(<PrintDocument design={base} data={data} />);
+    expect(plateOf(container)).toBe('The Traveler’s Edition');
+  });
+
+  it('adds Edition after an ordinary theme name', () => {
+    const { container } = render(<PrintDocument design={{ ...base, themeName: 'Aegean Deco' }} data={data} />);
+    expect(plateOf(container)).toBe('The Aegean Deco Edition');
+  });
+
+  it('does not double Edition when the theme name already ends with it', () => {
+    const { container } = render(
+      <PrintDocument design={{ ...base, themeName: 'Sun-Bleached Edition' }} data={data} />
+    );
+    expect(plateOf(container)).toBe('The Sun-Bleached Edition');
+  });
+
+  it('does not double Edition on a traveler’s own name either', () => {
+    const design = applyCopyOverrides(base, { themeName: 'Harbour edition' });
+    const renderCopy = (key: string, value: string) => <span data-field={key}>{value}</span>;
+    const { container } = render(<PrintDocument design={design} data={data} renderCopy={renderCopy} />);
+    expect(plateOf(container)).toBe('The Harbour edition');
   });
 });
 

@@ -10,6 +10,7 @@ import {
   PALETTE_FLOORS,
   relativeLuminance,
   sanitizePrintDesign,
+  themeNameEndsInEdition,
 } from './spec';
 import { hexToOklch } from './color';
 
@@ -248,7 +249,16 @@ describe('house voice', () => {
     });
     expect(out.cover.title).toBe('The Itinerary');
     expect(out.closing).toBe('Safe travels.');
-    expect(out.themeName).toBe('Traveler’s Edition');
+    // The plate prints "The ___ Edition", so the fallback fills only the blank.
+    expect(out.themeName).toBe('Traveler’s');
+  });
+
+  it('knows when a theme name already carries its own Edition', () => {
+    expect(themeNameEndsInEdition('Sun-Bleached Edition')).toBe(true);
+    expect(themeNameEndsInEdition('Harbour edition ')).toBe(true);
+    expect(themeNameEndsInEdition('Traveler’s')).toBe(false);
+    expect(themeNameEndsInEdition('Editions of Rome')).toBe(false);
+    expect(themeNameEndsInEdition('Reedition')).toBe(false);
   });
 
   it('drops only the captions that break the rules', () => {
