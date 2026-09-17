@@ -10,25 +10,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 ```bash
-npm install              # Install dependencies
-npm run dev             # Start dev server (Express + Vite, http://localhost:8080)
+npm install              # On Replit. Locally: npm install --no-package-lock --no-save (see note)
+npm run dev             # Vite on http://localhost:8080 + Express (tsx server/index.ts) on 5001; Vite proxies /api → 5001
 npm run dev:frontend    # Vite only (no Express backend)
 npm run dev:server      # Express server only
 npm run type-check      # TypeScript type checking
 npm run lint            # ESLint code quality check
 ```
 
-> **Note**: The project uses **npm** (Node 18+, Node 24 recommended). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
+> **Note**: The project uses **npm** (Node 22+ — `concurrently` 10 in `npm run dev` requires it; Replit runs Node 24). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. **Every `resolved` URL in `package-lock.json` points at `http://package-firewall.replit.internal`**, which only resolves on Replit (deploy runs `npm ci` there), so a lockfile install elsewhere fails with ENOTFOUND. Off Replit, install with `--no-package-lock --no-save`, and don't rewrite the URLs unless asked. Side effect: each checkout's `node_modules` holds whatever the `^` ranges resolved to on install day, so when a test passes in one checkout and fails in another, diff installed package versions first. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
 
 ### Building & Testing
 ```bash
 npm run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
 npm run build:dev       # Development build
 npm run preview         # Preview production build (port 8080)
-npm run test            # Run tests (Vitest)
+npm run test            # Run tests (Vitest) — there is no CI, so run this before pushing
+npx vitest run src/path/to/file.test.ts   # Single file
 npm run test:watch      # Watch mode
 npm run test:coverage   # Coverage report
-npm run evals           # Eval harness (LLM + integration; on-demand only, never CI)
+npm run evals           # Eval harness (LLM + integration; on-demand only, never part of npm test)
 npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
 npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
 ```
@@ -38,7 +39,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 ### Tech Stack
 - **Frontend**: React 19 + TypeScript + Vite 8 + Tailwind CSS
 - **State Management**: React Context (auth) + TanStack Query (server state) + React hooks (UI state)
-- **Database**: Supabase (PostgreSQL) with Row Level Security (RLS)
+- **Database / Auth**: Supabase (PostgreSQL) with Row Level Security (RLS); Supabase Auth with Google OAuth
 - **Real-time**: Supabase real-time subscriptions via WebSocket
 - **Backend**: Express.js + Supabase Edge Functions (Deno)
 - **AI**: Google Gemini 2.5 Flash for chat + doc parsing (hardcoded in Edge Function + Express; no env override); OpenAI (default `gpt-4.1`, `OPENAI_MODEL` override) for Print Studio design generation
@@ -55,7 +56,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 ```
 src/
 ├── components/
-│   ├── trip/              # Trip feature components (17 subdirs)
+│   ├── trip/              # Trip feature components (18 subdirs)
 │   │   ├── _shared/       # Shared trip utilities
 │   │   ├── accommodation/ # Hotel management
 │   │   ├── ai-assistant/  # AI assistant components
@@ -68,6 +69,7 @@ src/
 │   │   ├── dining/        # Restaurant reservations
 │   │   ├── hero/          # Trip hero/header
 │   │   ├── map/           # Interactive trip map (Google Maps + route playback)
+│   │   ├── print-studio/  # Print dialog (Simple PDF + Studio edition), PrintDocument renderer
 │   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
@@ -94,10 +96,10 @@ src/
 
 server/
 ├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
-├── dev-server.ts         # Development server config
+├── dev-server.ts         # Legacy Vite-middleware entry, used only by start-dev.sh (bun); `npm run dev` doesn't touch it
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
-│                         #   printDesign (Print Studio OpenAI call + trip payload)
-└── routes/               # API routes (Stripe, AI chat, MCP server, iCal calendar feed, admin insights,
+│                         #   sitemap, printDesign (Print Studio OpenAI call + trip payload), printSnapshot
+└── routes/               # API routes, registered in routes/index.ts (Stripe, AI chat, MCP server, iCal feed, admin insights,
                           #   invite preview, account export/deletion, Print Studio design generation,
                           #   live sitemap.xml + llms.txt)
 
@@ -123,7 +125,7 @@ supabase/
 ### Core Concepts
 
 #### 1. **State Management Strategy**
-- **Global Auth**: `AuthContext` (React Context) - authentication state with auto session refresh
+- **Global Auth**: `AuthContext` (React Context) - authentication state; token refresh is the Supabase client's `autoRefreshToken`, AuthContext re-validates on tab focus
 - **Server State**: `TanStack Query` - data fetching, caching, real-time subscriptions
 - **UI State**: React hooks (`useState`) - dialogs, forms, selected items
 - **Complex UI State**: `useSidebarState` hook - manages sidebar panels and dialog states
@@ -138,7 +140,7 @@ useAccommodationsRealtime() → .channel() → .on('postgres_changes')
  └─ Component auto-re-renders
 ```
 
-Real-time hooks exist for: accommodations, activities, reservations, trip details, the calendar view (trip-wide `useCalendarRealtime`), exchange rates, invite links, and live viewing presence (`trip_view_status`). AI chat streams over SSE, not a realtime subscription.
+Real-time hooks exist for: accommodations, activities, reservations, invite links, travelers (`trip_shares`), the calendar view (trip-wide `useCalendarRealtime`), the map (`useMapRealtime`), and viewing status (`useTripViewingStatus` — a `postgres_changes` channel over a 30s `presence_updated_at` heartbeat, not Supabase Presence). Exchange rates subscribe inline in `budget/utils/currencyConverter.ts`. `useTripSubscription` (trip row) is currently a disabled no-op. AI chat streams over SSE, not a realtime subscription.
 
 #### 3. **Data Flow Pattern**
 ```
@@ -163,11 +165,11 @@ PostgreSQL database
 
 #### 5. **AI Chat Integration**
 - Chat interface: `AIAssistantPanel` (`src/components/trip/ai-assistant/`) — combined chat + document extraction surface, mounted via `AIAssistantDrawer` (mobile full-screen) and `AssistantDock` (desktop: docked beside the timeline, collapsible to a floating button, floating overlay over the full-width calendar)
-- Backend: client calls Express (`POST /api/trips/:id/assistant`, streaming SSE via `useAIAssistant`), which drives Gemini 2.5 Flash with `find_place` (Google Places) + `search_web` (Serper) function calling; the `ai-chat` Edge Function mirrors this. Strict link policy: only tool-returned URLs are allowed, others are rewritten to Google Search
+- Backend: client calls Express (`POST /api/trips/:id/assistant`, streaming SSE via `useAIAssistant`), which **proxies to the `ai-chat` Edge Function**. The Edge Function drives Gemini 2.5 Flash with `find_place` (Google Places) + `search_web` (Serper) function calling and returns the 429s, so chat-behaviour changes need an Edge Function redeploy. Only the anon route (`/api/trips/:tripId/assistant/anon`) calls Gemini from Express, with no tools. Strict link policy: only tool-returned URLs are allowed, others are rewritten to Google Search
 - Structured outputs: ` ```create_items ` blocks add accommodations/transportation/activities/reservations to the itinerary; ` ```place_cards ` render rich cards with "Add to trip" and, for stays, "Book on Expedia" affiliate links
 - Document extraction: `parse-travel-doc` Edge Function (Gemini vision OCR, images/PDFs ≤15 MB, up to 10 items per document)
 - Data: `ai_chat_threads` + `ai_chat_messages` tables; `user_ai_usage` tracks usage
-- Limits: anonymous visitors get a 5-message trial on public trips (`/assistant/anon`). Signed-in chat is **unlimited on every tier** but rate-limited to **15 messages/minute** (429 `RATE_LIMITED` with `retryAfter`) as a human-pace guard; doc imports (OCR) are capped at **20/day for every tier** (429 `DAILY_LIMIT_REACHED`), enforced inside `parse-travel-doc` itself. Both enforced via the `increment_ai_usage`/`increment_ai_import_usage` RPCs (single source of truth; profile columns `ai_messages_limit`/`ai_imports_limit` remain per-user operator overrides — `-1` = unlimited, and a non-negative message limit re-enables a daily cap as a kill-switch). `PaywallModal` now pitches the Print Studio
+- Limits: anonymous visitors get a 5-message trial on public trips (counted client-side in sessionStorage; the server only applies 10 requests/15 min per IP). Signed-in chat is **unlimited on every tier** but rate-limited to **15 messages/minute** (429 `RATE_LIMITED` with `retryAfter`) as a human-pace guard; doc imports (OCR) are capped at **20/day for every tier** (429 `DAILY_LIMIT_REACHED`), enforced inside `parse-travel-doc` itself. Both enforced via the `increment_ai_usage`/`increment_ai_import_usage` RPCs (single source of truth; profile columns `ai_messages_limit`/`ai_imports_limit` remain per-user operator overrides — `-1` = unlimited, and a non-negative message limit re-enables a daily cap as a kill-switch). `PaywallModal` now pitches the Print Studio
 - Context: Includes trip details in system prompt for location-specific recommendations
 
 #### 6. **Component Patterns**
@@ -185,10 +187,9 @@ PostgreSQL database
 - Real-time subscriptions keep data fresh
 - Shared trip permissions checked via `useTripPermissions()`
 
-**Forms**
-- `react-hook-form` for state management
-- `zod` for validation schemas
-- `Shadcn/ui` form components for consistent styling
+**Forms & toasts**
+- `react-hook-form` + `zod` (`zodResolver`) + Shadcn/ui form components (about 9 feature files use them; not every dialog does)
+- Toasts: Sonner for new code (a few older files still use the shadcn `use-toast`)
 
 **Dialogs**
 - `Shadcn/ui` Dialog primitive (Radix UI based)
@@ -211,7 +212,7 @@ Key tables:
 - `day_activities` / `day_activity_travelers` - Activities and assignments
 - `accommodations` / `accommodations_days` / `accommodation_travelers` - Hotel bookings
 - `transportation` / `transportation_travelers` - Flight/train/car bookings
-- `reservations` / `reservation_travelers` - Dining reservations (`reservation_time` + optional `end_time`; a NULL end is read as 90 minutes by duration-shaped surfaces — see `src/utils/timeUtils.ts`)
+- `reservations` / `reservation_travelers` - Dining reservations (`reservation_time` + optional `end_time`; create paths write a 90-minute default end, and only the iCal feed reads a NULL end as +90 min via `effectiveReservationEnd` in `src/utils/timeUtils.ts`)
 - `trip_shares` - Trip sharing & permissions
 - `trip_invite_links` - Link-based invites (permission + optional expiry)
 - `profiles` - User profiles (auto-created on signup; holds `subscription_tier` + AI limits)
@@ -242,10 +243,10 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useSessionKeepAlive()` - Session management with tab visibility detection
 - `useTripTimezone()` / `useResolveTimezone()` - Trip default timezone + place→IANA resolution (lazy, self-healing)
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
-- `useTripSubscription()` - Trip-wide realtime for detail views (lives in `components/trip/details/`)
+- `useTripSubscription()` - Trip-row realtime for detail views — **currently a no-op** (body disabled; lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
 - `usePublicTrips()` - Explore showcase trips, grouped by region on `/explore` via `lib/regions.ts` and cross-linked by `RelatedItineraries` at the foot of every public trip page (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`). Showcase dates are kept evergreen by the operator-only `roll_public_trip_dates()` SQL function (run each January)
-- `useIsAdmin()` - Admin role checking
+- `useIsAdmin()` - Admin role checking (reads `profiles.is_admin`)
 - `usePWAInstall()` - PWA install prompt
 - `useWeather()` - Weather data fetching
 - `useDocumentExtraction()` - Travel document parsing
@@ -255,7 +256,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useVersionCheck()` - App version update detection
 - `useBufferedStreaming()` - Buffered AI streaming responses
 - `useVisualViewport()` - Mobile viewport handling
-- `useRealtimeSubscription()` - Generic real-time subscription helper (**dedupes by `channelKey` in a module-level Set** — two views sharing a key means the second one gets no events)
+- `useRealtimeSubscription()` - Generic real-time subscription helper (**dedupes by `channelKey` in a module-level Set** — two views sharing a key means the second one gets no events; pass `dedup: false` for a per-instance channel, as `useSidebarState` does)
 - `useTripMapData()` / `usePlaceCoordinates()` / `usePlayback()` / `useMapRealtime()` - Map view data, geocoding, route playback, realtime (live in `components/trip/map/`)
 - `useFirstRun()` - One-time discovery hints (`first-trip`, `map-view`, `calendar-sync`, `share-trip`, `doc-import`, `live-collab`)
 
@@ -281,39 +282,38 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 11. **Stripe Integration**
 - Pro subscription billing via `server/routes/stripe.ts` — checkout, webhook, billing portal, cancel-at-period-end + reactivate (UI in `Profile.tsx`)
-- **WanderLuxe Pro = $3.99/mo** and gates the **Print Studio** (see §23). The webhook sets `profiles.subscription_tier`; AI limits are identical on both tiers (`ai_messages_limit=-1`, `ai_imports_limit=20`) — chat is free product-wide, the OCR cap is universal abuse protection
+- **WanderLuxe Pro = $3.99/mo** (inline `price_data`, `unit_amount: 399` — no Stripe price-ID env var) and gates the **Print Studio** (see §23). The webhook sets `profiles.subscription_tier`; AI limits are identical on both tiers (`ai_messages_limit=-1`, `ai_imports_limit=20`) — chat is free product-wide, the OCR cap is universal abuse protection
 - Stripe SDK v20+ in dependencies
 
 #### 12. **Admin Dashboard**
 - Components in `src/components/admin/` — single-scroll sections: AI Insights, Pulse KPIs, sign-in trend, action breakdown, engagement frequency, sharing
 - **AI Insights**: `server/routes/admin-insights.ts` streams Gemini-generated platform analysis (admin-only, rate-limited 10/hr, saved to `admin_insights`)
-- Data via `useAdminMetrics()` + `useAdminInsights()`; protected via `useIsAdmin()` hook (`VITE_ADMIN_EMAIL`)
+- Data via `useAdminMetrics()` + `useAdminInsights()`; protected via `useIsAdmin()` (`profiles.is_admin`, not an email match)
 
 #### 13. **PWA Support**
 - `public/manifest.json` + `public/sw.js` for installable app
-- PWA icons at multiple resolutions (144, 192, 384, 512)
 - `usePWAInstall()` hook for install prompt
 - **Version stamping**: `vite.config.ts` emits `dist/version.json` and injects `__APP_SHA__` into `sw.js` at build time; `useVersionCheck()` polls `version.json` to detect updates
 
 #### 14. **Weather Integration**
 - Provider: **OpenWeatherMap** (`weather-proxy` Edge Function: geocoding + current conditions + 5-day/3-hour forecast condensed to daily highs/lows)
 - Caching: 6h server-side in `weather_cache`; 30-min client staleTime in `useWeather()`
-- UI: `DayWeatherBadge` on timeline days + `WeatherDetailModal` (`src/components/trip/weather/`)
+- UI: `DayWeatherBadge` on timeline days (`trip/timeline/`) + `WeatherDetailModal` (`trip/weather/`)
 
 #### 15. **Eval Harness** (`evals/`)
-- **On-demand only**: `npm run evals` (never in CI; `npm test` excludes `evals/` — eval files use the `.eval.ts` suffix, helper logic uses `.test.ts` and DOES run in CI)
+- **On-demand only**: `npm run evals` (never part of `npm test`: the root `vitest.config.ts` include globs don't match the `.eval.ts` suffix; helper logic uses `.test.ts` and DOES run in `npm test`)
 - **Suites**: `evals/mcp` (deterministic MCP tool + auth/RLS/discovery checks, no LLM cost), `evals/chat` (hybrid: deterministic asserts + Gemini-as-judge, pass ≥ 3.5/5, N=1 so judge scores vary run-to-run — the scorecard records raw scores for drift), `evals/parsing` (golden-file grading vs the **deployed** `parse-travel-doc`, pass ≥ 90% field accuracy; text fixtures are wrapped in PDFs via `evals/helpers/textToPdf.ts` since the function rejects non-image/non-PDF uploads)
 - **Fixtures**: dedicated eval user (`EVAL_USER_EMAIL`/`EVAL_USER_PASSWORD` in `.env`) in the prod Supabase project with two fixed-UUID trips (`evals/fixtures/trips.ts`); `npm run evals:seed` is idempotent (ownership-guarded) and resets chat history + AI usage
 - **Server**: `evals/globalSetup.ts` spawns Express from the working tree on port 8090 (override with `EVALS_SERVER_URL`); chat cases proxy to the **deployed** ai-chat Edge Function, so Edge Function changes need a redeploy before chat evals reflect them
 - **Results**: `evals/results/<timestamp>.json` (gitignored) + console summary table; status `error` = infra flake (retried once), distinct from `fail` = quality regression
-- **Helper unit tests** (`evals/helpers/*.test.ts`, node-env via `// @vitest-environment node`) run in the main CI suite — SSE parsing, scorecard math, field comparison, retry, text-to-PDF
+- **Helper unit tests** (`evals/helpers/*.test.ts`, node-env via `// @vitest-environment node`) run in `npm test` — SSE parsing, scorecard math, field comparison, retry, text-to-PDF
 
 #### 16. **Calendar View & iCal Feed**
 - `src/components/trip/calendar/` — `TripCalendarView` (lazy-loaded FullCalendar time grid), one arm of the three-way view switch in `TimelineView.tsx`
 - Defaults: 3-day view anchored at trip start (today if mid-trip); dense 7am–10pm slot window with a show-full-day toggle (`slotWindow.ts`)
 - `eventMapping.ts` maps trip entities → events; drag/resize applies minimal mutations (`calendarMutations.ts`); click-to-edit opens entity dialogs; `AddEntityPicker` for empty-slot adds
 - Chips (`CalendarEventChip` + `calendarTheme.css`, with timezone badges), desktop hover peek (`CalendarEventPeek`/`peekFacts.ts`)
-- **Pastel category colours**: blocks are painted by the timeline's `getEventCategory` (sage activity, ocean water/ferry, clay dining, slate transport, lodging stays), not by entity type — `eventMapping.ts` stores `extendedProps.category`, `eventClassNames` emits `wl-cat-*`, and the chip icon takes the full-strength `CATEGORY_ICON_CLASS` ink, so calendar and timeline share one colour language. Pastels sit near OKLCH L .92 so text stays AA
+- **Pastel category colours**: blocks are painted by the timeline's `getEventCategory` (sage activity, ocean water/ferry, clay dining, slate transport, lodging stays), not by entity type — `eventMapping.ts` stores `extendedProps.category`, `TripCalendarView`'s `eventClassNames` emits `wl-cat-*` (styled in `calendarTheme.css`), and the chip icon takes the full-strength `CATEGORY_ICON_CLASS` ink from `timeline-utils.ts`, so calendar and timeline share one colour language. Pastels sit near OKLCH L .92 so text stays AA
 - **Rental cars in the feed**: a `rental_car` leg is emitted as two short bookends (`-pickup` 60 min, `-return` 30 min UIDs) rather than one pickup→return block — a multi-day span would sit "in progress" all week and read as the current/next event on a phone. Other multi-day legs (red-eyes, overnight trains) stay a single timed event; you really are on them. Mirrors the timeline's rental split in `useDayTimeline.ts`
 - **iCal feed**: `server/routes/calendar.ts` serves `GET /api/trips/:tripId/calendar.ics?token=…` built by `server/lib/icalFeed.ts` (ical-generator; floating times, stable UIDs, zone text in summaries). Gated by `trips.calendar_feed_token`/`calendar_feed_enabled`; `CalendarSyncSheet` + `useCalendarFeed` handle subscribe URL (Google/Apple/Outlook), `.ics` download, token reset, and disable
 
@@ -360,17 +360,14 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 - Keys (`DiscoveryKey`): `first-trip` (a trip with days but no items; renders the three-way "Nothing planned yet" banner in `TimelineView`, and blank days collapse to one line via `quietEmptyDays` until the first item lands), `map-view`, `calendar-sync`, `share-trip` (3+ items, nobody else on the trip), `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
 #### 23. **Print Studio (Pro feature)**
-- The paid feature: an AI-art-directed printable keepsake itinerary. Entry: one **Print** button in the TimelineView toolbar opens `PrintStudioDialog`, which holds both halves — a free **Simple PDF** section (`SimplePdfSection.tsx`, the pdfmake export of §7) above a **Studio edition** section. Pro members get the theme field; free members see their own trip rendered by `PrintDocument` in the fixed `SAMPLE_TEASER_DESIGN` (`src/lib/printDesign/sample.ts`) — no AI call, no invented prose — with the upgrade button beneath. Anyone with trip access can open existing editions.
-- **Division of labor is the design invariant**: the model (ChatGPT API) is creative director only — it returns a `PrintDesignSpec` (palette, font-pairing id, motif id, editorial copy incl. per-day captions) through a strict json_schema; the renderer draws **every itinerary item from the DB** via the same `fetchPdfTripData` module the PDF export uses, so model output can degrade style, never content
-- **Shared contract**: `src/lib/printDesign/spec.ts` (dependency-free; imported by both client and server) — registries (`FONT_PAIRINGS` → Google Fonts pairs, `MOTIFS`, `PRINT_LAYOUTS`) + `sanitizePrintDesign`. Colour lives in `color.ts` (WCAG contrast + OKLCH) and `palette.ts` (`resolvePalette`). The sanitizer works for **legibility, not taste**: any page colour, surface and fill passes through (saturated, dark, neon), and only the text roles are adjusted — in OKLCH lightness, hue and chroma held — until they clear `PALETTE_FLOORS` (ink/muted/secondary/primary 4.5:1, accent 3:1). A text colour is never swapped for another role's. Each fill gets a text colour that clears 4.5:1 on it. Also registry-id fallbacks, copy length clamps, captions restricted to real trip dates; `auditPrintPalette` reports every colour change for the server log
-- **House voice**: `src/lib/printDesign/voice.ts` (shared, dependency-free) holds both halves of the anti-slop rule so they cannot drift — `VOICE_RULES` is injected into the generation prompt, and `findSlop` gates what comes back. Prose fields that break it (banned words, travel clichés, binary contrasts, puffery, recap endings) are **dropped to their fallback rather than printed**; em dashes are repaired to commas first. `cover.subtitle` is exempt — it is the traveler's own place names, not the model's prose. `auditPrintCopy` logs every drop with its reason so voice drift is visible instead of silent
-- **Editing the words**: an edition's AI prose is the traveler's to rewrite. `src/lib/printDesign/edits.ts` (shared, dependency-free) holds the contract — `EDITABLE_FIELDS` (cover title/tagline/route, edition name + note, intro, sign-off, plus one caption per day), `sanitizeCopyOverrides`, `applyCopyOverrides`, `pruneCopyOverrides`. Edits are stored in `copy_overrides` as a **layer over** `design`, never replacing it, so per-field revert is free and the model's version stays auditable. **The house-voice gate deliberately does NOT apply to human writing** — `cleanUserCopy` collapses whitespace, strips control characters and clamps length, but never runs `findSlop`; blanking a required slot (cover title, edition name, sign-off) falls back to the AI's line, blanking an optional one deletes it. Editing happens *in place on the document* (`EditableCopy.tsx` + the `renderCopy` prop on `PrintDocument`), because the only way to judge a line is to see it set in the face and colour it will print in
-- **Live vs. finalized**: an edition renders from **current** trip data until someone finalizes it, so a design made mid-planning keeps up with the plan. `POST /api/trips/:tripId/print-design/:designId/finalize` (`{ finalize: bool }`, edit permission, no Pro check) freezes the itinerary into `content_snapshot` and the page then renders from that. The snapshot holds **raw rows** (`server/lib/printSnapshot.ts`), not a rendered file, and is replayed through the same `buildPdfTripData` projection a live edition uses — `src/services/pdf/data.ts` is split into `fetchTripRows` (the only Supabase round trip) + `buildPdfTripData` (projection) for exactly this. The shape contract between server and renderer is held by `src/services/pdf/snapshot.test.ts`. Finalizing is taken server-side under the service role so the record stays truthful; the RLS UPDATE policy also stops accepting copy edits once `finalized_at` is set, so reopening runs through the route
-- **Server**: `server/routes/print-design.ts` (`POST /api/trips/:tripId/print-design`) — JWT auth + trip access + `subscription_tier === 'pro'` + 10 generations/user/day (counted from `trip_print_designs`); `server/lib/printDesign.ts` serializes the full trip server-side (clamped: ≤40 days, ≤20 activities/day), calls OpenAI chat completions with `response_format: json_schema (strict)`, sanitizes, stores the row. User theme text is quoted and pinned as "styling preference only" (prompt-injection blast radius = copy text, which is length-clamped)
-- **Output page**: `/trip/:tripId/print/:designId` (`src/pages/PrintItinerary.tsx`, lazy) — loads the design row (RLS: `can_access_trip`) + trip data, injects the pairing's Google Fonts, renders `PrintDocument` (`print-studio/PrintDocument.tsx` + `printDocument.css`, stroke-based SVG `motifs.tsx`). Printing = native browser dialog (`window.print()`); **AppLayout deliberately renders no nav/footer on `/trip/*/print/*`** so app chrome never reaches the printed page. Two layouts, chosen by the model per edition (`design.layout`; absent = editorial): **editorial** carries structure in type + hairline rules; **bold** (`[data-layout='bold']` in `printDocument.css`) paints the palette's fills into the cover and closing panels, section bands, day-number badges, item icons and table heads, and every piece of text inside a shape uses that fill's sanitizer-chosen text colour. `print-color-adjust: exact` makes both print their colour
-- **Money stays off the page**: an edition never prints per-item prices. The Ledger (spend by category against the trip budget) is opt-in per print via the toolbar's **Budget** toggle (`?budget=1`, deliberately not stored on the edition), and the generation payload omits costs, the budget and other expenses entirely, so the AI's copy has no prices to quote
-- Rollout note: designs are stored, so an edition stays openable even if generation is later disabled; deleting is creator-only (RLS)
-- **Landing page**: `components/landing/sections/PrintStudioShowcase.tsx` + `components/landing/print-showcase/` — a five-step demo (timeline → simple PDF → edition → rewritten words → print) that runs the real `PrintDocument` and `EditableCopy` over committed fixtures, so it cannot drift from the product and makes no API or Supabase calls at runtime (only the edition's Google Fonts load). The stage is a lazy chunk mounted near the viewport. The stage keeps one height across its steps, and a short autoplay (01 → 03) starts when it is 40% visible and ends at the first interaction. Regenerate the fixtures with `npm run build:print-showcase` (needs `OPENAI_API_KEY`, three model calls; the PDF-page image step renders page 2 at 2x via `scripts/pdf-page-to-png.swift`, CoreGraphics — needs macOS with the Xcode command line tools); `print-showcase/showcase.test.ts` holds the committed editions to the sanitizer and the house voice
+Full contract: **`docs/print-studio.md` — read it before changing `src/lib/printDesign/`, `components/trip/print-studio/`, `components/landing/print-showcase/`, `server/routes/print-design.ts` or `server/lib/print*.ts`.** Core rules:
+- One **Print** button (TimelineView toolbar) opens `PrintStudioDialog`: a free Simple PDF section (§7) above the Studio edition. Free members see their own trip in the fixed `SAMPLE_TEASER_DESIGN` (no AI call)
+- **The model is creative director only**: OpenAI returns a `PrintDesignSpec` (palette, font pairing, motif, layout, copy) through a strict json_schema; every itinerary item is drawn from the DB via the PDF export's data module, so model output can degrade style, never content
+- `sanitizePrintDesign` (`src/lib/printDesign/spec.ts`, shared client/server) fixes **legibility, not taste**: only text colours move (OKLCH lightness, hue and chroma held) until they clear `PALETTE_FLOORS`. AI prose that fails the house voice (`voice.ts` `findSlop`) is dropped to its fallback
+- Traveler edits live in `copy_overrides`, a layer over `design`; **the house-voice gate never applies to human writing** (`edits.ts`)
+- An edition renders from live trip data until finalized; finalizing (server route, service role) freezes raw rows into `content_snapshot`, replayed through `buildPdfTripData`
+- An edition never prints prices: the Ledger is opt-in per print (`?budget=1`) and the generation payload omits all costs
+- Output page `/trip/:tripId/print/:designId` renders with no app chrome (AppLayout skips nav/footer there)
 
 ## Common Development Tasks
 
@@ -383,32 +380,17 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 6. Update trip details route in `App.tsx` if new tab needed
 
 ### Adding API Endpoint
-1. Create route in `server/routes/`
-2. Add endpoint to Express server in `server/index.ts`
-3. Handle CORS and error responses
-4. Call Supabase client for database operations
-5. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, Mailgun)
+1. Create a router in `server/routes/`
+2. Register it in `registerRoutes()` (`server/routes/index.ts`), which `server/index.ts` mounts before `express.static` and the SPA catch-all
+3. Express uses the service-role key and bypasses RLS, so do your own auth + trip-access check (see `canAccessTrip` in `ai-chat.ts`)
+4. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, Mailgun)
 
 ### Adding Database Table/Migration
-1. Create SQL file in `supabase/migrations/`
-2. Define RLS policies for security
-3. Apply migration via Supabase dashboard or CLI
-4. Auto-generated types appear in `src/integrations/supabase/types/database.ts`
-5. Update TypeScript models in `src/integrations/supabase/types/models.ts`
-
-### Adding Form
-1. Use `react-hook-form` + `zod` schema
-2. Use Shadcn/ui form components from `src/components/ui/`
-3. Handle submission with React Query mutation
-4. Use optimistic updates for better UX
-5. Show error toasts via Sonner toast library
-
-### Working with Real-Time Data
-1. Use existing real-time hook or create new one following pattern in `src/hooks/`
-2. Hook fetches initial data with `useQuery()`
-3. Subscribe to table changes with `.channel()` and `.on('postgres_changes')`
-4. Update React Query cache with `.setQueryData()`
-5. No manual re-render needed - React Query triggers it
+1. Create SQL file in `supabase/migrations/`, with RLS policies
+2. Apply it (Supabase MCP `apply_migration`, dashboard, or CLI). Nothing applies migrations automatically
+3. Types are **not** regenerated for you: use the Supabase MCP `generate_typescript_types` (reflects applied schema only) or hand-edit `src/integrations/supabase/types/database.ts`
+4. Update TypeScript models in `src/integrations/supabase/types/models.ts`
+5. New column on an existing entity? See **Gotchas** — there are many write sites
 
 ## Important Files & Patterns
 
@@ -419,19 +401,13 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 | `contexts/AuthContext.tsx` | Global authentication state |
 | `pages/TripDetails.tsx` | Trip detail page wrapper |
 | `components/trip/*/` | Feature-specific components |
-| `hooks/use*Realtime.ts` | Real-time data hooks |
+| `hooks/use*Realtime.tsx` + `hooks/useRealtimeSubscription.ts` | Real-time data hooks + shared subscription helper |
 | `integrations/supabase/` | Supabase types & client (auto-generated) |
 | `services/` | Business logic layer |
 | `server/routes/stripe.ts` | Stripe payment routes |
 | `server/routes/mcp.ts` + `server/lib/mcpTools.ts` | MCP server & 20-tool registry |
 | `server/routes/calendar.ts` + `server/lib/icalFeed.ts` | Token-gated iCal feed |
-| `server/routes/print-design.ts` + `server/lib/printDesign.ts` | Print Studio generation (OpenAI, Pro-gated) + finalize endpoint |
-| `server/lib/printSnapshot.ts` | Frozen-itinerary snapshot for a finalized edition (raw rows, service role) |
-| `src/lib/printDesign/spec.ts` | Print Studio design-spec contract + sanitizer (shared client/server) |
-| `src/lib/printDesign/edits.ts` | Editable-copy contract — override layer, human-copy sanitizer (no slop gate) |
-| `src/lib/printDesign/sample.ts` | Fixed sample design for the free Studio preview (no AI call, no prose) |
-| `components/trip/print-studio/` | Print Studio dialog, document renderer, motifs |
-| `components/landing/print-showcase/` | Landing-page Print Studio demo — fixture, generated editions, interactive stage |
+| `docs/print-studio.md` | Print Studio contract + file map (generation, sanitizer, voice, edits, finalize, showcase) |
 | `components/trip/calendar/` | FullCalendar view, sync sheet, calendar hooks |
 | `components/trip/map/` | Trip map view — stop model, route playback, geocoding |
 | `components/trip/day/components/timeline-utils.ts` | Pure timeline logic (periods, grouping, categories) |
@@ -440,24 +416,6 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 | `DESIGN.md` + `DESIGN.json` | Full design-system spec (palette hexes, type scale, component rules) — **read before visual work** |
 | `vitest.config.ts` | Test configuration |
 | `sonar-project.properties` | SonarQube scan config (`reminiscent-io_wanderluxe`) |
-
-## Performance Considerations
-
-- **React Query Caching**: Server state cached aggressively; use `refetchInterval` or invalidation for updates
-- **Real-time Subscriptions**: Cheaper than polling; multiple subscriptions per page are normal
-- **Code Splitting**: Vite handles automatic chunking; routes lazy-loaded
-- **Image Optimization**: Use Unsplash for images (no local asset bloat)
-- **Database Queries**: RLS policies enforce filtering at database level (efficient)
-- **Optimistic Updates**: Use React Query's `setQueryData()` for instant UI feedback
-
-## Security Notes
-
-- **RLS Policies**: All user-facing tables have RLS; database enforces access control
-- **Trip Ownership**: Verified in RLS policies; can't access others' trips directly
-- **Shared Trips**: `trip_shares` table with view/edit permission levels
-- **Auth**: Supabase Auth with Google OAuth; token auto-refresh via AuthContext
-- **Validation**: Zod schemas on frontend; backend re-validates with RLS
-- **Session Keep-Alive**: `useSessionKeepAlive()` handles tab visibility and token refresh
 
 ## Environment Variables
 
@@ -471,8 +429,7 @@ Required in `.env`:
 - `AERODATABOX_API_KEY` - (Edge Function secret) RapidAPI key for AeroDataBox; consumed by the `flight-status-proxy` Edge Function. Required for the flight-number lookup button in the transportation dialog. Free tier: 600 calls/month.
 - `STRIPE_SECRET_KEY` - Stripe payment processing
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
-- `VITE_UNSPLASH_ACCESS_KEY` - Trip images (optional)
-- `VITE_ADMIN_EMAIL` - Admin user email
+- `VITE_UNSPLASH_ACCESS_KEY` / `VITE_ADMIN_EMAIL` - declared in the `src/config/env.ts` schema but not read anywhere (admin access is `profiles.is_admin`)
 - `VITE_PARSE_TRAVEL_DOC_URL` - Travel document parsing endpoint
 - `MCP_PUBLIC_BASE_URL` - Public base URL advertised by the MCP server (OAuth discovery)
 - `OPENAI_API_KEY` - (server) ChatGPT API key for Print Studio design generation (`server/routes/print-design.ts`); the route 503s without it
@@ -492,15 +449,16 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `CRON_SECRET` - auth for scheduled functions (`send-trip-reminders`, `update-exchange-rates`)
 - `ALLOWED_ORIGIN` - CORS origin for Edge Functions (defaults to `https://wanderluxe.io`)
 
-## Debugging Tips
+## Gotchas
 
-- **React Query DevTools**: Not included; can be added for development
-- **Supabase Studio**: Direct database inspection and RLS testing
-- **Console Logs**: Check for real-time subscription errors
-- **Network Tab**: Verify Supabase API calls and WebSocket connections
+- **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `DayActivityManager.tsx`, `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
+- **FK delete rules aren't in `supabase/migrations/`** (the base schema predates them). `accommodations_days.day_id → trip_days` is NO ACTION, so delete those rows before deleting trip days (`tripWrites.ts` does)
+- **Merged ≠ applied**: check the live schema before assuming a migration is in prod. The typed client doesn't error on unknown columns passed as variables, so `tsc` won't catch a missing generated type
+- **Edge Functions reject `localhost:8080`**: the CORS allowlist in `supabase/functions/_shared/cors.ts` is `ALLOWED_ORIGIN` + `*.replit.*`. Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function
+- **Tests in a checkout without `.env`** (e.g. a fresh worktree) fail at collection when the import graph reaches `@/integrations/supabase/client`, because `validateEnv()` throws. Add `vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))` inline, as ~25 test files already do; don't loosen `validateEnv`
 - **TypeScript**: `strict` is **off** (`strict: false` in `tsconfig.app.json`, `strictNullChecks: false` in `tsconfig.json`); only `noImplicitAny` is on
-- **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something — compare against a pre-change run, or grep the output for the files you touched
-- **ESLint**: Run `npm run lint` to catch code quality issues
+- **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something; compare against a pre-change run, or grep the output for the files you touched
+- **No CI**: nothing runs tests on push. SonarCloud (`sonar-project.properties`) only scans, and counts only `src/` tests as tests
 
 ## Deployment
 
@@ -510,7 +468,3 @@ Deployed via Replit Autoscale targeting Cloud Run (`deploymentTarget = "cloudrun
 2. Run: `npm run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
 3. Set environment variables in the Replit deployment, including the server-only `SUPABASE_SERVICE_ROLE_KEY`
 4. Database migrations applied via Supabase dashboard/CLI; Edge Functions deployed via Supabase
-
-## Browser Support
-
-Modern browsers with ES2020+ support. Mobile-first responsive design works on all device sizes.
