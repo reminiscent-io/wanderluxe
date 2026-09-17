@@ -24,7 +24,7 @@ import { buildPdfTripData, fetchPdfTripData, type PdfTripRows } from '@/services
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import { getFontPairing, themeNameEndsInEdition, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import {
   applyCopyOverrides,
   countCopyEdits,
@@ -379,7 +379,8 @@ const PrintItinerary: React.FC = () => {
               <p className="hidden min-w-0 flex-1 truncate text-center text-sm text-muted-foreground sm:block">
                 {design ? (
                   <>
-                    The <span className="font-medium text-foreground">{design.themeName}</span> Edition
+                    The <span className="font-medium text-foreground">{design.themeName}</span>
+                    {themeNameEndsInEdition(design.themeName) ? null : ' Edition'}
                     {isFinalized && <span className="text-muted-foreground"> · finalized</span>}
                     {!isFinalized && editCount > 0 && (
                       <span className="text-muted-foreground"> · your words</span>

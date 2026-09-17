@@ -245,6 +245,15 @@ function cleanCopy(v: unknown, maxLen: number, mode: CopyMode, fallback = ''): s
 }
 
 /**
+ * True when a theme name already ends in its own "Edition". The renderers set
+ * the name inside "The ___ Edition", so a name like "Sun-Bleached Edition",
+ * whether the model's or the traveler's, must not print the word twice.
+ */
+export function themeNameEndsInEdition(themeName: string): boolean {
+  return /\bedition\s*$/i.test(themeName);
+}
+
+/**
  * Validate + clamp a raw model response into a renderable PrintDesignSpec.
  *
  * Sanitizes for legibility, not taste. Guarantees, regardless of input:
@@ -303,7 +312,7 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
   }
 
   return {
-    themeName: cleanCopy(r.themeName, 60, 'prose', 'Traveler’s Edition'),
+    themeName: cleanCopy(r.themeName, 60, 'prose', 'Traveler’s'),
     themeRationale: cleanCopy(r.themeRationale, 240, 'prose'),
     palette,
     fontPairing,
