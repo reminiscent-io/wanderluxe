@@ -1,0 +1,22 @@
+{
+  "duration": 21.6,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#chat-row", "bySec": 1.0 },
+    { "kind": "appearsBy", "selector": "#daycard", "bySec": 4.9 },
+    { "kind": "appearsBy", "selector": "#msg-extract", "bySec": 7.0 },
+    { "kind": "before", "a": "#msg-user", "b": "#msg-extract" },
+    { "kind": "appearsBy", "selector": "#rowF .row-in", "bySec": 9.0 },
+    { "kind": "before", "a": "#msg-extract", "b": "#rowF .row-in" },
+    { "kind": "appearsBy", "selector": "#p3", "bySec": 11.4 },
+    { "kind": "before", "a": "#p1", "b": "#p3" },
+    { "kind": "appearsBy", "selector": "#ed0", "bySec": 14.3 },
+    { "kind": "appearsBy", "selector": "#ed2", "bySec": 16.5 },
+    { "kind": "before", "a": "#ed1", "b": "#ed2" },
+    { "kind": "appearsBy", "selector": "#d-word", "bySec": 17.9 },
+    { "kind": "appearsBy", "selector": "#d-cta", "bySec": 19.0 },
+    { "kind": "staysInFrame", "selector": "#l1" },
+    { "kind": "staysInFrame", "selector": "#l2" },
+    { "kind": "staysInFrame", "selector": "#l3" },
+    { "kind": "keepsMoving" }
+  ]
+}

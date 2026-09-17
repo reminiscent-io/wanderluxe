@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>WanderLuxe — brag</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "DM Serif Display";
+        src: url("assets/fonts/DMSerifDisplay-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Serif Display";
+        src: url("assets/fonts/DMSerifDisplay-Italic.ttf") format("truetype");
+        font-weight: 400;
+        font-style: italic;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Sans";
+        src: url("assets/fonts/DMSans-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "DM Sans";
+        src: url("assets/fonts/DMSans-Medium.ttf") format("truetype");
+        font-weight: 500;
+        font-style: normal;
+        font-display: block;
+      }
+
+      /* WanderLuxe tokens (DESIGN.md) */
+      :root {
+        --cream: #fdfcf8;
+        --vellum: #faf8f5;
+        --sand-50: #faf9f7;
+        --linen: #eee7da;
+        --tea: #eddcc8;
+        --edge: #ddd4c8;
+        --ink: #211f1b;
+        --earth-600: #5c544a;
+        --earth-500: #6b6354;
+        --earth-400: #8a7f6c;
+        --earth-200: #c7beb6;
+        --earth-100: #e6e2de;
+        --bronze: #603d2e;
+        --rust: #c2410c;
+        --clay-fire: #9a3412;
+        --danger-ink: #a93e32;
+        --cat-slate: #535b6c;
+        --cat-sage: #476348;
+        --cat-clay: #7e4d36;
+        --shadow-sm: 0 2px 6px 0 rgba(139, 119, 93, 0.12), 0 2px 4px -2px rgba(139, 119, 93, 0.1);
+        --shadow: 0 10px 28px -6px rgba(139, 119, 93, 0.2), 0 4px 12px -4px rgba(139, 119, 93, 0.12);
+        --shadow-lg: 0 24px 60px -12px rgba(139, 119, 93, 0.28), 0 10px 24px -8px rgba(139, 119, 93, 0.14);
+        --serif: "DM Serif Display", serif;
+        --sans: "DM Sans", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--cream);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .abs {
+        position: absolute;
+      }
+      .serif {
+        font-family: var(--serif);
+        font-weight: 400;
+      }
+      /* Masked line reveal: each line rises out of its own box. */
+      .line {
+        display: block;
+        overflow: hidden;
+        padding-bottom: 0.1em;
+        margin-bottom: -0.1em;
+      }
+      .line-in {
+        display: block;
+        will-change: transform;
+      }
+
+      /* ---------- persistent paper ---------- */
+      #light {
+        position: absolute;
+        left: 760px;
+        top: -260px;
+        width: 1500px;
+        height: 1300px;
+        pointer-events: none;
+      }
+      #light-core {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(237, 220, 200, 0.95), rgba(237, 220, 200, 0.45) 55%, rgba(237, 220, 200, 0) 100%);
+        opacity: 0.5;
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-repeat: repeat;
+      }
+      #paper-grain {
+        opacity: 0.055;
+        mix-blend-mode: multiply;
+        z-index: 50;
+      }
+
+      /* ---------- running head ---------- */
+      .rh-label {
+        top: 46px;
+        font-family: var(--sans);
+        font-weight: 500;
+        font-size: 20px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+        line-height: 26px;
+      }
+      #rh-left {
+        left: 120px;
+      }
+      #rh-right {
+        right: 120px;
+        display: flex;
+        gap: 10px;
+        font-variant-numeric: tabular-nums;
+      }
+      #folio {
+        position: relative;
+        width: 30px;
+        height: 26px;
+      }
+      #folio span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+      }
+      #folio #f1 {
+        opacity: 1;
+      }
+      #rh-rule {
+        left: 120px;
+        top: 94px;
+        width: 1680px;
+        height: 2px;
+        background: var(--edge);
+        transform-origin: left center;
+      }
+
+      /* ---------- scene 1: the spreadsheet ---------- */
+      #chat {
+        left: 120px;
+        top: 214px;
+        width: 560px;
+      }
+      #chat-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+      }
+      .avatar {
+        width: 60px;
+        height: 60px;
+        flex: 0 0 60px;
+        border-radius: 50%;
+        background: var(--tea);
+        border: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 26px;
+        color: var(--earth-600);
+      }
+      .bubble {
+        background: var(--linen);
+        color: var(--ink);
+        font-size: 34px;
+        line-height: 1.3;
+        padding: 20px 30px 22px;
+        border-radius: 32px 32px 32px 8px;
+        max-width: 470px;
+      }
+      #typing {
+        margin: 16px 0 0 76px;
+        width: 116px;
+        height: 58px;
+        border-radius: 29px 29px 29px 8px;
+        background: var(--linen);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transform-origin: left bottom;
+      }
+      .tdot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--earth-400);
+      }
+
+      #sheet-wrap {
+        left: 720px;
+        top: 136px;
+        width: 1100px;
+        height: 548px;
+      }
+      #sheet {
+        width: 100%;
+        height: 100%;
+        background: var(--vellum);
+        border: 2px solid var(--edge);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .sheet-bar {
+        height: 56px;
+        background: var(--linen);
+        border-bottom: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 22px;
+      }
+      .win-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--edge);
+      }
+      .sheet-name {
+        margin-left: 14px;
+        font-weight: 500;
+        font-size: 22px;
+        color: var(--ink);
+      }
+      .grid-head,
+      .grid-row {
+        display: grid;
+        grid-template-columns: 56px 290px 220px 420px 1fr;
+      }
+      .grid-head {
+        height: 40px;
+        background: var(--linen);
+        border-bottom: 2px solid var(--edge);
+        font-weight: 500;
+        font-size: 18px;
+        color: var(--earth-500);
+      }
+      .grid-head > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 2px solid var(--edge);
+      }
+      #grid-body {
+        position: relative;
+      }
+      .grid-row {
+        height: 64px;
+        border-bottom: 2px solid var(--edge);
+      }
+      .grid-row > div {
+        border-right: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 26px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .grid-row > .rn {
+        justify-content: center;
+        padding: 0;
+        background: var(--linen);
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--earth-500);
+      }
+      .grid-row.hdr > div:not(.rn) {
+        font-weight: 500;
+        color: var(--earth-600);
+      }
+      .cell-t {
+        display: block;
+        will-change: clip-path;
+      }
+      .qq {
+        color: var(--danger-ink);
+        font-weight: 500;
+      }
+      .hl {
+        background: var(--tea);
+        border-radius: 6px;
+        padding: 2px 8px;
+        margin-left: -8px;
+      }
+      #cell-cursor {
+        left: 566px;
+        top: 128px;
+        width: 420px;
+        height: 64px;
+        border: 3px solid var(--bronze);
+        border-radius: 3px;
+        pointer-events: none;
+      }
+
+      #hook {
+        left: 120px;
+        top: 752px;
+        width: 1400px;
+        font-size: 104px;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+
+      .ghost {
+        width: 792px;
+        height: 116px;
+        left: 1004px;
+        border-radius: 12px;
+        background: var(--tea);
+        opacity: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+      #ghost3 {
+        top: 384px;
+      }
+      #ghost4 {
+        top: 512px;
+      }
+
+      /* ---------- scene 2: paste a confirmation ---------- */
+      #capA {
+        opacity: 0;
+        left: 120px;
+        top: 136px;
+        width: 820px;
+        font-size: 72px;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #assistant {
+        left: 120px;
+        top: 410px;
+        width: 780px;
+        height: 570px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        border-radius: 22px;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
+      .as-head {
+        height: 100px;
+        padding: 12px 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-bottom: 2px solid var(--edge);
+        background: var(--vellum);
+      }
+      .as-title {
+        font-size: 36px;
+        line-height: 1.1;
+        color: var(--ink);
+      }
+      .as-sub {
+        margin-top: 2px;
+        font-size: 20px;
+        color: var(--earth-500);
+      }
+      #msg-user {
+        right: 32px;
+        top: 124px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 26px 0 20px;
+        border-radius: 30px 30px 8px 30px;
+        background: var(--earth-500);
+        color: var(--cream);
+        font-weight: 500;
+        font-size: 22px;
+      }
+      #msg-user svg {
+        width: 26px;
+        height: 26px;
+      }
+      #msg-typing {
+        left: 32px;
+        top: 204px;
+        width: 110px;
+        height: 54px;
+        border-radius: 8px 27px 27px 27px;
+        background: var(--sand-50);
+        border: 2px solid var(--edge);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        opacity: 0;
+      }
+      #msg-typing .tdot {
+        width: 11px;
+        height: 11px;
+      }
+      #msg-extract {
+        left: 32px;
+        top: 204px;
+        width: 716px;
+        height: 258px;
+        background: var(--sand-50);
+        border: 2px solid var(--edge);
+        border-radius: 6px 22px 22px 22px;
+        overflow: hidden;
+        opacity: 0;
+      }
+      .ex-head {
+        position: relative;
+        height: 76px;
+        background: var(--cream);
+        border-bottom: 2px solid var(--edge);
+      }
+      .palm {
+        left: 20px;
+        top: 17px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--earth-500);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .palm svg {
+        width: 22px;
+        height: 22px;
+      }
+      .ex-hdr {
+        left: 76px;
+        top: 11px;
+        font-weight: 500;
+        font-size: 22px;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .ex-sub {
+        left: 76px;
+        top: 42px;
+        font-size: 18px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+      .item-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 684px;
+        height: 84px;
+        padding: 0 18px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        border-radius: 14px;
+      }
+      #item-card {
+        left: 16px;
+        top: 90px;
+      }
+      .ic-icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 50%;
+        background: var(--linen);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cat-slate);
+      }
+      .ic-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+      .ic-title {
+        font-weight: 500;
+        font-size: 24px;
+        line-height: 1.2;
+        color: var(--ink);
+      }
+      .ic-sub {
+        margin-top: 2px;
+        font-size: 18px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+      .ex-actions {
+        left: 16px;
+        top: 188px;
+        display: flex;
+        gap: 14px;
+      }
+      .btn {
+        height: 52px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 500;
+        font-size: 22px;
+      }
+      #btn-import {
+        position: relative;
+        width: 190px;
+        background: var(--bronze);
+        color: var(--cream);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .imp-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      #imp-label-2 {
+        opacity: 0;
+      }
+      #imp-label-2 svg {
+        width: 22px;
+        height: 22px;
+      }
+      .btn-outline {
+        width: 214px;
+        background: var(--cream);
+        border: 2px solid var(--edge);
+        color: var(--ink);
+      }
+      .btn-outline svg {
+        width: 20px;
+        height: 20px;
+      }
+      #hdr-added {
+        opacity: 0;
+      }
+      .composer {
+        left: 32px;
+        right: 32px;
+        bottom: 22px;
+        height: 62px;
+        border: 2px solid var(--edge);
+        border-radius: 31px;
+        background: var(--vellum);
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        gap: 14px;
+      }
+      .cmp-plus,
+      .cmp-send {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cmp-plus {
+        border: 2px solid var(--edge);
+        color: var(--earth-600);
+      }
+      .cmp-send {
+        margin-left: auto;
+        background: var(--earth-500);
+        color: var(--cream);
+      }
+      .cmp-plus svg,
+      .cmp-send svg {
+        width: 22px;
+        height: 22px;
+      }
+      .cmp-ph {
+        font-size: 22px;
+        color: var(--earth-500);
+      }
+
+      #daycard {
+        left: 980px;
+        top: 190px;
+        width: 840px;
+        height: 620px;
+        background: var(--vellum);
+        border: 2px solid var(--edge);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+      }
+      #dc-date {
+        left: 44px;
+        top: 38px;
+        font-weight: 500;
+        font-size: 20px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+      }
+      #dc-title {
+        left: 44px;
+        top: 70px;
+        font-size: 56px;
+        line-height: 1.1;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      #dc-divider {
+        left: 44px;
+        right: 44px;
+        top: 160px;
+        height: 2px;
+        background: var(--edge);
+        transform-origin: left center;
+      }
+      #rail {
+        left: 179px;
+        top: 219px;
+        width: 2px;
+        height: 128px;
+        background: var(--edge);
+        transform-origin: top center;
+      }
+      .row {
+        left: 24px;
+        width: 792px;
+        height: 116px;
+      }
+      #rowF {
+        top: 194px;
+      }
+      #rowA {
+        top: 194px;
+      }
+      #rowB {
+        top: 322px;
+      }
+      .flash {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        background: var(--tea);
+        opacity: 0;
+      }
+      .row-in {
+        position: absolute;
+        inset: 0;
+      }
+      .r-time {
+        left: 12px;
+        top: 20px;
+        width: 120px;
+        text-align: right;
+        font-size: 26px;
+        line-height: 1.25;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .r-time small {
+        display: block;
+        font-size: 22px;
+        color: var(--earth-500);
+      }
+      .r-node {
+        left: 149px;
+        top: 27px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--earth-400);
+      }
+      .r-icon {
+        left: 184px;
+        top: 16px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .r-icon svg {
+        width: 32px;
+        height: 32px;
+      }
+      .r-title {
+        left: 248px;
+        top: 16px;
+        font-size: 29px;
+        line-height: 1.25;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .r-sub {
+        left: 248px;
+        top: 58px;
+        font-size: 22px;
+        color: var(--earth-500);
+        white-space: nowrap;
+      }
+
+      #flyer {
+        left: 168px;
+        top: 704px;
+        opacity: 0;
+        transform-origin: 0 0;
+        box-shadow: var(--shadow-lg);
+        will-change: transform;
+      }
+      #cursor {
+        left: 0;
+        top: 0;
+        width: 44px;
+        height: 44px;
+        opacity: 0;
+        z-index: 40;
+        will-change: transform;
+      }
+      #cursor-in {
+        width: 44px;
+        height: 44px;
+        transform-origin: 6px 4px;
+      }
+      #ripple {
+        left: 213px;
+        top: 798px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid var(--bronze);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* ---------- scene 3: plan together ---------- */
+      #b-head {
+        opacity: 0;
+        left: 120px;
+        top: 318px;
+        width: 700px;
+        font-size: 116px;
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #b-live {
+        left: 124px;
+        top: 612px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .avs {
+        display: flex;
+      }
+      .av {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: 4px solid var(--cream);
+        margin-left: -18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 28px;
+      }
+      .av:first-child {
+        margin-left: 0;
+      }
+      .av1 {
+        background: var(--bronze);
+        color: var(--cream);
+      }
+      .av2 {
+        background: var(--tea);
+        color: var(--earth-600);
+      }
+      .av3 {
+        background: var(--earth-500);
+        color: var(--cream);
+      }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        font-size: 26px;
+        color: var(--earth-600);
+      }
+      .live-dot {
+        position: relative;
+        width: 16px;
+        height: 16px;
+      }
+      .live-dot i,
+      #live-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: #3f8f5a;
+      }
+      .phone {
+        width: 310px;
+        height: 600px;
+        will-change: transform;
+      }
+      .phone .float {
+        width: 100%;
+        height: 100%;
+      }
+      .phone img {
+        display: block;
+        width: 310px;
+        height: 600px;
+        border-radius: 30px;
+        border: 2px solid var(--earth-100);
+        box-shadow: 0 30px 70px -18px rgba(139, 119, 93, 0.42), 0 12px 26px -10px rgba(139, 119, 93, 0.2);
+        filter: saturate(1.05) contrast(1.02) brightness(1.01);
+      }
+      #p1 {
+        left: 875px;
+        top: 236px;
+      }
+      #p2 {
+        left: 1215px;
+        top: 206px;
+      }
+      #p3 {
+        left: 1555px;
+        top: 236px;
+      }
+      .plabel {
+        top: 884px;
+        width: 310px;
+        text-align: center;
+        font-weight: 500;
+        font-size: 28px;
+        color: var(--earth-600);
+      }
+      #l1 {
+        left: 875px;
+      }
+      #l2 {
+        left: 1215px;
+      }
+      #l3 {
+        left: 1555px;
+      }
+
+      /* ---------- scene 4: print studio ---------- */
+      #c-eyebrow {
+        left: 120px;
+        top: 236px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-weight: 500;
+        font-size: 24px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--earth-500);
+      }
+      #c-eyebrow i {
+        display: block;
+        width: 44px;
+        height: 2px;
+        background: var(--bronze);
+      }
+      #c-head {
+        opacity: 0;
+        left: 120px;
+        top: 290px;
+        width: 800px;
+        font-size: 92px;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
+        color: var(--earth-600);
+      }
+      #c-chips {
+        left: 120px;
+        top: 668px;
+        width: 740px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 54px;
+        padding: 0 22px 0 18px;
+        border-radius: 27px;
+        border: 2px solid var(--edge);
+        background: var(--cream);
+        color: var(--earth-500);
+        font-weight: 500;
+        font-size: 23px;
+        white-space: nowrap;
+      }
+      .sw {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+      }
+      #c-step {
+        left: 984px;
+        top: 118px;
+        width: 360px;
+        height: 30px;
+        font-weight: 500;
+        font-size: 22px;
+        line-height: 30px;
+        color: var(--earth-500);
+      }
+      #c-step > span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        white-space: nowrap;
+      }
+      #c-step #st2 {
+        opacity: 0;
+      }
+      #c-step b {
+        font-weight: 500;
+        color: var(--earth-600);
+        margin-right: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      #c-pdf {
+        left: 1016px;
+        top: 196px;
+        width: 440px;
+        will-change: transform;
+      }
+      #c-pdf img,
+      .sheet-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        border: 2px solid var(--edge);
+        box-shadow: 0 26px 60px -14px rgba(139, 119, 93, 0.36), 0 10px 22px -10px rgba(139, 119, 93, 0.2);
+      }
+      .ed-cover {
+        left: 980px;
+        top: 162px;
+        width: 560px;
+        will-change: transform;
+      }
+      .ed-day {
+        left: 1290px;
+        top: 468px;
+        width: 530px;
+        will-change: transform;
+      }
+      .ed {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+      }
+
+      /* ---------- scene 5: outro ---------- */
+      #d-wipe {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+      #d-band {
+        position: absolute;
+        inset: 0;
+        background: var(--earth-500);
+      }
+      #d-band .grain {
+        opacity: 0.09;
+        mix-blend-mode: multiply;
+      }
+      #d-glow {
+        left: 310px;
+        top: 20px;
+        width: 1300px;
+        height: 900px;
+        pointer-events: none;
+      }
+      #d-glow-core {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(237, 220, 200, 0.34), rgba(237, 220, 200, 0.12) 55%, rgba(237, 220, 200, 0) 100%);
+        opacity: 0.4;
+      }
+      #d-lock {
+        left: 0;
+        top: 250px;
+        width: 1920px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform-origin: 50% 40%;
+      }
+      #d-word {
+        font-size: 210px;
+        line-height: 1;
+        letter-spacing: -0.015em;
+        color: var(--cream);
+        white-space: nowrap;
+      }
+      #d-rule {
+        margin-top: 34px;
+        width: 150px;
+        height: 2px;
+        background: var(--earth-200);
+      }
+      #d-line {
+        margin-top: 34px;
+        font-size: 66px;
+        line-height: 1.1;
+        color: var(--earth-100);
+      }
+      #d-cta {
+        margin-top: 50px;
+        height: 84px;
+        padding: 0 50px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, var(--rust), var(--clay-fire));
+        color: #ffffff;
+        font-weight: 500;
+        font-size: 34px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 18px 40px -14px rgba(33, 31, 27, 0.35);
+      }
+      #d-url {
+        margin-top: 30px;
+        font-weight: 500;
+        font-size: 26px;
+        letter-spacing: 0.12em;
+        color: var(--earth-100);
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-oeg9" id="root" data-composition-id="main" data-start="0" data-duration="21.6" data-fps="30" data-width="1920" data-height="1080">
+      <!-- Persistent paper: warm light (audio-reactive) -->
+      <div data-hf-id="hf-cem4" id="light" data-layout-ignore=""><div data-hf-id="hf-zkx5" id="light-core"></div></div>
+
+      <!-- Running head, scenes 1-4 -->
+      <div data-hf-id="hf-5cks" id="runhead" class="clip" data-start="0" data-duration="17.4" data-track-index="1">
+        <div data-hf-id="hf-fwth" id="rh-left" class="abs rh-label">Tokyo · Oct 3 – Oct 5</div>
+        <div data-hf-id="hf-2dii" id="rh-right" class="abs rh-label">
+          <div data-hf-id="hf-9ci4" id="folio"><span data-hf-id="hf-6xkq" id="f1">01</span><span data-hf-id="hf-56rk" id="f2">02</span><span data-hf-id="hf-o8tu" id="f3">03</span><span data-hf-id="hf-bcv8" id="f4">04</span></div>
+          <span data-hf-id="hf-kfzu">/ 04</span>
+        </div>
+        <div data-hf-id="hf-3pub" id="rh-rule" class="abs"></div>
+      </div>
+
+      <!-- Scene 1 + 2: the spreadsheet, then paste a confirmation -->
+      <section data-hf-id="hf-lvin" id="sceneA" class="clip" data-start="0" data-duration="9.7" data-track-index="2">
+        <!-- 1: group chat -->
+        <div data-hf-id="hf-ltos" id="chat" class="abs">
+          <div data-hf-id="hf-17yw" id="chat-row">
+            <div data-hf-id="hf-coj7" class="avatar">J</div>
+            <div data-hf-id="hf-f8lk" class="bubble">wait, where are we staying again?</div>
+          </div>
+          <div data-hf-id="hf-k5uo" id="typing"><span data-hf-id="hf-f524" class="tdot"></span><span data-hf-id="hf-2nv8" class="tdot"></span><span data-hf-id="hf-1gy5" class="tdot"></span></div>
+        </div>
+
+        <!-- 1: the spreadsheet -->
+        <div data-hf-id="hf-vtzo" id="sheet-wrap" class="abs">
+          <div data-hf-id="hf-0n66" id="sheet">
+            <div data-hf-id="hf-o2x5" class="sheet-bar">
+              <span data-hf-id="hf-a5rz" class="win-dot"></span><span data-hf-id="hf-szwf" class="win-dot"></span><span data-hf-id="hf-slle" class="win-dot"></span>
+              <span data-hf-id="hf-bylb" class="sheet-name">tokyo trip FINAL (2).xlsx</span>
+            </div>
+            <div data-hf-id="hf-q1wf" class="grid-head"><div data-hf-id="hf-yeow"></div><div data-hf-id="hf-80vn">A</div><div data-hf-id="hf-7mkm">B</div><div data-hf-id="hf-789l">C</div><div data-hf-id="hf-6tyk">D</div></div>
+            <div data-hf-id="hf-a0oq" id="grid-body">
+              <div data-hf-id="hf-i5e1" class="grid-row hdr"><div data-hf-id="hf-kq4j" class="rn">1</div><div data-hf-id="hf-y7yw"><span data-hf-id="hf-rh3g" class="cell-t">what</span></div><div data-hf-id="hf-x11t"><span data-hf-id="hf-vyqe" class="cell-t">when</span></div><div data-hf-id="hf-xfcu"><span data-hf-id="hf-vr0j" class="cell-t">notes</span></div><div data-hf-id="hf-w8fr"><span data-hf-id="hf-gqka" class="cell-t">who</span></div></div>
+              <div data-hf-id="hf-1jdb" class="grid-row"><div data-hf-id="hf-kbti" class="rn">2</div><div data-hf-id="hf-wmqs"><span data-hf-id="hf-5h9h" class="cell-t">flight<span data-hf-id="hf-i2ep" class="qq">??</span> ANA 175</span></div><div data-hf-id="hf-vftp"><span data-hf-id="hf-srj8" class="cell-t">Oct 3, 11:05<span data-hf-id="hf-wfmc" class="qq">?</span></span></div><div data-hf-id="hf-vu4q"><span data-hf-id="hf-5yvk" class="cell-t">SFO to HND, bags<span data-hf-id="hf-bd4c" class="qq">?</span></span></div><div data-hf-id="hf-1043"><span data-hf-id="hf-17x8" class="cell-t">me</span></div></div>
+              <div data-hf-id="hf-ptgv" class="grid-row"><div data-hf-id="hf-jxih" class="rn">3</div><div data-hf-id="hf-1ef4"><span data-hf-id="hf-3pjk" class="cell-t">hotel</span></div><div data-hf-id="hf-c4s8"><span data-hf-id="hf-acx5" class="cell-t">Oct 3 to 5</span></div><div data-hf-id="hf-bqh7"><span data-hf-id="hf-r2sm" class="cell-t"><span data-hf-id="hf-hope" class="hl">conf # in email somewhere</span></span></div><div data-hf-id="hf-bc66"><span data-hf-id="hf-hb01" class="cell-t qq">?</span></div></div>
+              <div data-hf-id="hf-pf5u" class="grid-row"><div data-hf-id="hf-jj7g" class="rn">4</div><div data-hf-id="hf-axv5"><span data-hf-id="hf-0zzc" class="cell-t">walk to Akihabara</span></div><div data-hf-id="hf-ajk4"><span data-hf-id="hf-0uln" class="cell-t">night 1<span data-hf-id="hf-rv6t" class="qq">??</span></span></div><div data-hf-id="hf-a593"><span data-hf-id="hf-8gzb" class="cell-t">along the Kanda river</span></div><div data-hf-id="hf-9qy2"><span data-hf-id="hf-dmn9" class="cell-t">all</span></div></div>
+              <div data-hf-id="hf-p0ut" class="grid-row"><div data-hf-id="hf-j4wf" class="rn">5</div><div data-hf-id="hf-9cn1"><span data-hf-id="hf-yruw" class="cell-t">Sushi Sho</span></div><div data-hf-id="hf-fb8g"><span data-hf-id="hf-1yk3" class="cell-t">Oct 4, 8pm<span data-hf-id="hf-t23w" class="qq">??</span></span></div><div data-hf-id="hf-ewxf"><span data-hf-id="hf-wajm" class="cell-t">who booked<span data-hf-id="hf-snsv" class="qq">??</span></span></div><div data-hf-id="hf-88dv"><span data-hf-id="hf-fnqd" class="cell-t qq">?</span></div></div>
+              <div data-hf-id="hf-rt00" class="grid-row"><div data-hf-id="hf-iqle" class="rn">6</div><div data-hf-id="hf-8mow"><span data-hf-id="hf-rna6" class="cell-t">teamLab</span></div><div data-hf-id="hf-7frt"><span data-hf-id="hf-c0et" class="cell-t">10am</span></div><div data-hf-id="hf-7u2u"><span data-hf-id="hf-yjxw" class="cell-t">barefoot! socks<span data-hf-id="hf-a679" class="qq">?</span></span></div><div data-hf-id="hf-6n5r"><span data-hf-id="hf-zg3d" class="cell-t">all</span></div></div>
+              <div data-hf-id="hf-reoz" class="grid-row"><div data-hf-id="hf-icad" class="rn">7</div><div data-hf-id="hf-71gs"><span data-hf-id="hf-istv" class="cell-t">Tsukiji</span></div><div data-hf-id="hf-5ujp"><span data-hf-id="hf-et2l" class="cell-t">early</span></div><div data-hf-id="hf-68uq"><span data-hf-id="hf-m9m5" class="cell-t">tamagoyaki, 2nd lane</span></div><div data-hf-id="hf-51xn"><span data-hf-id="hf-a8h6" class="cell-t"></span></div></div>
+              <div data-hf-id="hf-23bh" id="cell-cursor" class="abs"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1: the hook -->
+        <h1 data-hf-id="hf-0qja" id="hook" class="abs serif">
+          <span data-hf-id="hf-k6gu" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-lfgy" class="line-in">Your journey deserves more</span></span>
+          <span data-hf-id="hf-kxia" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-78i7" class="line-in">than a spreadsheet.</span></span>
+        </h1>
+
+        <!-- 2: caption -->
+        <h2 data-hf-id="hf-ngk5" id="capA" class="abs serif">
+          <span data-hf-id="hf-lbtb" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-nso8" class="line-in">Paste a confirmation</span></span>
+          <span data-hf-id="hf-lq4c" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-ie1h" class="line-in">and it lands on the</span></span>
+          <span data-hf-id="hf-m4fd" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-vx4f" class="line-in">right day.</span></span>
+        </h2>
+
+        <!-- 2: the day card (timeline) -->
+        <div data-hf-id="hf-925e" id="daycard" class="abs">
+          <div data-hf-id="hf-uold" id="dc-date" class="abs">Saturday · October 3</div>
+          <div data-hf-id="hf-t06f" id="dc-title" class="abs serif">Landing, and a first walk</div>
+          <div data-hf-id="hf-9d65" id="dc-divider" class="abs"></div>
+          <div data-hf-id="hf-2m3u" id="rail" class="abs"></div>
+
+          <div data-hf-id="hf-abrg" id="rowF" class="abs row">
+            <div data-hf-id="hf-xwk6" class="flash"></div>
+            <div data-hf-id="hf-9h3c" class="row-in">
+              <div data-hf-id="hf-hlx2" class="abs r-time">11:05a<small data-hf-id="hf-1bhf">3:40p</small></div>
+              <div data-hf-id="hf-t7xf" class="abs r-node"></div>
+              <div data-hf-id="hf-9ey5" class="abs r-icon" style="color: var(--cat-slate)">
+                <svg data-hf-id="hf-c53f" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-d0zg" d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+              </div>
+              <div data-hf-id="hf-2rtg" class="abs r-title">Flight: ANA 175</div>
+              <div data-hf-id="hf-ewrh" class="abs r-sub">San Francisco (SFO) → Tokyo (HND)</div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-xt8z" id="rowA" class="abs row">
+            <div data-hf-id="hf-09xc" class="row-in">
+              <div data-hf-id="hf-2xg0" class="abs r-time">6:00p</div>
+              <div data-hf-id="hf-d4rn" class="abs r-node"></div>
+              <div data-hf-id="hf-c2yb" class="abs r-icon" style="color: var(--cat-clay)">
+                <svg data-hf-id="hf-f417" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-gzwe" d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" /><path data-hf-id="hf-7yzy" d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" /><path data-hf-id="hf-rz7m" d="M12 4v6" /><path data-hf-id="hf-xm9o" d="M2 18h20" /></svg>
+              </div>
+              <div data-hf-id="hf-4ty9" class="abs r-title">Check-in: Hotel Ryumeikan Ochanomizu</div>
+              <div data-hf-id="hf-qhjl" class="abs r-sub">Corner room, city side</div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-p5d4" id="rowB" class="abs row">
+            <div data-hf-id="hf-z309" class="row-in">
+              <div data-hf-id="hf-zs2q" class="abs r-time">7:30p</div>
+              <div data-hf-id="hf-cqgm" class="abs r-node"></div>
+              <div data-hf-id="hf-kfvm" class="abs r-icon" style="color: var(--cat-sage)">
+                <svg data-hf-id="hf-epq6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-sk3t" d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z" /><circle data-hf-id="hf-m1lh" cx="12" cy="12" r="10" /></svg>
+              </div>
+              <div data-hf-id="hf-0guj" class="abs r-title">Walk the Kanda river to Akihabara</div>
+              <div data-hf-id="hf-y8h0" class="abs r-sub">Slow first evening, no tickets, no plan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1 -> 2: selected spreadsheet rows lift into the day card -->
+        <div data-hf-id="hf-m102" id="ghost3" class="abs ghost" data-layout-ignore=""></div>
+        <div data-hf-id="hf-39ad" id="ghost4" class="abs ghost" data-layout-ignore=""></div>
+
+        <!-- 2: the Trip Assistant -->
+        <div data-hf-id="hf-j5ey" id="assistant" class="abs">
+          <div data-hf-id="hf-0shb" class="as-head">
+            <div data-hf-id="hf-o5dl" class="as-title serif">Trip Assistant</div>
+            <div data-hf-id="hf-sgbn" class="as-sub">Private to you, not shared with co-travelers</div>
+          </div>
+
+          <div data-hf-id="hf-aj83" id="msg-user" class="abs">
+            <svg data-hf-id="hf-ebf5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-dbxf" d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path data-hf-id="hf-oor7" d="M14 2v5a1 1 0 0 0 1 1h5" /><path data-hf-id="hf-59kx" d="M10 9H8" /><path data-hf-id="hf-eoqm" d="M16 13H8" /><path data-hf-id="hf-bfay" d="M16 17H8" /></svg>
+            <span data-hf-id="hf-1rjv">ANA 175 confirmation.pdf</span>
+          </div>
+
+          <div data-hf-id="hf-i7g3" id="msg-typing" class="abs"><span data-hf-id="hf-1v96" class="tdot"></span><span data-hf-id="hf-3usb" class="tdot"></span><span data-hf-id="hf-493c" class="tdot"></span></div>
+
+          <div data-hf-id="hf-eoix" id="msg-extract" class="abs">
+            <div data-hf-id="hf-lvcm" class="ex-head">
+              <div data-hf-id="hf-5nbk" class="abs palm">
+                <svg data-hf-id="hf-a3p7" viewBox="0 0 24 24" fill="none" stroke="#fdfcf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-as4f" d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4" /><path data-hf-id="hf-o4gp" d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3" /><path data-hf-id="hf-z003" d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35" /><path data-hf-id="hf-9it2" d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14" /></svg>
+              </div>
+              <div data-hf-id="hf-p9zl" id="hdr-found" class="abs ex-hdr" data-layout-allow-overlap="">Found 1 item</div>
+              <div data-hf-id="hf-qezx" id="hdr-added" class="abs ex-hdr" data-layout-allow-overlap="">Added 1 item</div>
+              <div data-hf-id="hf-hv1n" class="abs ex-sub">From ANA 175 confirmation.pdf · 1 transport</div>
+            </div>
+            <div data-hf-id="hf-t5ci" id="item-card" class="abs item-card">
+              <div data-hf-id="hf-5c2q" class="ic-icon">
+                <svg data-hf-id="hf-dx44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-x2us" d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+              </div>
+              <div data-hf-id="hf-5g8o">
+                <div data-hf-id="hf-e7ea" class="ic-title">Flight: ANA 175</div>
+                <div data-hf-id="hf-vkej" class="ic-sub">San Francisco (SFO) → Tokyo (HND) • Oct 3 • 11:05</div>
+              </div>
+            </div>
+            <div data-hf-id="hf-q05d" class="abs ex-actions">
+              <div data-hf-id="hf-0w60" id="btn-import" class="btn">
+                <span data-hf-id="hf-5qvo" id="imp-label-1" class="imp-label" data-layout-allow-overlap="">Import</span>
+                <span data-hf-id="hf-vkka" id="imp-label-2" class="imp-label" data-layout-allow-overlap="">
+                  <svg data-hf-id="hf-n58i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-2q26" d="M20 6 9 17l-5-5" /></svg>
+                  Imported
+                </span>
+              </div>
+              <div data-hf-id="hf-bfxh" class="btn btn-outline">
+                <svg data-hf-id="hf-dit3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-901a" d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path data-hf-id="hf-wusw" d="m15 5 4 4" /></svg>
+                Review &amp; edit
+              </div>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-fi0u" class="abs composer">
+            <div data-hf-id="hf-ek39" class="cmp-plus"><svg data-hf-id="hf-zf3a" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path data-hf-id="hf-8gds" d="M5 12h14" /><path data-hf-id="hf-um4s" d="M12 5v14" /></svg></div>
+            <div data-hf-id="hf-41d1" class="cmp-ph">Ask about your trip...</div>
+            <div data-hf-id="hf-lmjr" class="cmp-send"><svg data-hf-id="hf-h0hq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-czg6" d="m5 12 7-7 7 7" /><path data-hf-id="hf-oeiv" d="M12 19V5" /></svg></div>
+          </div>
+        </div>
+
+        <!-- 2: the extracted card travelling to its day -->
+        <div data-hf-id="hf-gigv" id="flyer" class="abs item-card" data-layout-ignore="">
+          <div data-hf-id="hf-iedi" class="ic-icon">
+            <svg data-hf-id="hf-d4i2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-hf-id="hf-vvxp" d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+          </div>
+          <div data-hf-id="hf-do3u">
+            <div data-hf-id="hf-tprq" class="ic-title">Flight: ANA 175</div>
+            <div data-hf-id="hf-kokr" class="ic-sub">San Francisco (SFO) → Tokyo (HND) • Oct 3 • 11:05</div>
+          </div>
+        </div>
+
+        <div data-hf-id="hf-6k6p" id="ripple" class="abs" data-layout-ignore=""></div>
+        <div data-hf-id="hf-ryo9" id="cursor" class="abs" data-layout-ignore="">
+          <svg data-hf-id="hf-o56d" id="cursor-in" viewBox="0 0 44 44"><path data-hf-id="hf-e5h2" d="M8 4 L8 36 L16.5 28.5 L22 40.5 L27.5 38 L22 26.5 L33 26 Z" fill="#211f1b" stroke="#fdfcf8" stroke-width="2.5" stroke-linejoin="round" /></svg>
+        </div>
+      </section>
+
+      <!-- Scene 3: plan together -->
+      <section data-hf-id="hf-y9xv" id="sceneB" class="clip" data-start="9.45" data-duration="3.85" data-track-index="3">
+        <h2 data-hf-id="hf-vpfd" id="b-head" class="abs serif">
+          <span data-hf-id="hf-miqe" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-arwg" class="line-in">Plan together,</span></span>
+          <span data-hf-id="hf-mx1f" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-l3nv" class="line-in">in real time.</span></span>
+        </h2>
+        <div data-hf-id="hf-091z" id="b-live" class="abs">
+          <div data-hf-id="hf-sb04" class="avs"><div data-hf-id="hf-f18n" class="av av1"><span data-hf-id="hf-it3y">K</span></div><div data-hf-id="hf-6dcs" class="av av2"><span data-hf-id="hf-ms68">A</span></div><div data-hf-id="hf-750l" class="av av3"><span data-hf-id="hf-i0hw">M</span></div></div>
+          <div data-hf-id="hf-68v0" class="live"><span data-hf-id="hf-d399" class="live-dot"><span data-hf-id="hf-xe57" id="live-ring"></span><i data-hf-id="hf-wt6k"></i></span>Live</div>
+        </div>
+
+        <div data-hf-id="hf-vpq3" id="p1" class="abs phone"><div data-hf-id="hf-gm5y" class="float"><img data-hf-id="hf-qj06" src="assets/img/app-timeline.jpg" alt="WanderLuxe timeline view of the Tokyo trip"></div></div>
+        <div data-hf-id="hf-ku8g" id="p2" class="abs phone"><div data-hf-id="hf-yba2" class="float"><img data-hf-id="hf-a2xs" src="assets/img/app-calendar.jpg" alt="WanderLuxe calendar view of the Tokyo trip"></div></div>
+        <div data-hf-id="hf-llw9" id="p3" class="abs phone"><div data-hf-id="hf-ypl3" class="float"><img data-hf-id="hf-ymgy" src="assets/img/app-map.jpg" alt="WanderLuxe map view of the Tokyo trip"></div></div>
+        <div data-hf-id="hf-rmja" id="l1" class="abs plabel">Timeline</div>
+        <div data-hf-id="hf-7nbs" id="l2" class="abs plabel">Calendar</div>
+        <div data-hf-id="hf-jsxz" id="l3" class="abs plabel">Map</div>
+      </section>
+
+      <!-- Scene 4: print studio -->
+      <section data-hf-id="hf-r6dh" id="sceneC" class="clip" data-start="12.95" data-duration="4.5" data-track-index="4">
+        <div data-hf-id="hf-jkmk" id="c-eyebrow" class="abs"><i data-hf-id="hf-zeb8"></i>Print Studio</div>
+        <h2 data-hf-id="hf-9v2e" id="c-head" class="abs serif">
+          <span data-hf-id="hf-nbcg" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-oujb" class="line-in">The plan you made,</span></span>
+          <span data-hf-id="hf-hcr1" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-zfkd" class="line-in">set as something</span></span>
+          <span data-hf-id="hf-hr22" class="line" data-layout-allow-overflow=""><span data-hf-id="hf-ftrx" class="line-in">to keep</span></span>
+        </h2>
+        <div data-hf-id="hf-s41f" id="c-chips" class="abs">
+          <div data-hf-id="hf-7qxs" id="chip0" class="chip"><span data-hf-id="hf-6gk9" class="sw" style="background: #3771a6"></span>Edo Blue October</div>
+          <div data-hf-id="hf-cmx1" id="chip1" class="chip"><span data-hf-id="hf-1hj5" class="sw" style="background: #01628f"></span>Tokyo Deco Evenings</div>
+          <div data-hf-id="hf-wlsp" id="chip2" class="chip"><span data-hf-id="hf-8ija" class="sw" style="background: #709257"></span>Autumn Greens: Tokyo in October</div>
+        </div>
+
+        <div data-hf-id="hf-ce14" id="c-step" class="abs"><span data-hf-id="hf-3qoo" id="st1"><b data-hf-id="hf-2ll3">02</b>Simple PDF</span><span data-hf-id="hf-ssbz" id="st2"><b data-hf-id="hf-2zw4">03</b>Studio edition</span></div>
+
+        <div data-hf-id="hf-cpu8" id="c-pdf" class="abs"><img data-hf-id="hf-j0mh" src="assets/img/print-showcase-simple-pdf.png" alt="The free simple PDF itinerary page"></div>
+
+        <div data-hf-id="hf-1jfq" id="ed0" class="ed">
+          <div data-hf-id="hf-glw5" class="abs ed-cover"><img data-hf-id="hf-a9b3" class="sheet-img" src="assets/img/edition-0-cover.png" alt="Edo Blue October edition cover"></div>
+          <div data-hf-id="hf-xj1e" class="abs ed-day"><img data-hf-id="hf-dp92" class="sheet-img" src="assets/img/edition-0-day1.png" alt="Edo Blue October edition, day one"></div>
+        </div>
+        <div data-hf-id="hf-7p5j" id="ed1" class="ed">
+          <div data-hf-id="hf-w1l5" class="abs ed-cover"><img data-hf-id="hf-8ury" class="sheet-img" src="assets/img/edition-1-cover.png" alt="Tokyo Deco Evenings edition cover"></div>
+          <div data-hf-id="hf-0s5i" class="abs ed-day"><img data-hf-id="hf-hqol" class="sheet-img" src="assets/img/edition-1-day1.png" alt="Tokyo Deco Evenings edition, day one"></div>
+        </div>
+        <div data-hf-id="hf-wtnw" id="ed2" class="ed">
+          <div data-hf-id="hf-x8i8" class="abs ed-cover"><img data-hf-id="hf-kdkz" class="sheet-img" src="assets/img/edition-2-cover.png" alt="Autumn Greens edition cover"></div>
+          <div data-hf-id="hf-16gj" class="abs ed-day"><img data-hf-id="hf-8o3u" class="sheet-img" src="assets/img/edition-2-day1.png" alt="Autumn Greens edition, day one"></div>
+        </div>
+      </section>
+
+      <!-- Scene 5: outro -->
+      <section data-hf-id="hf-ovys" id="sceneD" class="clip" data-start="16.9" data-duration="4.7" data-track-index="5">
+        <div data-hf-id="hf-4su0" id="d-wipe" data-layout-allow-overflow="">
+          <div data-hf-id="hf-owb5" id="d-band"><div data-hf-id="hf-h60x" class="grain"></div></div>
+          <div data-hf-id="hf-1cs1" id="d-glow" class="abs" data-layout-ignore=""><div data-hf-id="hf-ny6d" id="d-glow-core"></div></div>
+          <div data-hf-id="hf-g8jq" id="d-lock" class="abs">
+            <div data-hf-id="hf-ybr1" id="d-word" class="serif">WanderLuxe</div>
+            <div data-hf-id="hf-4eum" id="d-rule"></div>
+            <div data-hf-id="hf-3qo9" id="d-line" class="serif">Plan the trip together.</div>
+            <div data-hf-id="hf-qvxt" id="d-cta">Start planning, free</div>
+            <div data-hf-id="hf-ehzo" id="d-url">wanderluxe.io</div>
+          </div>
+        </div>
+      </section>
+
+      <div data-hf-id="hf-t9wq" id="paper-grain" class="grain" data-layout-ignore=""></div>
+
+      <!-- Audio: music bed + sparse, motion-matched SFX -->
+      <audio data-hf-id="hf-r7ks" id="bgm" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3" data-start="0" data-duration="21.6" data-track-index="10" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:0.4,&quot;v&quot;:0.3},{&quot;t&quot;:20.4,&quot;v&quot;:0.3},{&quot;t&quot;:21.6,&quot;v&quot;:0}]}]}"></audio>
+      <audio data-hf-id="hf-0lmg" id="sfx-key1" src="assets/sfx/keyboard/keypress-004.wav" data-start="0.34" data-duration="0.25" data-track-index="11" data-volume="0.28"></audio>
+      <audio data-hf-id="hf-ldj5" id="sfx-key2" src="assets/sfx/keyboard/keypress-011.wav" data-start="0.66" data-duration="0.25" data-track-index="12" data-volume="0.24"></audio>
+      <audio data-hf-id="hf-scgi" id="sfx-key3" src="assets/sfx/keyboard/keypress-019.wav" data-start="1.02" data-duration="0.25" data-track-index="13" data-volume="0.28"></audio>
+      <audio data-hf-id="hf-ogdk" id="sfx-drop" src="assets/sfx/interface/drop_002.ogg" data-start="5.28" data-duration="0.19" data-track-index="14" data-volume="0.5"></audio>
+      <audio data-hf-id="hf-56kn" id="sfx-click" src="assets/sfx/ui/click2.ogg" data-start="7.9" data-duration="0.06" data-track-index="15" data-volume="0.34"></audio>
+      <audio data-hf-id="hf-xe5i" id="sfx-land" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="8.72" data-duration="0.18" data-track-index="16" data-volume="0.38"></audio>
+      <audio data-hf-id="hf-lrc1" id="sfx-slide1" src="assets/sfx/casino/card-slide-1.ogg" data-start="14.04" data-duration="0.6" data-track-index="17" data-volume="0.3"></audio>
+      <audio data-hf-id="hf-yp9c" id="sfx-slide2" src="assets/sfx/casino/card-slide-1.ogg" data-start="16.22" data-duration="0.6" data-track-index="18" data-volume="0.26"></audio>
+      <audio data-hf-id="hf-hyf8" id="sfx-bell" src="assets/sfx/impact/impactBell_heavy_000.ogg" data-start="17.45" data-duration="1.48" data-track-index="19" data-volume="0.42"></audio>
+    </div>
+
+    <script>
+      // Pre-extracted with hyperframes-creative/scripts/extract-audio-data.py from the first 22s of the bed,
+      // RMS, smoothed and normalized, sampled at 15 per second (index = floor(t * 15)).
+      const AUDIO_REACTIVE = { fps: 15, rms: [0.52,0.48,0.41,0.32,0.19,0.18,0.11,0.2,0.23,0.19,0.08,0.03,0.0,0.12,0.19,0.17,0.11,0.07,0.09,0.13,0.15,0.09,0.12,0.25,0.36,0.33,0.3,0.18,0.19,0.17,0.15,0.13,0.13,0.16,0.26,0.24,0.27,0.21,0.22,0.19,0.27,0.25,0.2,0.05,0.12,0.22,0.34,0.33,0.18,0.03,0.06,0.1,0.16,0.18,0.14,0.14,0.21,0.23,0.2,0.23,0.25,0.21,0.2,0.18,0.22,0.3,0.34,0.3,0.22,0.24,0.25,0.26,0.3,0.25,0.26,0.25,0.13,0.14,0.14,0.13,0.11,0.13,0.16,0.14,0.2,0.2,0.22,0.24,0.2,0.21,0.24,0.2,0.26,0.28,0.26,0.25,0.25,0.25,0.31,0.3,0.26,0.28,0.29,0.28,0.24,0.17,0.13,0.09,0.13,0.14,0.14,0.18,0.18,0.23,0.27,0.28,0.34,0.4,0.48,0.49,0.52,0.51,0.51,0.55,0.55,0.56,0.54,0.52,0.55,0.53,0.54,0.54,0.56,0.55,0.56,0.54,0.56,0.54,0.54,0.56,0.58,0.59,0.59,0.6,0.61,0.6,0.57,0.58,0.62,0.62,0.61,0.59,0.57,0.57,0.52,0.51,0.51,0.54,0.53,0.53,0.51,0.51,0.52,0.54,0.53,0.54,0.57,0.58,0.55,0.53,0.56,0.58,0.59,0.61,0.59,0.62,0.61,0.58,0.61,0.6,0.61,0.6,0.57,0.53,0.56,0.54,0.51,0.51,0.53,0.53,0.55,0.55,0.59,0.59,0.59,0.57,0.56,0.54,0.53,0.54,0.54,0.54,0.57,0.58,0.58,0.62,0.66,0.69,0.71,0.71,0.72,0.74,0.73,0.67,0.61,0.58,0.59,0.6,0.62,0.64,0.62,0.65,0.67,0.67,0.67,0.67,0.68,0.68,0.64,0.63,0.66,0.66,0.66,0.66,0.64,0.63,0.58,0.53,0.53,0.52,0.51,0.51,0.51,0.51,0.51,0.53,0.52,0.51,0.51,0.53,0.54,0.53,0.52,0.49,0.47,0.45,0.43,0.46,0.47,0.46,0.46,0.47,0.52,0.6,0.63,0.62,0.63,0.65,0.67,0.7,0.74,0.76,0.77,0.77,0.79,0.8,0.8,0.8,0.79,0.78,0.72,0.64,0.58,0.53,0.53,0.53,0.58,0.64,0.68,0.73,0.74,0.77,0.78,0.81,0.85,0.86,0.87,0.84,0.83,0.85,0.88,0.89,0.9,0.9,0.91,0.91,0.87,0.89,0.9,0.9,0.93,0.96,0.95] };
+    </script>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const STEP = 1 / AUDIO_REACTIVE.fps;
+
+      // ---------------- persistent paper light (audio-reactive, subtle) ----------------
+      tl.fromTo("#light", { x: 0, y: 0 }, { x: -300, y: 110, duration: 21.6, ease: "sine.inOut" }, 0);
+      tl.to(
+        "#light-core",
+        {
+          keyframes: AUDIO_REACTIVE.rms.map((v) => ({ opacity: 0.4 + v * 0.42, scale: 1 + v * 0.05, duration: STEP, ease: "sine.inOut" })),
+        },
+        0,
+      );
+
+      // ---------------- running head ----------------
+      tl.fromTo("#rh-rule", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "power2.out" }, 0.12);
+      tl.fromTo("#rh-left", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.22);
+      tl.fromTo("#rh-right", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.3);
+      const swap = (out, inn, t) => {
+        tl.to(out, { opacity: 0, y: -10, duration: 0.18, ease: "power1.in" }, t);
+        tl.fromTo(inn, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.26, ease: "power2.out", immediateRender: false }, t + 0.18);
+      };
+      swap("#f1", "#f2", 4.2);
+      swap("#f2", "#f3", 9.6);
+      swap("#f3", "#f4", 13.11);
+
+      // ================= SCENE 1 — the spreadsheet (0.00–4.20) =================
+      tl.fromTo("#sheet", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0.1);
+      tl.fromTo("#sheet-wrap", { y: 0 }, { y: -10, duration: 3.2, ease: "sine.inOut" }, 0.7); // at rest (y -10) by 3.90 for the morph
+      // Cells "typed" in a hurry: texture, not a read.
+      tl.fromTo(".cell-t", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.16, ease: "none", stagger: 0.03 }, 0.3);
+      // The active cell hops down column C as rows are filled.
+      tl.set("#cell-cursor", { y: -64, opacity: 0 }, 0);
+      tl.to("#cell-cursor", { y: 0, duration: 0.14, ease: "power2.out" }, 0.62);
+      tl.to("#cell-cursor", { y: 128, duration: 0.14, ease: "power2.out" }, 0.98);
+      tl.to("#cell-cursor", { y: 256, duration: 0.14, ease: "power2.out" }, 1.24);
+      tl.to("#cell-cursor", { y: 0, duration: 0.18, ease: "power2.out" }, 2.1);
+      tl.to("#cell-cursor", { opacity: 1, duration: 0.12 }, 0.6);
+
+      // Group chat
+      tl.fromTo("#chat-row", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.45);
+      tl.fromTo("#typing", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 1.15);
+      tl.fromTo("#typing .tdot", { opacity: 0.3 }, { opacity: 1, duration: 0.32, ease: "sine.inOut", stagger: { each: 0.16, repeat: 5, yoyo: true } }, 1.3);
+
+      // Hook line
+      tl.fromTo("#hook .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.13 }, 1.05);
+
+      // Exit: the chat and hook clear, two rows lift off the grid, the grid falls away
+      tl.to("#chat", { opacity: 0, x: -32, duration: 0.38, ease: "power2.in" }, 3.86);
+      tl.to("#hook", { opacity: 0, y: -30, duration: 0.4, ease: "power2.in" }, 3.9);
+      tl.fromTo(["#ghost3", "#ghost4"], { opacity: 0 }, { opacity: 0.92, duration: 0.18, ease: "power1.out", stagger: 0.05 }, 3.82);
+      tl.fromTo("#ghost3", { x: -226, y: -32, scaleX: 930 / 792, scaleY: 64 / 116 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.74, ease: "power3.inOut" }, 4.02);
+      tl.fromTo("#ghost4", { x: -226, y: -96, scaleX: 930 / 792, scaleY: 64 / 116 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.74, ease: "power3.inOut" }, 4.08);
+      tl.to("#sheet", { opacity: 0, y: 40, scale: 0.985, duration: 0.5, ease: "power2.in" }, 3.98);
+      tl.to(["#ghost3", "#ghost4"], { opacity: 0, duration: 0.4, ease: "power1.inOut", stagger: 0.05 }, 4.8);
+
+      // ================= SCENE 2 — paste a confirmation (4.20–9.60) =================
+      tl.fromTo("#daycard", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 4.3);
+      tl.fromTo(["#dc-date", "#dc-title"], { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.08 }, 4.46);
+      tl.fromTo("#dc-divider", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, 4.56);
+      tl.fromTo(["#rowA .row-in", "#rowB .row-in"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, 4.74);
+      tl.fromTo("#rail", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power2.out" }, 4.84);
+
+      tl.fromTo("#assistant", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.85, ease: "expo.out" }, 4.56);
+      tl.set("#capA", { opacity: 1 }, 4.7);
+      tl.fromTo("#capA .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.9, ease: "expo.out", stagger: 0.1 }, 4.7);
+
+      // Attach → the assistant reads it
+      tl.fromTo("#msg-user", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 5.28);
+      tl.fromTo("#msg-typing", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, 5.64);
+      tl.fromTo("#msg-typing .tdot", { opacity: 0.3 }, { opacity: 1, duration: 0.22, ease: "sine.inOut", stagger: { each: 0.1, repeat: 1, yoyo: true } }, 5.72);
+      tl.to("#msg-typing", { opacity: 0, duration: 0.14, ease: "power1.in" }, 6.3);
+      tl.fromTo("#msg-extract", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 6.44); // beat-grid: lands ~6.56s
+
+      // Cursor → Import
+      tl.set("#cursor", { x: 780, y: 1100, opacity: 0 }, 0);
+      tl.to("#cursor", { opacity: 1, duration: 0.18, ease: "power1.out" }, 6.8);
+      tl.to("#cursor", { x: 258, duration: 0.95, ease: "power2.inOut" }, 6.8);
+      tl.to("#cursor", { y: 822, duration: 0.95, ease: "power3.out" }, 6.8);
+      tl.to("#cursor-in", { scale: 0.84, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 7.9);
+      tl.to("#btn-import", { scale: 0.95, duration: 0.08, ease: "power2.in", yoyo: true, repeat: 1 }, 7.9);
+      tl.fromTo("#ripple", { scale: 0.2, opacity: 0.6 }, { scale: 2.6, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 7.93);
+      tl.to("#imp-label-1", { opacity: 0, y: -12, duration: 0.18, ease: "power1.in" }, 8.0);
+      tl.fromTo("#imp-label-2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.26, ease: "power2.out" }, 8.17);
+      tl.to("#hdr-found", { opacity: 0, duration: 0.16, ease: "power1.in" }, 8.3);
+      tl.fromTo("#hdr-added", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, 8.46);
+
+      // The extracted card travels to Saturday and slots in as the 11:05 row
+      tl.set("#flyer", { x: 0, y: 0, scale: 1, opacity: 0 }, 0);
+      tl.to("#flyer", { opacity: 1, duration: 0.06 }, 8.06);
+      tl.to("#item-card", { opacity: 0.4, duration: 0.3, ease: "power1.out" }, 8.08);
+      tl.to("#flyer", { x: 1020, scale: 0.87, duration: 0.66, ease: "power2.inOut" }, 8.08);
+      tl.to("#flyer", { y: -291, duration: 0.66, ease: "power3.out" }, 8.08);
+      tl.to(["#rowA", "#rowB"], { y: 128, duration: 0.5, ease: "power2.inOut" }, 8.14);
+      tl.to("#rail", { scaleY: 2, duration: 0.5, ease: "power2.inOut" }, 8.14);
+      tl.to("#flyer", { opacity: 0, duration: 0.2, ease: "power1.in" }, 8.72);
+      tl.fromTo("#rowF .row-in", { opacity: 0 }, { opacity: 1, duration: 0.24, ease: "power1.out" }, 8.7); // beat-locked: 8.74s (groove enters)
+      tl.fromTo("#rowF .flash", { opacity: 0 }, { opacity: 0.75, duration: 0.16, ease: "power1.out" }, 8.74);
+      tl.to("#rowF .flash", { opacity: 0, duration: 0.6, ease: "power1.inOut" }, 9.0);
+      tl.to("#cursor", { opacity: 0, duration: 0.25, ease: "power1.in" }, 8.9);
+
+      // Exit
+      tl.to("#capA", { opacity: 0, y: -26, duration: 0.34, ease: "power2.in" }, 9.22);
+      tl.to("#assistant", { opacity: 0, x: -44, duration: 0.34, ease: "power2.in" }, 9.22);
+      tl.to("#daycard", { opacity: 0, y: 26, scale: 0.97, duration: 0.36, ease: "power2.in" }, 9.2);
+
+      // ================= SCENE 3 — plan together (9.60–13.10) =================
+      tl.set("#b-head", { opacity: 1 }, 9.6);
+      tl.fromTo("#b-head .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.12 }, 9.6);
+      tl.fromTo(".av", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.08 }, 10.3);
+      tl.fromTo("#b-live .live", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 10.55);
+      tl.fromTo("#live-ring", { scale: 1, opacity: 0.55 }, { scale: 2.6, opacity: 0, duration: 0.9, ease: "power1.out", repeat: 2 }, 10.6);
+
+      // Phones dealt on consecutive beats, then the full set holds so every label reads
+      [
+        ["#p1", -5, 9.72, "#l1"], // beat-grid: 9.83s
+        ["#p2", 0, 10.26, "#l2"], // beat-grid: 10.37s
+        ["#p3", 5, 10.82, "#l3"], // beat-grid: 10.93s
+      ].forEach(([sel, rot, t, label]) => {
+        tl.fromTo(sel, { opacity: 0, y: 160, rotation: rot * 2.4 + (rot === 0 ? 4 : 0) }, { opacity: 1, y: 0, rotation: rot, duration: 0.9, ease: "expo.out" }, t);
+        tl.fromTo(label, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, t + 0.2);
+      });
+      tl.fromTo("#p1 .float", { y: 0 }, { y: -10, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 10.7);
+      tl.fromTo("#p2 .float", { y: 0 }, { y: -10, duration: 1.0, ease: "sine.inOut", yoyo: true, repeat: 1 }, 11.1);
+      tl.fromTo("#p3 .float", { y: 0 }, { y: -10, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1 }, 11.5);
+
+      tl.to(["#p1", "#p2", "#p3"], { opacity: 0, y: 46, duration: 0.3, ease: "power2.in", stagger: 0.04 }, 12.94);
+      tl.to(["#b-head", "#b-live", "#l1", "#l2", "#l3"], { opacity: 0, duration: 0.26, ease: "power1.in" }, 12.96);
+
+      // ================= SCENE 4 — print studio (13.10–17.40) =================
+      tl.fromTo("#c-eyebrow", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" }, 13.11); // beat-locked: 13.11s
+      tl.set("#c-head", { opacity: 1 }, 13.24);
+      tl.fromTo("#c-head .line-in", { yPercent: 112 }, { yPercent: 0, duration: 0.95, ease: "expo.out", stagger: 0.09 }, 13.24);
+      tl.fromTo("#c-pdf", { opacity: 0, x: 150, rotation: -13 }, { opacity: 1, x: 0, rotation: -6, duration: 0.95, ease: "expo.out" }, 13.14);
+      tl.fromTo("#c-step", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 13.36);
+      tl.fromTo(".chip", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 }, 13.8);
+      swap("#st1", "#st2", 14.04);
+
+      // Three editions of the same trip, one every other beat
+      [
+        [0, 14.2, -3, 2], // beat-grid: 14.20s
+        [1, 15.29, -2, 3], // beat-grid: 15.29s
+        [2, 16.38, -3.5, 1.5], // beat-grid: 16.38s
+      ].forEach(([i, beat, rc, rd]) => {
+        const t = beat - 0.16;
+        // Opaque almost at once, so the new sheets slide over the old ones instead of ghosting through them.
+        tl.fromTo(`#ed${i}`, { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "power1.out" }, t);
+        tl.fromTo(`#ed${i} .ed-cover`, { x: 190, y: 26, rotation: rc + 9 }, { x: 0, y: 0, rotation: rc, duration: 0.8, ease: "expo.out" }, t);
+        tl.fromTo(`#ed${i} .ed-day`, { x: 230, y: 70, rotation: rd + 11 }, { x: 0, y: 0, rotation: rd, duration: 0.85, ease: "expo.out" }, t + 0.07);
+        tl.to(`#chip${i}`, { backgroundColor: "#eee7da", borderColor: "#5c544a", color: "#5c544a", duration: 0.25, ease: "power1.out" }, beat);
+        if (i > 0) {
+          tl.to(`#chip${i - 1}`, { backgroundColor: "#fdfcf8", borderColor: "#ddd4c8", color: "#6b6354", duration: 0.25, ease: "power1.out" }, beat);
+          // The previous edition leaves only once the new one has covered it.
+          tl.to(`#ed${i - 1}`, { opacity: 0, duration: 0.2, ease: "power1.in" }, beat + 0.32);
+        }
+      });
+      tl.to("#c-pdf", { y: 18, duration: 3.0, ease: "sine.inOut" }, 14.2);
+
+      // ================= SCENE 5 — outro (17.40–21.60) =================
+      tl.fromTo("#d-wipe", { yPercent: 100 }, { yPercent: 0, duration: 0.52, ease: "power3.inOut" }, 16.9);
+      tl.fromTo("#d-word", { opacity: 0, y: 42, scale: 1.06 }, { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "expo.out" }, 17.38); // beat-locked: 17.47s
+      tl.fromTo("#d-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, 17.9);
+      tl.fromTo("#d-line", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 18.0);
+      tl.fromTo("#d-cta", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.75, ease: "expo.out" }, 18.5); // beat-grid: 18.56s
+      tl.fromTo("#d-url", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out" }, 19.1);
+      tl.fromTo("#d-lock", { scale: 1 }, { scale: 1.028, duration: 4.2, ease: "none" }, 17.4);
+      tl.fromTo("#d-glow", { x: 0 }, { x: 40, duration: 4.7, ease: "sine.inOut" }, 16.9);
+      tl.to(
+        "#d-glow-core",
+        {
+          keyframes: AUDIO_REACTIVE.rms.slice(Math.round(17.4 * AUDIO_REACTIVE.fps)).map((v) => ({ opacity: 0.3 + v * 0.7, scale: 1 + v * 0.07, duration: STEP, ease: "sine.inOut" })),
+        },
+        17.4,
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
