@@ -299,6 +299,21 @@ const PrintItinerary: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designRow?.id, tripId]);
 
+  // The edit fields inherit the document's type, and a 10px kicker is well under
+  // the 16px line where iOS zooms into a focused field. In a home-screen app that
+  // zoom never unwinds, leaving the page panned sideways under the toolbar. Cap
+  // the scale only while editing, so reading the edition keeps pinch-zoom.
+  useEffect(() => {
+    if (!isEditing) return;
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!meta) return;
+    const original = meta.content;
+    meta.content = `${original}, maximum-scale=1`;
+    return () => {
+      meta.content = original;
+    };
+  }, [isEditing]);
+
   const pairing = design ? getFontPairing(design.fontPairing) : null;
   useGoogleFonts(pairing?.googleQuery ?? null);
 
@@ -327,7 +342,7 @@ const PrintItinerary: React.FC = () => {
   const canShowBudget = isReady && hasLedgerData(tripData!);
 
   return (
-    <div className="min-h-screen bg-sand-100 print:bg-transparent">
+    <div className="min-h-screen bg-sand-100 safe-pl safe-pr print:bg-transparent">
       {design && (
         <Helmet>
           <title>{`${design.cover.title} · WanderLuxe`}</title>
@@ -337,7 +352,7 @@ const PrintItinerary: React.FC = () => {
 
       {/* Screen-only toolbar. Opaque rather than blurred: this page is a paper
           simulation, and a glass bar floating over it breaks the illusion. */}
-      <div className="print:hidden sticky top-0 z-20 border-b border-border bg-background">
+      <div className="print:hidden sticky top-0 z-20 border-b border-border bg-background safe-pt">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2 sm:px-4 sm:py-3">
           {isEditing ? (
             <>
@@ -476,7 +491,7 @@ const PrintItinerary: React.FC = () => {
         )}
       </div>
 
-      <div className="mx-auto max-w-3xl px-0 py-8 print:max-w-none print:p-0 sm:px-4">
+      <div className="mx-auto max-w-3xl px-0 pt-8 pb-[calc(2rem_+_env(safe-area-inset-bottom,0px))] print:max-w-none print:p-0 sm:px-4">
         {isLoading && (
           <div className="shadow-warm-lg print:hidden" aria-busy="true">
             <span className="sr-only" role="status">
