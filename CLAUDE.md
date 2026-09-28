@@ -189,7 +189,7 @@ PostgreSQL database
 
 **Forms & toasts**
 - `react-hook-form` + `zod` (`zodResolver`) + Shadcn/ui form components (about 9 feature files use them; not every dialog does)
-- Toasts: Sonner for new code (a few older files still use the shadcn `use-toast`)
+- Toasts: Sonner only (`toast` from `sonner`; the shadcn `use-toast`/`toaster` pair is gone)
 
 **Dialogs**
 - `Shadcn/ui` Dialog primitive (Radix UI based)

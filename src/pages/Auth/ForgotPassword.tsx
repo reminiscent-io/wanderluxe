@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const schema = z.object({
@@ -18,7 +18,6 @@ type FormValues = z.infer<typeof schema>;
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<FormValues>({
@@ -36,19 +35,14 @@ const ForgotPassword = () => {
       if (error) throw error;
 
       // Generic message to prevent email enumeration
-      toast({
-        title: "Check your email",
-        description:
-          "If an account exists for that address, you'll receive a link to reset your password.",
+      toast("Check your email", {
+        description: "If an account exists for that address, you'll receive a link to reset your password.",
       });
 
       navigate("/"); // or back to /auth
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Unable to send reset email",
+      toast.error("Unable to send reset email", {
         description: err instanceof Error ? err.message : "Please try again.",
-        className: "bg-earth-100/50 border-destructive",
       });
     } finally {
       setLoading(false);

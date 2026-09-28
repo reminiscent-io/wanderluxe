@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const schema = z
@@ -25,7 +25,6 @@ type FormValues = z.infer<typeof schema>;
 const UpdatePassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -47,11 +46,8 @@ const UpdatePassword = () => {
     (async () => {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Link invalid or expired",
+        toast.error("Link invalid or expired", {
           description: "Please request a new password reset.",
-          className: "bg-earth-100/50 border-destructive",
         });
         navigate("/auth/forgot-password");
         return;
@@ -69,17 +65,11 @@ const UpdatePassword = () => {
       });
       if (error) throw error;
 
-      toast({
-        title: "Password updated",
-        description: "You can now access your trips.",
-      });
+      toast.success("Password updated", { description: "You can now access your trips." });
       navigate("/my-trips");
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Unable to update password",
+      toast.error("Unable to update password", {
         description: err instanceof Error ? err.message : "Please try again.",
-        className: "bg-earth-100/50 border-destructive",
       });
     } finally {
       setLoading(false);

@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
@@ -160,7 +160,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       handleBackToTrips();
     } catch (error) {
       console.error('Failed to delete trip:', error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete trip' });
+      toast.error('Failed to delete trip');
     }
   };
 
@@ -507,7 +507,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
             setSelectedReservation(null);
           } catch (err) {
             console.error('Failed to save reservation:', err);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save reservation' });
+            toast.error('Failed to save reservation');
           }
         }}
       />

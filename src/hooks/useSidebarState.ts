@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTripQuery } from '@/hooks/useTripQuery';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Currency } from '@/utils/currencyConstants';
 import { ActivityFormData } from '@/types/trip';
 import { generateDatesArray } from '@/utils/dateUtils';
@@ -290,7 +290,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       queryClient.invalidateQueries({ queryKey: ['accommodations'] });
     } catch (err) {
       console.error('Error deleting accommodation:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete accommodation' });
+      toast.error('Failed to delete accommodation');
     }
   };
 
@@ -315,7 +315,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
     } catch (err) {
       console.error('Error deleting transportation:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete transportation' });
+      toast.error('Failed to delete transportation');
     }
   };
 
@@ -340,7 +340,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
     } catch (err) {
       console.error('Error deleting reservation:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete reservation' });
+      toast.error('Failed to delete reservation');
     }
   };
 
@@ -376,7 +376,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
     } catch (err) {
       console.error('Error deleting activity:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete activity' });
+      toast.error('Failed to delete activity');
     }
   };
 
@@ -427,7 +427,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       setActivityOpen(false);
     } catch (err) {
       console.error('Error adding activity:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add activity' });
+      toast.error('Failed to add activity');
       throw err;
     }
   };
@@ -476,7 +476,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       setSelectedActivity(null);
     } catch (err) {
       console.error('Error editing activity:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update activity' });
+      toast.error('Failed to update activity');
       throw err;
     }
   };
@@ -519,7 +519,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       };
     } catch (err) {
       console.error('Error checking days to remove:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to check affected days' });
+      toast.error('Failed to check affected days');
       return null;
     }
   };
@@ -557,7 +557,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       console.log('Successfully created trip days');
     } catch (err) {
       console.error('Failed to add new trip days:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new trip days' });
+      toast.error('Failed to add new trip days');
       throw err;
     }
   };
@@ -595,7 +595,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     const finalDeparture = overrideDeparture || newDeparture;
     console.log('handleSaveDates called with finalArrival:', finalArrival, 'finalDeparture:', finalDeparture);
     if (!finalArrival || !finalDeparture) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Both arrival and departure dates are required' });
+      toast.error('Both arrival and departure dates are required');
       return;
     }
     setIsSubmittingDates(true);
@@ -620,7 +620,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
     } catch (err) {
       console.error('Error updating trip dates:', err);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update trip dates' });
+      toast.error('Failed to update trip dates');
       setIsSubmittingDates(false);
     }
   };
