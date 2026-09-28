@@ -97,60 +97,6 @@ const insertAccommodationDays = async (
   }
 };
 
-// Add a new accommodation
-export const addAccommodation = async (
-  tripId: string,
-  formData: AccommodationFormData
-) => {
-  try {
-    console.log("Adding accommodation with data:", formData);
-    const orderIndex = await getNextAccommodationOrderIndex(tripId);
-    // Insert the accommodation record
-    const { data: accommodationData, error: accommodationError } = await supabase
-      .from("accommodations")
-      .insert({
-        trip_id: tripId,
-        title: formData.hotel || "Unnamed Accommodation",
-        hotel: formData.hotel,
-        hotel_details: formData.hotel_details || null,
-        hotel_address: formData.hotel_address || null,
-        hotel_phone: formData.hotel_phone || null,
-        hotel_website: formData.hotel_website || null,
-        hotel_url: formData.hotel_url || null,
-        hotel_checkin_date: formData.hotel_checkin_date,
-        hotel_checkout_date: formData.hotel_checkout_date,
-        checkin_time: formData.checkin_time || null,
-        checkout_time: formData.checkout_time || null,
-        cost: formData.cost ? parseFloat(formData.cost) : null,
-        currency: formData.currency || null,
-        hotel_place_id: formData.hotel_place_id || null,
-        timezone: formData.timezone || null,
-        order_index: orderIndex,
-      })
-      .select("*")
-      .single();
-    if (accommodationError) {
-      console.error("Error adding accommodation:", accommodationError);
-      throw accommodationError;
-    }
-    console.log("Accommodation added successfully:", accommodationData);
-
-    // Insert corresponding accommodation days
-    const stayId = accommodationData.stay_id;
-    await insertAccommodationDays(
-      stayId,
-      tripId,
-      formData.hotel_checkin_date,
-      formData.hotel_checkout_date
-    );
-    return accommodationData;
-  } catch (error) {
-    console.error("Error in addAccommodation:", error);
-    toast.error("Failed to add accommodation");
-    throw error;
-  }
-};
-
 // Update an existing accommodation
 export const updateAccommodation = async (
   stayId: string,
@@ -214,37 +160,6 @@ export const updateAccommodation = async (
   } catch (error) {
     console.error("Error in updateAccommodation:", error);
     toast.error("Failed to update accommodation");
-    throw error;
-  }
-};
-
-// Delete an accommodation
-export const deleteAccommodation = async (stayId: string) => {
-  try {
-    console.log("Deleting accommodation with ID:", stayId);
-    // First delete all associated accommodation_days
-    const { error: daysError } = await supabase
-      .from("accommodations_days")
-      .delete()
-      .eq("stay_id", stayId);
-    if (daysError) {
-      console.error("Error deleting accommodation days:", daysError);
-      throw daysError;
-    }
-    // Then delete the accommodation
-    const { error: accommodationError } = await supabase
-      .from("accommodations")
-      .delete()
-      .eq("stay_id", stayId);
-    if (accommodationError) {
-      console.error("Error deleting accommodation:", accommodationError);
-      throw accommodationError;
-    }
-    console.log("Accommodation deleted successfully");
-    return { success: true };
-  } catch (error) {
-    console.error("Error in deleteAccommodation:", error);
-    toast.error("Failed to delete accommodation");
     throw error;
   }
 };

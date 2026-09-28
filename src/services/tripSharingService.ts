@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { TripShare, SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
+import { SharedTripWithDetails, PermissionLevel } from '@/integrations/supabase/trip_shares_types';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 import { buildInviteUrl, createInviteLink } from './inviteLinkService';
 
@@ -10,7 +10,7 @@ import { buildInviteUrl, createInviteLink } from './inviteLinkService';
  * email does not admit people indefinitely. The link is listed under
  * Travelers → invite links, so the organizer can revoke it sooner.
  */
-export const SHARE_EMAIL_INVITE_DAYS = 30;
+const SHARE_EMAIL_INVITE_DAYS = 30;
 
 type TripShareRow = Tables<'trip_shares'>;
 type TripRow = Tables<'trips'>;
@@ -170,7 +170,7 @@ async function mintShareInviteUrl(
   }
 }
 
-export interface ShareNotificationParams {
+interface ShareNotificationParams {
   toEmail: string;
   fromEmail: string;
   /** The trip's title (`trips.destination`). */
@@ -192,7 +192,7 @@ export interface ShareNotificationParams {
  * Send an email notification to a user that a trip has been shared with them
  * Using Supabase Edge Function for email delivery
  */
-export const sendShareNotification = async (
+const sendShareNotification = async (
   params: ShareNotificationParams
 ): Promise<boolean> => {
   try {
@@ -231,43 +231,6 @@ export const sendShareNotification = async (
     return true;
   } catch (error) {
     console.error('Error in share notification process:', error);
-    return false;
-  }
-};
-
-/**
- * Update permission level for an existing trip share
- */
-export const updateTripSharePermission = async (shareId: string, newPermissionLevel: PermissionLevel): Promise<boolean> => {
-  try {
-    console.log(`Starting permission update for share ${shareId} to ${newPermissionLevel}`);
-    
-    // Direct update approach with comprehensive error handling
-    const { data: updateResult, error: updateError } = await supabase
-      .from('trip_shares')
-      .update({ permission_level: newPermissionLevel })
-      .eq('id', shareId)
-      .select('*')
-      .single();
-
-    if (updateError) {
-      console.error('Error updating trip share permission:', updateError);
-      toast.error(`Failed to update permission: ${updateError.message}`);
-      return false;
-    }
-
-    if (!updateResult) {
-      console.error('No data returned from update operation');
-      toast.error('Permission update failed - no data returned');
-      return false;
-    }
-
-    console.log('Permission update successful:', updateResult);
-    toast.success(`Permission updated to ${newPermissionLevel === 'read' ? 'view only' : 'full access'}`);
-    return true;
-  } catch (error) {
-    console.error('Error updating trip share permission:', error);
-    toast.error('An unexpected error occurred while updating permissions');
     return false;
   }
 };
@@ -451,92 +414,5 @@ export const getSharedTrips = async () => {
   } catch (error) {
     console.error('Error fetching shared trips:', error);
     return { data: [], error };
-  }
-};
-
-/**
- * Get all users who have access to a specific trip
- */
-export const getTripShares = async (tripId: string): Promise<TripShare[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('trip_shares')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching trip shares:', error);
-      return [];
-    }
-
-    // Ensure permission_level has a default value for backward compatibility
-    const processedData = ((data ?? []) as TripShareRow[]).map((share) => ({
-      ...share,
-      permission_level: share.permission_level || 'edit'
-    }));
-
-    console.log('Fetched trip shares:', processedData);
-    return processedData as unknown as TripShare[];
-  } catch (error) {
-    console.error('Error fetching trip shares:', error);
-    return [];
-  }
-};
-
-/**
- * Get unique email addresses that the current user has previously shared trips with
- * (excluding emails that have already been shared with the current trip)
- */
-export const getPreviouslySharedEmails = async (currentTripId: string): Promise<string[]> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return [];
-    }
-
-    // Get all emails the current user has shared trips with
-    const { data: allShares, error: allSharesError } = await supabase
-      .from('trip_shares')
-      .select('shared_with_email, trip_id, created_at')
-      .eq('shared_by_user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (allSharesError) {
-      console.error('Error fetching previous shares:', allSharesError);
-      return [];
-    }
-
-    // Get emails already shared with current trip
-    const { data: currentTripShares, error: currentSharesError } = await supabase
-      .from('trip_shares')
-      .select('shared_with_email')
-      .eq('trip_id', currentTripId);
-
-    if (currentSharesError) {
-      console.error('Error fetching current trip shares:', currentSharesError);
-      return [];
-    }
-
-    // Create sets for efficient filtering
-    const currentTripEmails = new Set(
-      ((currentTripShares ?? []) as Pick<TripShareRow, 'shared_with_email'>[])
-        .map((share) => (share.shared_with_email ?? '').toLowerCase().trim())
-        .filter(Boolean)
-    );
-
-    // Get unique emails, excluding current trip shares and user's own email
-    const uniqueEmails = new Set<string>();
-    ((allShares ?? []) as Pick<TripShareRow, 'shared_with_email' | 'trip_id' | 'created_at'>[]).forEach((share) => {
-      const email = (share.shared_with_email ?? '').toLowerCase().trim();
-      if (email && !currentTripEmails.has(email) && email !== user.email?.toLowerCase()) {
-        uniqueEmails.add(email);
-      }
-    });
-
-    return Array.from(uniqueEmails).slice(0, 10); // Limit to 10 most recent unique emails
-  } catch (error) {
-    console.error('Error fetching previously shared emails:', error);
-    return [];
   }
 };
