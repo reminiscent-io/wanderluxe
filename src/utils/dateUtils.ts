@@ -67,8 +67,6 @@ export const generateDateArray = (startDate: string, endDate: string): string[] 
   return datesArray;
 };
 
-export const generateDatesArray = generateDateArray;
-
 // Calculate the number of days between two dates
 export const calculateDurationInDays = (startDateStr?: string, endDateStr?: string): number => {
   if (!startDateStr || !endDateStr) return 0;

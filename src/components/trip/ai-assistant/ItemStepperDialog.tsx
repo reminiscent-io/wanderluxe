@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, X, Check, SkipForward, Loader2 } from 'lucide-react';
+import { ChevronLeft, Check, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ExtractedItemCard from './ExtractedItemCard';
 import { supabase } from '@/integrations/supabase/client';

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { searchPlaces, getPlaceDetails, type AutocompleteResult, type PlaceResult } from '@/utils/googleMapsLoader';
+import { searchPlaces, getPlaceDetails, type AutocompleteResult } from '@/utils/googleMapsLoader';
 import { ChevronDown, MapPin, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

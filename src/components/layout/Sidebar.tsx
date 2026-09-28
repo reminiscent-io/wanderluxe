@@ -3,12 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2,
+   Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
+   BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2,
   BookOpen
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -474,9 +474,9 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       />
 
       <RestaurantReservationDialog
-        isOpen={reservationOpen}
+        open={reservationOpen}
         onOpenChange={setReservationOpen}
-        editingReservation={selectedReservation}
+        initialData={selectedReservation}
         tripId={tripId || ""}
         title={selectedReservation ? "Edit Reservation" : "Add Reservation"}
         isSubmitting={false}
@@ -513,7 +513,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       />
 
       <ActivityDialog
-        isOpen={activityOpen || !!selectedActivity}
+        open={activityOpen || !!selectedActivity}
         onOpenChange={(open) => {
           if (!open) {
             setActivityOpen(false);

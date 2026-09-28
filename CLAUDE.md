@@ -140,7 +140,7 @@ useAccommodationsRealtime() → .channel() → .on('postgres_changes')
  └─ Component auto-re-renders
 ```
 
-Real-time hooks exist for: accommodations, activities, reservations, invite links, travelers (`trip_shares`), the calendar view (trip-wide `useCalendarRealtime`), the map (`useMapRealtime`), and viewing status (`useTripViewingStatus` — a `postgres_changes` channel over a 30s `presence_updated_at` heartbeat, not Supabase Presence). Exchange rates subscribe inline in `budget/utils/currencyConverter.ts`. `useTripSubscription` (trip row) is currently a disabled no-op. AI chat streams over SSE, not a realtime subscription.
+Real-time hooks exist for: accommodations, activities, reservations, invite links, travelers (`trip_shares`), the calendar view (trip-wide `useCalendarRealtime`), the map (`useMapRealtime`), and viewing status (`useTripViewingStatus` — a `postgres_changes` channel over a 30s `presence_updated_at` heartbeat, not Supabase Presence). Exchange rates subscribe inline in `budget/utils/currencyConverter.ts`. AI chat streams over SSE, not a realtime subscription.
 
 #### 3. **Data Flow Pattern**
 ```
@@ -243,7 +243,6 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useSessionKeepAlive()` - Session management with tab visibility detection
 - `useTripTimezone()` / `useResolveTimezone()` - Trip default timezone + place→IANA resolution (lazy, self-healing)
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
-- `useTripSubscription()` - Trip-row realtime for detail views — **currently a no-op** (body disabled; lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
 - `usePublicTrips()` - Explore showcase trips, grouped by region on `/explore` via `lib/regions.ts` and cross-linked by `RelatedItineraries` at the foot of every public trip page (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`). Showcase dates are kept evergreen by the operator-only `roll_public_trip_dates()` SQL function (run each January)
 - `useIsAdmin()` - Admin role checking (reads `profiles.is_admin`)

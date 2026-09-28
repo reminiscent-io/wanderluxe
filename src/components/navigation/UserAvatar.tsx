@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";

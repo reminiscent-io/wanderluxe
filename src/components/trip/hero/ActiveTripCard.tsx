@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, CloudSun, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, ChevronRight } from 'lucide-react';
 import { Trip } from '@/types/trip';
 import { useWeather, getWeatherEmoji } from '@/hooks/useWeather';
 import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';

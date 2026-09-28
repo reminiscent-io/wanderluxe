@@ -1,4 +1,3 @@
-import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ActivityFormData, DayActivity } from '@/types/trip';

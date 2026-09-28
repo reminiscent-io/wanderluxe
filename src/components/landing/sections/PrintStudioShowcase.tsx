@@ -6,7 +6,7 @@
 // the document renderer, its stylesheet and edition fonts, none of which
 // belong in the landing page's first paint.
 
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';

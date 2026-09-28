@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { useTravelers, type Traveler } from "@/hooks/useTravelers";
-import { useAuth } from "@/contexts/AuthContext";
 import { useTripPermissions } from "@/hooks/use-trip-permissions";
 import { Separator } from "@/components/ui/separator";
 import Header from "../_shared/Header";

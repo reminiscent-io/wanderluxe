@@ -463,7 +463,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       />
 
       <ActivityDialog
-        isOpen={activityOpen || !!editingActivity}
+        open={activityOpen || !!editingActivity}
         onOpenChange={(open) => {
           if (!open) handleActivityDialogClose();
         }}
@@ -480,7 +480,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
       />
 
       <RestaurantReservationDialog
-        isOpen={reservationOpen}
+        open={reservationOpen}
         onOpenChange={(open) => {
           setReservationOpen(open);
           if (!open) {
@@ -491,7 +491,7 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
         }}
         tripId={tripId}
         title={editingReservation ? "Edit Restaurant Reservation" : "Add Restaurant Reservation"}
-        editingReservation={editingReservation || undefined}
+        initialData={editingReservation || undefined}
         preselectedDate={editingReservation ? undefined : preselectedDate}
         isSubmitting={false}
         onSubmit={handleReservationSubmit}

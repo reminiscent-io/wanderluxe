@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import HeroSection from "../components/trip/HeroSection";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
@@ -6,7 +6,6 @@ import BottomNavigation from "@/components/layout/BottomNavigation";
 import QuickAddSheet from "@/components/layout/QuickAddSheet";
 import { useTripQuery, useTripIdBySlug } from '@/hooks/useTripQuery';
 import { buildOgImageUrl, tripTitle } from '@/utils/tripUrl';
-import { useTripSubscription } from '@/components/trip/details/useTripSubscription';
 import { useTripAccessGate } from '@/components/trip/details/useTripAccessGate';
 import TripDetailsSkeleton from '@/components/trip/details/TripDetailsSkeleton';
 import TripDetailsError from '@/components/trip/details/TripDetailsError';
@@ -57,7 +56,6 @@ const TripDetails = () => {
   }, [onExploreRoute, paramsTripId, location.pathname, location.search, navigate]);
 
   const { trip, tripLoading, tripError, previousTrip } = useTripQuery(tripId);
-  useTripSubscription(tripId);
 
   // Signed-out visitors following a share or reminder link are sent to sign in
   // and returned here afterwards; true while that redirect is pending, or

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Zap, TrendingUp, Award } from 'lucide-react';
 import { formatCurrencyWithSymbol } from '../utils/budgetCalculations';
 

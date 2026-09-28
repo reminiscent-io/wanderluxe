@@ -6,7 +6,6 @@ import {
   disableInviteLink,
   deleteInviteLink,
 } from '@/services/inviteLinkService';
-import type { InviteLink } from '@/integrations/supabase/invite_link_types';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 export function useInviteLinks(tripId: string) {

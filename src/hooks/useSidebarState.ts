@@ -6,7 +6,7 @@ import { useTripQuery } from '@/hooks/useTripQuery';
 import { toast } from 'sonner';
 import { Currency } from '@/utils/currencyConstants';
 import { ActivityFormData } from '@/types/trip';
-import { generateDatesArray } from '@/utils/dateUtils';
+import { generateDateArray } from '@/utils/dateUtils';
 import { createTripDays } from '@/services/tripDaysService';
 import { setJunctionTravelers } from '@/services/travelers';
 import type { TravelerWithMeta } from '@/services/travelers';
@@ -490,8 +490,8 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Check for days that need to be removed when date range is shortened
   const checkDaysToRemove = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
-    const oldDates = generateDatesArray(oldArr, oldDep);
-    const newDates = generateDatesArray(newArr, newDep);
+    const oldDates = generateDateArray(oldArr, oldDep);
+    const newDates = generateDateArray(newArr, newDep);
     const toRemove = oldDates.filter(d => !newDates.includes(d));
     if (!toRemove.length) return null;
 
@@ -543,8 +543,8 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   // Utility to add new trip_days if trip dates have been extended
   const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
     console.log('addNewTripDays called with:', { oldArr, oldDep, newArr, newDep });
-    const oldDates = generateDatesArray(oldArr, oldDep);
-    const newDates = generateDatesArray(newArr, newDep);
+    const oldDates = generateDateArray(oldArr, oldDep);
+    const newDates = generateDateArray(newArr, newDep);
     const toAdd = newDates.filter(d => !oldDates.includes(d));
     console.log('Date comparison - old:', oldDates, 'new:', newDates, 'toAdd:', toAdd);
     if (!toAdd.length) {
@@ -582,7 +582,7 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
       await addNewTripDays(oldArrival, oldDeparture, arr, dep);
     } else {
       console.log('Taking createTripDays path - no existing dates');
-      const allDates = generateDatesArray(arr, dep);
+      const allDates = generateDateArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
 

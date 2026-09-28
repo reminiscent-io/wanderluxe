@@ -24,18 +24,17 @@ const normalizeDateForDB = (value?: string) => {
 };
 
 interface ActivityDialogProps {
-  open?: boolean;                 // NEW preferred
-  isOpen?: boolean;               // legacy support
+  open: boolean;
   onOpenChange: (open: boolean) => void;
 
-  // Legacy interface (timeline/sidebar)
+  // Controlled interface: TimelineContent and Sidebar own the form state and the write
   activity?: ActivityFormData;
   onActivityChange?: (activity: ActivityFormData) => void;
   onSubmit?: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
   eventId?: string;
 
-  // New interface (chat system)
+  // Self-contained interface: chat, calendar and map let the dialog write to Supabase itself
   initialData?: Partial<Tables<'day_activities'>>;
   onSuccess?: () => void;
 
@@ -50,7 +49,6 @@ interface ActivityDialogProps {
 const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   const {
     open,
-    isOpen,
     onOpenChange,
     activity,
     onActivityChange,
@@ -67,7 +65,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   } = props;
 
   const queryClient = useQueryClient();
-  const finalOpen = open ?? isOpen ?? false;
   const isEditMode = !!activityId;
 
   // ---------- Internal activity state (used by chat flow) ----------
@@ -102,7 +99,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   // If none provided (chat path), derive from trip_days (min/max)
   useEffect(() => {
-    if (tripDates || !finalOpen || !tripId) return;
+    if (tripDates || !open || !tripId) return;
 
     let cancelled = false;
     (async () => {
@@ -129,7 +126,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     return () => {
       cancelled = true;
     };
-  }, [tripDates, finalOpen, tripId]);
+  }, [tripDates, open, tripId]);
 
   // ✅ Only prefill date for ADD flow (never in edit)
   useEffect(() => {
@@ -263,7 +260,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     !isEditMode ? preselectedDate || finalActivity.date : undefined;
 
   return (
-    <Dialog open={finalOpen} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>

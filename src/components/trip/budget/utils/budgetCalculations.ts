@@ -161,13 +161,3 @@ export const convertAmount = (
   return amount * toUsdRate * fromUsdRate;
 };
 
-// Format currency amount to string
-export const formatCurrencyOld = (amount: number | null, currency: string): string => {
-  if (amount === null) return '-';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
-};

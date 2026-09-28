@@ -1,5 +1,4 @@
 // src/components/trip/timeline/TripDatesPanel.tsx
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import Header from "@/components/trip/_shared/Header";
