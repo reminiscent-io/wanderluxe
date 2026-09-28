@@ -37,7 +37,6 @@ Preferred communication style: Simple, everyday language.
 - **Separate**: `npm run dev:frontend` (Vite only) or `npm run dev:server` (Express only)
 - **Replit workflow**: `PORT=5000 NODE_ENV=development npx tsx server/index.ts`
 - **Production**: `npm run build` then `npm run start` → `node dist/server/index.js`. Cloud Run injects `PORT`; the local fallback is 5001.
-- **Note**: `dev.sh` and `start-dev.sh` are legacy Bun-based scripts and are not the supported path.
 
 ### API Endpoints (Express Server)
 - `/api/health` — health check

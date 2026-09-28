@@ -29,6 +29,7 @@ npm run test            # Run tests (Vitest) — there is no CI, so run this bef
 npx vitest run src/path/to/file.test.ts   # Single file
 npm run test:watch      # Watch mode
 npm run test:coverage   # Coverage report
+npx knip                # Dead files / exports / dependencies (config in knip.json; not part of npm test)
 npm run evals           # Eval harness (LLM + integration; on-demand only, never part of npm test)
 npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
 npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
@@ -90,13 +91,12 @@ src/
 ├── constants/             # Shared constants (unsplash.ts)
 ├── lib/                   # Theme, utilities
 ├── integrations/supabase/ # Supabase client & auto-generated types
-├── test/                  # Test setup & mocks
+├── test/                  # Test setup
 ├── types/                 # TypeScript definitions
 └── utils/                 # Utility functions
 
 server/
 ├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
-├── dev-server.ts         # Legacy Vite-middleware entry, used only by start-dev.sh (bun); `npm run dev` doesn't touch it
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   sitemap, printDesign (Print Studio OpenAI call + trip payload), printSnapshot
 └── routes/               # API routes, registered in routes/index.ts (Stripe, AI chat, MCP server, iCal feed, admin insights,
@@ -451,7 +451,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 
 ## Gotchas
 
-- **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `DayActivityManager.tsx`, `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
+- **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
 - **FK delete rules aren't in `supabase/migrations/`** (the base schema predates them). `accommodations_days.day_id → trip_days` is NO ACTION, so delete those rows before deleting trip days (`tripWrites.ts` does)
 - **Merged ≠ applied**: check the live schema before assuming a migration is in prod. The typed client doesn't error on unknown columns passed as variables, so `tsc` won't catch a missing generated type
 - **Edge Functions reject `localhost:8080`**: every function imports `getCorsHeaders` from `supabase/functions/_shared/cors.ts`, whose allowlist is `ALLOWED_ORIGIN` + `*.replit.*`. A deploy must ship the `_shared/` files next to `index.ts` (the Supabase MCP `deploy_edge_function` takes a file list; the dashboard's single-file editor does not). Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function

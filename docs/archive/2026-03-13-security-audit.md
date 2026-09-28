@@ -1,3 +1,8 @@
+> **Archived snapshot.** This is the March 2026 audit as written; it is not a live tracker and has no per-finding status.
+> Verified since: C1 (Edge Function CORS) now goes through the `ALLOWED_ORIGIN` allowlist in `supabase/functions/_shared/cors.ts`;
+> C2 (Express CORS) is gated by `ALLOWED_ORIGINS`; C7 (hardcoded admin email) is replaced by `profiles.is_admin`.
+> Other findings have not been re-checked here.
+
 # WanderLuxe Security Audit Report
 
 **Date:** 2026-03-13
