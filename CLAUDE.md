@@ -327,6 +327,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - Tools in `server/lib/mcpTools.ts` — **20 total**: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, plus add/update/delete for activity, dining, accommodation, transportation, and expense
 - Timezone-aware (times stay wall-clock); `update_trip` returns at-risk days and requires `confirm_remove_days: true` before dropping days that contain items; writes go through `server/lib/tripWrites.ts`
 - Covered by `evals/mcp` (full read+write lifecycle, auth/RLS/discovery)
+- Public docs (Connectors Directory submission link): `docs/mcp.md`. Every tool needs a `title` + `readOnlyHint`/`destructiveHint` (the directory rejects tools without them; `mcpTools.test.ts` enforces it). Keep the doc in step when a tool or parameter changes
 
 #### 19. **Booking Tab (Expedia Affiliate)**
 - `src/components/trip/BookingView.tsx` + `src/lib/expedia.ts` — embedded Expedia Group affiliate search widget (stays + flights, Partnerize network), fallback deep link, and a human travel-advisor CTA (Fora Travel)

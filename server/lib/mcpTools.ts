@@ -102,6 +102,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
   server.registerTool(
     'list_trips',
     {
+      title: 'List trips',
       description:
         'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination, dates, budget, and the trip default timezone.',
       annotations: READ_ONLY,
@@ -119,6 +120,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
   server.registerTool(
     'get_trip',
     {
+      title: 'Get trip itinerary',
       description:
         "Get the full itinerary for one trip: day-by-day activities and dining reservations, plus accommodations and transportation. Use list_trips to find the trip_id. All times are wall-clock values local to each item's timezone field; a null timezone means the trip's default timezone.",
       inputSchema: { trip_id: z.string().uuid().describe('Trip ID from list_trips') },
@@ -194,6 +196,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
   server.registerTool(
     'get_trip_budget',
     {
+      title: 'Get trip budget',
       description:
         'Get the budget breakdown for one trip: total budget, spend per category (accommodations, transportation, activities, dining, other), and paid vs unpaid amounts.',
       inputSchema: { trip_id: z.string().uuid().describe('Trip ID from list_trips') },
@@ -208,7 +211,7 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
         supabase.from('reservations').select('cost,currency,amount_paid,is_paid').eq('trip_id', trip_id),
         supabase
           .from('other_expenses')
-          .select('description,date,cost,currency,amount_paid,is_paid')
+          .select('id,description,date,cost,currency,amount_paid,is_paid')
           .eq('trip_id', trip_id),
       ]);
 
@@ -245,6 +248,7 @@ function registerWriteTools(
   server.registerTool(
     'create_trip',
     {
+      title: 'Create trip',
       description:
         'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read. Required: destination, arrival_date, and departure_date — if the traveler has not given specific arrival and departure dates, ask for them rather than inventing dates.',
       inputSchema: {
@@ -270,6 +274,7 @@ function registerWriteTools(
           arrival_date: args.arrival_date,
           departure_date: args.departure_date,
           budget: args.budget ?? null,
+          timezone: args.timezone ?? null,
         });
         return toolResult(result);
       } catch (err) {
@@ -281,6 +286,7 @@ function registerWriteTools(
   server.registerTool(
     'update_trip',
     {
+      title: 'Update trip',
       description:
         "Update a trip's destination, budget, or dates. Changing dates adds new days automatically. If shrinking the range would drop days that still have items, the tool returns status 'confirmation_required' with the at-risk days and changes nothing; re-call with confirm_remove_days: true to delete those days and their items.",
       inputSchema: {
@@ -315,6 +321,7 @@ function registerWriteTools(
   server.registerTool(
     'add_activity',
     {
+      title: 'Add activity',
       description:
         'Add an activity to a trip on a given date (the server resolves the trip day). Returns the created activity, including its id.',
       inputSchema: {
@@ -345,6 +352,7 @@ function registerWriteTools(
   server.registerTool(
     'update_activity',
     {
+      title: 'Update activity',
       description:
         'Update an existing activity by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
       inputSchema: {
@@ -375,6 +383,7 @@ function registerWriteTools(
   server.registerTool(
     'delete_activity',
     {
+      title: 'Delete activity',
       description: 'Delete an activity by its id (from get_trip).',
       inputSchema: { activity_id: z.string().uuid().describe('Activity id from get_trip') },
       annotations: DESTRUCTIVE,
@@ -391,6 +400,7 @@ function registerWriteTools(
   server.registerTool(
     'add_dining',
     {
+      title: 'Add dining reservation',
       description:
         'Add a dining reservation to a trip on a given date (the server resolves the trip day). Returns the created reservation, including its id.',
       inputSchema: {
@@ -425,6 +435,7 @@ function registerWriteTools(
   server.registerTool(
     'update_dining',
     {
+      title: 'Update dining reservation',
       description:
         'Update an existing dining reservation by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
       inputSchema: {
@@ -459,6 +470,7 @@ function registerWriteTools(
   server.registerTool(
     'delete_dining',
     {
+      title: 'Delete dining reservation',
       description: 'Delete a dining reservation by its id (from get_trip).',
       inputSchema: { reservation_id: z.string().uuid().describe('Reservation id from get_trip') },
       annotations: DESTRUCTIVE,
@@ -475,6 +487,7 @@ function registerWriteTools(
   server.registerTool(
     'add_accommodation',
     {
+      title: 'Add accommodation',
       description:
         'Add a hotel / accommodation to a trip. Maps each night between check-in and check-out to its trip day. Returns the created stay, including its stay_id.',
       inputSchema: {
@@ -508,6 +521,7 @@ function registerWriteTools(
   server.registerTool(
     'update_accommodation',
     {
+      title: 'Update accommodation',
       description:
         'Update an accommodation by its stay_id (from get_trip). If check-in/out dates change, night mappings are recomputed. Only the fields you pass are changed.',
       inputSchema: {
@@ -541,6 +555,7 @@ function registerWriteTools(
   server.registerTool(
     'delete_accommodation',
     {
+      title: 'Delete accommodation',
       description: 'Delete an accommodation by its stay_id (from get_trip). Also removes its night mappings.',
       inputSchema: { stay_id: z.string().uuid().describe('Accommodation stay_id from get_trip') },
       annotations: DESTRUCTIVE,
@@ -557,6 +572,7 @@ function registerWriteTools(
   server.registerTool(
     'add_transportation',
     {
+      title: 'Add transportation',
       description:
         'Add a transportation leg (flight, train, car_service, shuttle, ferry, or rental_car) to a trip. Returns the created leg, including its id.',
       inputSchema: {
@@ -601,6 +617,7 @@ function registerWriteTools(
   server.registerTool(
     'update_transportation',
     {
+      title: 'Update transportation',
       description:
         'Update a transportation leg by its id (from get_trip). Only the fields you pass are changed.',
       inputSchema: {
@@ -645,6 +662,7 @@ function registerWriteTools(
   server.registerTool(
     'delete_transportation',
     {
+      title: 'Delete transportation',
       description: 'Delete a transportation leg by its id (from get_trip).',
       inputSchema: { id: z.string().uuid().describe('Transportation id from get_trip') },
       annotations: DESTRUCTIVE,
@@ -661,6 +679,7 @@ function registerWriteTools(
   server.registerTool(
     'add_expense',
     {
+      title: 'Add expense',
       description:
         'Add a miscellaneous (non-booking) expense to a trip — e.g. tickets, shopping, fees. Returns the created expense, including its id.',
       inputSchema: {
@@ -686,6 +705,7 @@ function registerWriteTools(
   server.registerTool(
     'update_expense',
     {
+      title: 'Update expense',
       description:
         'Update a miscellaneous expense by its id (from get_trip_budget). Only the fields you pass are changed.',
       inputSchema: {
@@ -711,6 +731,7 @@ function registerWriteTools(
   server.registerTool(
     'delete_expense',
     {
+      title: 'Delete expense',
       description: 'Delete a miscellaneous expense by its id (from get_trip_budget).',
       inputSchema: { id: z.string().uuid().describe('Expense id from get_trip_budget') },
       annotations: DESTRUCTIVE,
