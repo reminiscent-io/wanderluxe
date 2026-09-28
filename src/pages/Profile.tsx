@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
-import Navigation from "@/components/Navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -873,8 +872,7 @@ const Profile = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
-      <Navigation />
-      <div className="container mx-auto px-4 pt-20 md:pt-28 pb-12">
+      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-12">
         <div className="max-w-4xl mx-auto">
           {/* Page header — editorial anchor */}
           <header className="mb-10 md:mb-14">

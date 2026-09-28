@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
-import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAdminMetrics } from '@/hooks/useAdminMetrics';
@@ -10,8 +9,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="container mx-auto max-w-5xl px-4 pt-20 md:pt-28 pb-12">
+      <main className="container mx-auto max-w-5xl px-4 pt-12 md:pt-20 pb-12">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

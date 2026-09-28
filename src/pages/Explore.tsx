@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import Navigation from "../components/Navigation";
 import { Button } from "@/components/ui/button";
 import { usePublicTrips } from '@/hooks/usePublicTrips';
 import TripCard from '../components/trip/TripCard';
@@ -161,7 +160,6 @@ const Explore = () => {
         canonicalPath="/explore"
         jsonLd={itemListJsonLd}
       />
-      <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Header */}
         <header className="mb-8 md:mb-10 max-w-2xl">
