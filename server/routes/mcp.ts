@@ -118,7 +118,7 @@ const protectedResourceMetadata = {
   bearer_methods_supported: ['header'],
   scopes_supported: ['openid', 'email', 'profile'],
   resource_name: 'WanderLuxe',
-  resource_documentation: `${publicBaseUrl}/about`,
+  resource_documentation: 'https://github.com/reminiscent-io/wanderluxe/blob/main-agent/docs/mcp.md',
 };
 
 router.get('/.well-known/oauth-protected-resource/mcp', (_req: Request, res: Response) => {
