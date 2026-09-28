@@ -30,10 +30,10 @@ const shots = [
 
 const AppShowcase = () => {
   return (
-    <section className="bg-background py-16 md:py-24 overflow-hidden">
+    <section className="bg-background pt-10 pb-16 md:pt-14 md:pb-24 overflow-hidden">
       <div className="mx-auto max-w-6xl px-6">
         <motion.p
-          className="text-center font-sans text-sm uppercase tracking-widest text-earth-500 mb-10"
+          className="text-center font-sans text-sm uppercase tracking-widest text-earth-500 mb-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
