@@ -39,6 +39,7 @@ import { useDayTimeline } from './components/useDayTimeline';
 import { combineDateAndTime, type TimelineRenderRow } from './components/timeline-utils';
 
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
