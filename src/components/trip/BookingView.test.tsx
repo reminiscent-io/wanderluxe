@@ -6,7 +6,7 @@ const auth = vi.hoisted(() => ({ user: null as { id: string } | null }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: auth.user }) }));
 
 const toast = vi.hoisted(() => vi.fn());
-vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast }) }));
+vi.mock('sonner', () => ({ toast }));
 
 vi.mock('@/lib/expedia', () => ({
   EXPEDIA_FALLBACK_URL: 'https://expedia.com/affiliates/wanderluxe_travel/wanderluxe',

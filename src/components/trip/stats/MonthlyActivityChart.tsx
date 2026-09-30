@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format, getDay } from 'date-fns';

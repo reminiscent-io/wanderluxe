@@ -16,18 +16,16 @@ import type { Tables } from '@/integrations/supabase/types';
 type ReservationData = Partial<Tables<'reservations'>> & Record<string, unknown>;
 
 interface RestaurantReservationDialogProps {
-  open?: boolean;              // NEW preferred
-  isOpen?: boolean;            // legacy support
+  open: boolean;
   onOpenChange: (open: boolean) => void;
   tripId: string;
-  initialData?: ReservationData;           // NEW preferred
-  editingReservation?: ReservationData;    // legacy support
+  initialData?: ReservationData;
   onSuccess?: () => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
   preselectedDate?: string;    // Day the user clicked "Add to this day" on
   destination?: string;        // Trip destination to bias search results
-  // Legacy props from Sidebar
+  // Controlled interface: TimelineContent and Sidebar own submit/delete
   title?: string;
   isSubmitting?: boolean;
   onSubmit?: (data: ReservationData) => Promise<void>;
@@ -36,41 +34,36 @@ interface RestaurantReservationDialogProps {
 
 const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = ({
   open,
-  isOpen,
   onOpenChange,
   tripId,
   initialData,
-  editingReservation,
   onSuccess,
   tripArrivalDate,
   tripDepartureDate,
   preselectedDate,
   destination,
   title,
-  isSubmitting: legacyIsSubmitting,
-  onSubmit: legacyOnSubmit,
-  onDelete: legacyOnDelete,
+  isSubmitting: controlledIsSubmitting,
+  onSubmit: controlledOnSubmit,
+  onDelete: controlledOnDelete,
 }) => {
-  const finalOpen = open ?? isOpen ?? false;
-  const finalInitialData = initialData || editingReservation;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = async (data: ReservationData) => {
-    // Use legacy onSubmit if provided (from Sidebar)
-    if (legacyOnSubmit) {
-      await legacyOnSubmit(data);
+    if (controlledOnSubmit) {
+      await controlledOnSubmit(data);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      if (finalInitialData?.id) {
+      if (initialData?.id) {
         // Update existing reservation
         const { error } = await supabase
           .from('reservations')
           .update(data)
-          .eq('id', finalInitialData.id)
+          .eq('id', initialData.id)
           .eq('trip_id', tripId);
         
         if (error) throw error;
@@ -96,19 +89,18 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   };
 
   const handleDelete = async () => {
-    // Use legacy onDelete if provided (from Sidebar)
-    if (legacyOnDelete) {
-      await legacyOnDelete();
+    if (controlledOnDelete) {
+      await controlledOnDelete();
       return;
     }
 
-    if (!finalInitialData?.id) return;
+    if (!initialData?.id) return;
     
     try {
       const { error } = await supabase
         .from('reservations')
         .delete()
-        .eq('id', finalInitialData.id)
+        .eq('id', initialData.id)
         .eq('trip_id', tripId);
       
       if (error) throw error;
@@ -124,12 +116,12 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   };
 
   return (
-    <Dialog open={finalOpen} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0 z-40">
-          <DialogTitle>{title || (finalInitialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
+          <DialogTitle>{title || (initialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
           <DialogDescription className="sr-only">
-            {finalInitialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
+            {initialData?.id ? 'Update your restaurant booking details' : 'Add a new dining reservation'}
           </DialogDescription>
         </DialogHeader>
         {/* overflow-x-hidden is load-bearing: `overflow-y: auto` alone makes
@@ -138,9 +130,9 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
           <RestaurantReservationForm
             onSubmit={handleSubmit}
-            isSubmitting={legacyIsSubmitting ?? isSubmitting}
-            defaultValues={finalInitialData}
-            onDelete={finalInitialData?.id ? handleDelete : undefined}
+            isSubmitting={controlledIsSubmitting ?? isSubmitting}
+            defaultValues={initialData}
+            onDelete={initialData?.id ? handleDelete : undefined}
             onCancel={() => onOpenChange(false)}
             tripId={tripId}
             tripArrivalDate={tripArrivalDate}

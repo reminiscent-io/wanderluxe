@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useAuth } from '@/contexts/AuthContext';
 import { ExternalLink, Star } from 'lucide-react';
 import {
@@ -17,7 +17,6 @@ interface BookingViewProps {
 }
 
 const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [widgetFailed, setWidgetFailed] = useState(false);
   const widgetRef = useRef<HTMLDivElement | null>(null);
@@ -81,8 +80,7 @@ const BookingView: React.FC<BookingViewProps> = ({ tripId }) => {
 
     window.open('https://www.foratravel.com/advisors', '_blank');
 
-    toast({
-      title: "Redirecting to Fora Travel",
+    toast("Redirecting to Fora Travel", {
       description: "Opening Fora's advisor search for booking assistance",
     });
   };

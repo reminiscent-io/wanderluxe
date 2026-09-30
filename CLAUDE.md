@@ -29,6 +29,7 @@ npm run test            # Run tests (Vitest) — there is no CI, so run this bef
 npx vitest run src/path/to/file.test.ts   # Single file
 npm run test:watch      # Watch mode
 npm run test:coverage   # Coverage report
+npx knip                # Dead files / exports / dependencies (config in knip.json; not part of npm test)
 npm run evals           # Eval harness (LLM + integration; on-demand only, never part of npm test)
 npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
 npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
@@ -90,13 +91,12 @@ src/
 ├── constants/             # Shared constants (unsplash.ts)
 ├── lib/                   # Theme, utilities
 ├── integrations/supabase/ # Supabase client & auto-generated types
-├── test/                  # Test setup & mocks
+├── test/                  # Test setup
 ├── types/                 # TypeScript definitions
 └── utils/                 # Utility functions
 
 server/
 ├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
-├── dev-server.ts         # Legacy Vite-middleware entry, used only by start-dev.sh (bun); `npm run dev` doesn't touch it
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   sitemap, printDesign (Print Studio OpenAI call + trip payload), printSnapshot
 └── routes/               # API routes, registered in routes/index.ts (Stripe, AI chat, MCP server, iCal feed, admin insights,
@@ -140,7 +140,7 @@ useAccommodationsRealtime() → .channel() → .on('postgres_changes')
  └─ Component auto-re-renders
 ```
 
-Real-time hooks exist for: accommodations, activities, reservations, invite links, travelers (`trip_shares`), the calendar view (trip-wide `useCalendarRealtime`), the map (`useMapRealtime`), and viewing status (`useTripViewingStatus` — a `postgres_changes` channel over a 30s `presence_updated_at` heartbeat, not Supabase Presence). Exchange rates subscribe inline in `budget/utils/currencyConverter.ts`. `useTripSubscription` (trip row) is currently a disabled no-op. AI chat streams over SSE, not a realtime subscription.
+Real-time hooks exist for: accommodations, activities, reservations, invite links, travelers (`trip_shares`), the calendar view (trip-wide `useCalendarRealtime`), the map (`useMapRealtime`), and viewing status (`useTripViewingStatus` — a `postgres_changes` channel over a 30s `presence_updated_at` heartbeat, not Supabase Presence). Exchange rates subscribe inline in `budget/utils/currencyConverter.ts`. AI chat streams over SSE, not a realtime subscription.
 
 #### 3. **Data Flow Pattern**
 ```
@@ -189,7 +189,7 @@ PostgreSQL database
 
 **Forms & toasts**
 - `react-hook-form` + `zod` (`zodResolver`) + Shadcn/ui form components (about 9 feature files use them; not every dialog does)
-- Toasts: Sonner for new code (a few older files still use the shadcn `use-toast`)
+- Toasts: Sonner only (`toast` from `sonner`; the shadcn `use-toast`/`toaster` pair is gone)
 
 **Dialogs**
 - `Shadcn/ui` Dialog primitive (Radix UI based)
@@ -243,7 +243,6 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - `useSessionKeepAlive()` - Session management with tab visibility detection
 - `useTripTimezone()` / `useResolveTimezone()` - Trip default timezone + place→IANA resolution (lazy, self-healing)
 - `useCalendarEvents()` / `useCalendarRealtime()` / `useCalendarFeed()` - Calendar event adapter, trip-wide realtime, iCal feed token (live in `components/trip/calendar/`)
-- `useTripSubscription()` - Trip-row realtime for detail views — **currently a no-op** (body disabled; lives in `components/trip/details/`)
 - `useAdminMetrics()` / `useAdminInsights()` - Admin dashboard metrics + AI insights
 - `usePublicTrips()` - Explore showcase trips, grouped by region on `/explore` via `lib/regions.ts` and cross-linked by `RelatedItineraries` at the foot of every public trip page (`CopyTripButton` copies one into your own account via the `copy_public_trip` Postgres function — the whole deep copy runs in a single transaction; see `services/copyTripService.ts`). Showcase dates are kept evergreen by the operator-only `roll_public_trip_dates()` SQL function (run each January)
 - `useIsAdmin()` - Admin role checking (reads `profiles.is_admin`)
@@ -452,10 +451,10 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 
 ## Gotchas
 
-- **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `DayActivityManager.tsx`, `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
+- **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
 - **FK delete rules aren't in `supabase/migrations/`** (the base schema predates them). `accommodations_days.day_id → trip_days` is NO ACTION, so delete those rows before deleting trip days (`tripWrites.ts` does)
 - **Merged ≠ applied**: check the live schema before assuming a migration is in prod. The typed client doesn't error on unknown columns passed as variables, so `tsc` won't catch a missing generated type
-- **Edge Functions reject `localhost:8080`**: the CORS allowlist in `supabase/functions/_shared/cors.ts` is `ALLOWED_ORIGIN` + `*.replit.*`. Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function
+- **Edge Functions reject `localhost:8080`**: every function imports `getCorsHeaders` from `supabase/functions/_shared/cors.ts`, whose allowlist is `ALLOWED_ORIGIN` + `*.replit.*`. A deploy must ship the `_shared/` files next to `index.ts` (the Supabase MCP `deploy_edge_function` takes a file list; the dashboard's single-file editor does not). Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function
 - **Tests in a checkout without `.env`** (e.g. a fresh worktree) fail at collection when the import graph reaches `@/integrations/supabase/client`, because `validateEnv()` throws. Add `vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))` inline, as ~25 test files already do; don't loosen `validateEnv`
 - **TypeScript**: `strict` is **off** (`strict: false` in `tsconfig.app.json`, `strictNullChecks: false` in `tsconfig.json`); only `noImplicitAny` is on
 - **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something; compare against a pre-change run, or grep the output for the files you touched

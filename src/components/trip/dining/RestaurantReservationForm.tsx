@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RestaurantSearchInput from './RestaurantSearchInput';
 import RestaurantContactInfo from './form/RestaurantContactInfo';
 import { Loader, Trash2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import TravelersTagMultiSelect from '../travelers/TravelersTagMultiSelect';
@@ -92,7 +92,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   preselectedDate,
   destination,
 }) => {
-  const { toast } = useToast();
 
   // Generate trip dates for dropdown with timezone-safe handling
   const generateTripDates = () => {
@@ -261,11 +260,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const handleSubmitForm = form.handleSubmit(async (data) => {
     const effectiveTripId = tripId || defaultValues?.trip_id;
     if (!effectiveTripId) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing trip',
-        description: 'Trip ID is required to save this reservation.',
-      });
+      toast.error('Missing trip', { description: 'Trip ID is required to save this reservation.' });
       return;
     }
 
@@ -282,9 +277,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
       if (tripDayError || !tripDay) {
         console.error('Failed to find day_id for date:', data.reservation_date, tripDayError);
-        toast({
-          variant: 'destructive',
-          title: 'Invalid date',
+        toast.error('Invalid date', {
           description: 'Could not find the selected date in this trip.',
         });
         return;
@@ -320,9 +313,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
       }
     } catch (err) {
       console.error('Failed to save reservation:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Save failed',
+      toast.error('Save failed', {
         description: 'We could not save your reservation. Please try again.',
       });
     }

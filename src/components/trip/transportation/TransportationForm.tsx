@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -12,7 +12,6 @@ import { CURRENCIES } from "@/utils/currencyConstants";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import TravelersTagMultiSelect from "../travelers/TravelersTagMultiSelect";
 import { getJunctionTravelerIds, setJunctionTravelers } from "@/services/travelers";
 import { useTripTimezone } from "@/hooks/useTripTimezone";
 

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import Navigation from "../components/Navigation";
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrencyWithSymbol } from '../components/trip/budget/utils/budgetCalculations';
@@ -388,7 +387,6 @@ const Budget = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-24">
 
         {/* Page Header */}

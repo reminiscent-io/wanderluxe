@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Navigation from '../../Navigation';
 import { useNavigate } from 'react-router-dom';
 
 interface TripDetailsErrorProps {
@@ -12,7 +11,6 @@ const TripDetailsError: React.FC<TripDetailsErrorProps> = ({ message = 'Unable t
   
   return (
     <div>
-      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground">Error Loading Trip</h2>

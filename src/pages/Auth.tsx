@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -32,7 +32,6 @@ const Auth = () => {
   const [firstName, setFirstName] = useState("");
   const [isSliding, setIsSliding] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -96,8 +95,7 @@ const Auth = () => {
     // registered (it will not say so outright, to avoid enumeration).
     const alreadyRegistered = data.user && (data.user.identities?.length ?? 0) === 0;
     if (alreadyRegistered) {
-      toast({
-        title: "You already have an account",
+      toast("You already have an account", {
         description: "Sign in with this email instead, or reset your password.",
       });
       setMode("signin");
@@ -127,20 +125,15 @@ const Auth = () => {
 
     if (signInError.message?.toLowerCase().includes("email not confirmed")) {
       await supabase.auth.resend({ type: "signup", email });
-      toast({
-        title: "Email not verified",
-        description:
-          "We've sent a new verification link to your email. Please check your inbox and try again.",
+      toast("Email not verified", {
+        description: "We've sent a new verification link to your email. Please check your inbox and try again.",
       });
       return;
     }
 
     if (signInError.message?.toLowerCase().includes("invalid login credentials")) {
-      toast({
-        variant: "destructive",
-        title: "Wrong email or password",
+      toast.error("Wrong email or password", {
         description: "Check both, use Forgot password, or create an account if you are new here.",
-        className: "bg-earth-100/50 border-destructive",
       });
       return;
     }
@@ -159,12 +152,7 @@ const Auth = () => {
       }
       setLoading(false);
     } catch (error: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : String(error),
-        className: "bg-earth-100/50 border-destructive",
-      });
+      toast.error(error instanceof Error ? error.message : String(error));
       setLoading(false);
     }
   };
@@ -196,12 +184,7 @@ const Auth = () => {
       });
       if (error) throw error;
     } catch (error: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : String(error),
-        className: "bg-earth-100/50 border-destructive",
-      });
+      toast.error(error instanceof Error ? error.message : String(error));
       setGoogleLoading(false);
     }
   };

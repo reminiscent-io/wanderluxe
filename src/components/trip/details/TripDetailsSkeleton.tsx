@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Navigation from '../../Navigation';
 
 const TripDetailsSkeleton: React.FC = () => {
   // Fills the viewport, like the route fallback in App.tsx: a shorter
@@ -8,7 +7,6 @@ const TripDetailsSkeleton: React.FC = () => {
   // off again, which counts as layout shift on tall viewports.
   return (
     <div className="min-h-screen">
-      <Navigation />
       <div className="h-[250px] w-full bg-sand-200 animate-pulse" />
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">

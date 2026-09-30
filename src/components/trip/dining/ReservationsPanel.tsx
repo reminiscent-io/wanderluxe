@@ -1,5 +1,5 @@
 // src/components/trip/dining/ReservationsPanel.tsx
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { formatDateSafe, compareDatesSafe, formatTime } from "@/utils/sidebarUtils";

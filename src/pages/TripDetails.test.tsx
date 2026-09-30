@@ -44,9 +44,6 @@ vi.mock('@/hooks/use-trip-permissions', () => ({
   useTripPermissions: () => mockPermissions,
 }));
 
-vi.mock('@/components/trip/details/useTripSubscription', () => ({
-  useTripSubscription: (): void => undefined,
-}));
 
 // The page's import graph reaches the real Supabase client, which validates env
 // vars on import and throws in a checkout with no .env. The only render-time

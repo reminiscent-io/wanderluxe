@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Navigation from "../components/Navigation";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -337,7 +336,6 @@ const MyTrips = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
-      <Navigation />
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Hero — single primary surface */}
         <motion.div

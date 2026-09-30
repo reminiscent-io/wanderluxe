@@ -24,6 +24,9 @@ bun.lockb
 # MCP configuration (may contain project-specific settings)
 .mcp.json
 
+# Per-developer Claude Code permission allowlist (absolute paths, machine-specific)
+.claude/settings.local.json
+
 # Cache directories that should not be watched
 .cache
 .bun

@@ -3,12 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Menu, Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
-  Sparkles, BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2,
+   Calendar, CalendarDays, Building, Car, MapPin, UtensilsCrossed,
+   BarChart2, Package, Settings, ArrowLeft, Users, Download, Link2, ShieldCheck, Trash2,
   BookOpen
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
 import AccommodationDialog from "../trip/accommodation/AccommodationDialog";
 import TransportationDialog from "../trip/transportation/TransportationDialog";
@@ -160,7 +160,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       handleBackToTrips();
     } catch (error) {
       console.error('Failed to delete trip:', error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete trip' });
+      toast.error('Failed to delete trip');
     }
   };
 
@@ -474,9 +474,9 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
       />
 
       <RestaurantReservationDialog
-        isOpen={reservationOpen}
+        open={reservationOpen}
         onOpenChange={setReservationOpen}
-        editingReservation={selectedReservation}
+        initialData={selectedReservation}
         tripId={tripId || ""}
         title={selectedReservation ? "Edit Reservation" : "Add Reservation"}
         isSubmitting={false}
@@ -507,13 +507,13 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
             setSelectedReservation(null);
           } catch (err) {
             console.error('Failed to save reservation:', err);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save reservation' });
+            toast.error('Failed to save reservation');
           }
         }}
       />
 
       <ActivityDialog
-        isOpen={activityOpen || !!selectedActivity}
+        open={activityOpen || !!selectedActivity}
         onOpenChange={(open) => {
           if (!open) {
             setActivityOpen(false);

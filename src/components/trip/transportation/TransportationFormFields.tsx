@@ -1,5 +1,5 @@
 // src/components/trip/transportation/TransportationFormFields.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { UseFormReturn, Controller, useWatch } from "react-hook-form";
 import { Loader2, Search, Globe, ChevronDown } from "lucide-react";
@@ -20,12 +20,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
-import LuxuryDateTimeRangePicker, { LuxuryDateTimeRange } from "@/components/ui/LuxuryDateTimeRangePicker";
+import LuxuryDateTimeRangePicker from "@/components/ui/LuxuryDateTimeRangePicker";
 import LocationInputPair from "./LocationInputPair";
 import TimezoneSelect from "../_shared/TimezoneSelect";
 import {
   CURRENCIES,
-  CURRENCY_NAMES,
   CURRENCY_SYMBOLS,
 } from "@/utils/currencyConstants";
 import {

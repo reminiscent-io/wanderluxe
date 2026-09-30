@@ -5,8 +5,6 @@ import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/uti
 import {
   TimelineItem,
   TimelineRenderRow,
-  TimelineType,
-  getTransportationIconComponent,
   getNormalizedDay,
   combineDateAndTime,
   extractIata,
@@ -14,7 +12,6 @@ import {
   humanizeMinutes,
   getTimePeriod,
   getPeriodLabel,
-  getPeriodOrder,
   TimePeriod,
   groupSimilarEvents,
   generateGroupTitle,

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "index.html",
+    "src/main.tsx",
+    "server/index.ts",
+    "server/build.js",
+    "scripts/*.{ts,mjs}",
+    "evals/**/*.{ts,tsx}",
+    "src/**/*.test.{ts,tsx}",
+    "server/**/*.test.ts",
+    "src/test/setup.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "tailwind.config.ts",
+    "eslint.config.js",
+    "postcss.config.js"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx,js}",
+    "server/**/*.{ts,js}",
+    "scripts/**/*.{ts,mjs}",
+    "evals/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "supabase/**",
+    "brag-output*/**",
+    "src/integrations/supabase/types/**",
+    "src/types/global.d.ts"
+  ],
+  "ignoreDependencies": [
+    "@anthropic-ai/claude-code",
+    "@types/google.maps",
+    "puppeteer",
+    "tar-fs",
+    "esbuild"
+  ]
+}

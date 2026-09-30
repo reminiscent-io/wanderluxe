@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +16,6 @@ const NotFound = () => {
   return (
     <div className="flex min-h-screen flex-col bg-sand-50">
       <SEO title="Page not found" noIndex />
-      <Navigation />
       <main className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="max-w-md text-center">
           <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-4">

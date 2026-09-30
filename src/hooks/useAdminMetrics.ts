@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { subDays, format, eachDayOfInterval, parseISO } from 'date-fns';
+import { subDays, format, eachDayOfInterval } from 'date-fns';
 
 interface TripStats {
   total_trips: number;
