@@ -59,7 +59,7 @@ export default function PWAInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 md:max-w-xs">
+    <div className="fixed bottom-4 right-4 z-50 md:max-w-xs print:hidden">
       <Card className="bg-white/90 backdrop-blur-sm border-sand-200 shadow-warm-sm">
         <div className="p-3">
           <div className="flex items-center justify-between gap-3">

@@ -649,6 +649,45 @@
     orphans: 2;
     widows: 2;
   }
+
+  /* ---------- sheet ----------
+     PrintItinerary sets data-pd-sheet and --pd-sheet (the edition's paper
+     colour) on the root.
+
+     The colour covers the sheet, not just the document's box: without this
+     the last page's colour stops in a hard edge where the itinerary runs out. */
+  html[data-pd-sheet],
+  html[data-pd-sheet] body {
+    background: var(--pd-sheet);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* "bleed": zero page margins let the colour reach the edge of the paper (a
+     page margin never takes the root's colour) and leave Chrome no room for
+     its date, title and URL header and footer. The 15mm × 16mm inset moves
+     into the document, and clone repeats it at every page break. Browsers
+     without clone on blocks (Safari) get "inset" and keep the page margins.
+     The page name goes on body, not .print-doc: a change of page name forces
+     a break, and the empty elements ahead of the document would spend a blank
+     first page on it. */
+  @page pd-edition {
+    margin: 0;
+  }
+
+  html[data-pd-sheet='bleed'] body {
+    page: pd-edition;
+  }
+
+  html[data-pd-sheet='bleed'] .pd-page {
+    padding: 15mm 16mm;
+    box-decoration-break: clone;
+  }
+
+  /* 100vh is now the whole sheet, and the cover's page also carries the inset. */
+  html[data-pd-sheet='bleed'] .pd-cover {
+    min-height: calc(100vh - 30mm);
+  }
 }
 
 /* =========================================================================

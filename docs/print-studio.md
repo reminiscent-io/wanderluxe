@@ -77,6 +77,13 @@ Two layouts, chosen by the model per edition (`design.layout`; absent = editoria
 
 `print-color-adjust: exact` makes both print their colour.
 
+Getting a clean print out of the browser:
+
+- **Type first.** The browser lays the print out with whatever faces it has when Print is pressed, so `useGoogleFonts` reports when the pairing's faces have loaded and the Print button waits for it (capped at `FONT_WAIT_MS`, so a blocked font CDN prints in fallbacks rather than never). Cmd+P can't be gated.
+- **The sheet is the paper.** The page sets `data-pd-sheet` and `--pd-sheet` (the palette background) on the root, and print paints the root with it, so the last page doesn't stop in a hard edge where the itinerary ends. Where `box-decoration-break: clone` works on blocks (Chrome 130+, Firefox) the mode is `bleed`: the named page `pd-edition` has zero margins, so the colour reaches the paper's edge and Chrome has no room for its date/title/URL header and footer, and the 15mm × 16mm inset moves into `.pd-page`, repeated at every break. Safari gets `inset` and keeps the `@page` margins. The test runs in JS (`CSS.supports`) because the lightningcss minifier widens an `@supports` condition to the `-webkit-` form, which Safari passes on its inline-only support.
+- **No overlays on paper.** A fixed element prints on every page, so the toaster, cookie banner and install card carry `print:hidden`.
+- **Check it for real.** `page.pdf()` in Puppeteer (`puppeteer-core` + `/opt/pw-browsers/chromium` in a cloud session) runs Chrome's print pipeline. Pass `waitForFonts: false` to reproduce a print pressed before the type loaded.
+
 ## Money stays off the page
 
 An edition never prints per-item prices. The Ledger (spend by category against the trip budget) is opt-in per print via the toolbar's **Budget** toggle (`?budget=1`, deliberately not stored on the edition). The generation payload omits costs, the budget and other expenses entirely, so the AI's copy has no prices to quote.
