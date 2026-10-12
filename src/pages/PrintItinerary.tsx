@@ -315,7 +315,27 @@ const PrintItinerary: React.FC = () => {
   }, [isEditing]);
 
   const pairing = design ? getFontPairing(design.fontPairing) : null;
-  useGoogleFonts(pairing?.googleQuery ?? null);
+  const fontsReady = useGoogleFonts(pairing?.googleQuery ?? null);
+
+  // The paper colour belongs to the whole sheet, not just the document's box,
+  // so printDocument.css paints the root with it (see "sheet" there).
+  // "bleed" also takes the colour to the paper's edge, which needs the page
+  // inset repeated at every break: box-decoration-break: clone on blocks.
+  // Tested here, not in an @supports block, because the CSS minifier widens
+  // that condition to the -webkit- form, which Safari passes on its
+  // inline-only support.
+  const sheetColor = design?.palette.background;
+  useEffect(() => {
+    if (!sheetColor) return;
+    const root = document.documentElement;
+    const bleed = typeof CSS !== 'undefined' && CSS.supports('box-decoration-break', 'clone');
+    root.style.setProperty('--pd-sheet', sheetColor);
+    root.setAttribute('data-pd-sheet', bleed ? 'bleed' : 'inset');
+    return () => {
+      root.style.removeProperty('--pd-sheet');
+      root.removeAttribute('data-pd-sheet');
+    };
+  }, [sheetColor]);
 
   const handlePrint = () => {
     if (tripId) track('print_studio_print_clicked', { trip_id: tripId });
@@ -461,7 +481,7 @@ const PrintItinerary: React.FC = () => {
                 variant="sunset"
                 size="sm"
                 onClick={handlePrint}
-                disabled={!isReady}
+                disabled={!isReady || !fontsReady}
                 className="h-11 shrink-0 sm:h-9"
               >
                 <Printer className="mr-2 h-4 w-4" />
