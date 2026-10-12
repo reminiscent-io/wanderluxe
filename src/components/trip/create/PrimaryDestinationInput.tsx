@@ -78,8 +78,10 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
 
     setIsLoading(true);
     try {
-      // Use '(cities)' type to search for cities and regions
-      const results = await searchPlaces(query, '(cities)');
+      // '(regions)' rather than '(cities)': the cities filter drops hamlets
+      // like Elmau (part of Krün, Bavaria) and lets Google autocorrect them
+      // to a same-sounding town (Ellmau, Austria)
+      const results = await searchPlaces(query, '(regions)');
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
       setSelectedIndex(-1);
