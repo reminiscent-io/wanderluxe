@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { geocodeCandidates } from './geocodeCandidates.ts';
 
 interface DailyForecast {
   date: string;
@@ -100,28 +101,36 @@ serve(async (req: Request) => {
 
     console.log(`Weather cache miss for: ${destination}, fetching from API`);
 
-    // Geocode destination to get coordinates
-    const geoRes = await fetch(
-      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(destination)}&limit=1&appid=${apiKey}`
-    );
-
-    if (!geoRes.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to geocode location" }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // Geocode destination to get coordinates, loosening the query until
+    // OpenWeatherMap recognises it (see geocodeCandidates)
+    let match: { lat: number; lon: number } | undefined;
+    for (const query of geocodeCandidates(destination)) {
+      const geoRes = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=1&appid=${apiKey}`
       );
+
+      if (!geoRes.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to geocode location" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const geoData = await geoRes.json();
+      if (geoData && geoData.length > 0) {
+        match = geoData[0];
+        break;
+      }
     }
 
-    const geoData = await geoRes.json();
-
-    if (!geoData || geoData.length === 0) {
+    if (!match) {
       return new Response(
         JSON.stringify({ error: "Location not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { lat, lon } = geoData[0];
+    const { lat, lon } = match;
 
     // Fetch current weather
     const currentRes = await fetch(
