@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ImageUpload from "@/components/ImageUpload";
@@ -125,12 +125,15 @@ const ImageSection: React.FC<ImageSectionProps> = ({
 
           {results.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {results.map((img) => (
+              {results.map((img) => {
+                const isSelected = img.url === localImageUrl;
+                return (
                 <button
                   key={img.id}
-                  className="relative rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-earth-500"
+                  className={`relative rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-earth-500 ${isSelected ? 'ring-2 ring-earth-600' : ''}`}
                   onClick={() => selectUnsplash(img)}
                   type="button"
+                  aria-pressed={isSelected}
                 >
                   <UnsplashImage
                     src={img.url}
@@ -140,14 +143,17 @@ const ImageSection: React.FC<ImageSectionProps> = ({
                     photographer={img.photographer}
                     unsplashUsername={img.username}
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                  <div className="absolute bottom-2 right-2">
-                    <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      Use
-                    </Button>
-                  </div>
+                  {/* Hover wash only where hover exists: on iOS, a first tap that
+                      reveals hover content is eaten as a hover, so selecting took two taps */}
+                  <div className="absolute inset-0 bg-black/0 [@media(hover:hover)]:group-hover:bg-black/20 transition-colors" />
+                  {isSelected && (
+                    <div className="absolute top-2 left-2 rounded-full bg-earth-600 p-1 text-white">
+                      <Check className="h-4 w-4" />
+                    </div>
+                  )}
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
 
