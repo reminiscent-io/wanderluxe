@@ -16,6 +16,7 @@
     a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
     #MessageViewBody a { color: inherit; text-decoration: none; }
     u + #body a { color: #7c5e45 !important; }
+    a.btn, u + #body a.btn { color: #ffffff !important; }
 
     @media (prefers-color-scheme: dark) {
       body, .bg { background: #1b1a19 !important; }
@@ -85,7 +86,7 @@
                           <![endif]-->
                           <!--[if !mso]><!-- -->
                           <td align="center" bgcolor="#7c5e45" style="border-radius:6px;">
-                            <a href="{{ .ConfirmationURL }}" target="_blank" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;display:inline-block;padding:12px 32px;text-decoration:none;color:#ffffff;background:#7c5e45;border-radius:6px;font-weight:600;font-size:16px;">
+                            <a class="btn" href="{{ .ConfirmationURL }}" target="_blank" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;display:inline-block;padding:12px 32px;text-decoration:none;color:#ffffff;background:#7c5e45;border-radius:6px;font-weight:600;font-size:16px;">
                               Sign In
                             </a>
                           </td>
