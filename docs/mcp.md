@@ -104,7 +104,7 @@ These hold for every tool. The server also sends them to the client as MCP `inst
 | `update_expense` | Update expense | write | Edit an expense |
 | `delete_expense` | Delete expense | destructive | Remove an expense |
 
-Every tool declares a `title` plus `readOnlyHint` and `destructiveHint` annotations. The three read tools set `readOnlyHint: true`. `update_*` tools also set `idempotentHint: true`: repeating the same call leaves the same result.
+Every tool declares a `title` (mirrored into `annotations.title`) plus `readOnlyHint` and `destructiveHint` annotations. The three read tools set `readOnlyHint: true`. `update_*` tools also set `idempotentHint: true`: repeating the same call leaves the same result.
 
 ### Read tools
 
@@ -382,4 +382,4 @@ Still stuck? Email [info@wanderluxe.io](mailto:info@wanderluxe.io) with the prom
 - **Config:** `MCP_PUBLIC_BASE_URL` sets the public origin advertised in discovery (default `https://wanderluxe.io`). The server also needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. It uses the anon key plus the user's token, never the service-role key.
 - **Run locally:** `npm run dev`, then point [MCP Inspector](https://github.com/modelcontextprotocol/inspector) at `http://localhost:5001/mcp`. To connect Claude to a local build, expose it through an HTTPS tunnel and set `MCP_PUBLIC_BASE_URL` to the tunnel's origin.
 - **Tests:** `npx vitest run server/lib/mcpTools.test.ts server/lib/tripWrites.test.ts` covers schemas, annotations and write logic. `npm run evals:mcp` runs the full read/write lifecycle plus auth, row-level security and discovery checks against a real account (see `evals/`).
-- **Adding a tool:** give it a `title`, `readOnlyHint` and `destructiveHint`, validate every argument with zod, route writes through `tripWrites.ts`, and add it to this page. The registry test fails on a tool without a title or hints.
+- **Adding a tool:** give it a `title`, `readOnlyHint` and `destructiveHint`, validate every argument with zod (build field schemas fresh per use, never share one zod instance between two parameters: the JSON Schema converter turns the second into a type-less `$ref`), route writes through `tripWrites.ts`, and add it to this page. The registry test fails on a tool without a title or hints, and on any parameter that reaches `tools/list` without a type.

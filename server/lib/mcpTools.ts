@@ -48,23 +48,30 @@ const transportTypeField = z.enum([
   'rental_car',
 ]);
 
-const dateField = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date, YYYY-MM-DD')
-  .refine((s) => {
-    const [y, m, d] = s.split('-').map(Number);
-    const dt = new Date(Date.UTC(y, m - 1, d));
-    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
-  }, 'Not a valid calendar date');
-const timeField = z
-  .string()
-  .regex(/^\d{2}:\d{2}$/, 'Use a 24h time, HH:MM');
+// Factories, not shared constants: zod-to-json-schema emits a reused schema
+// instance as a `$ref` to its first use, and a `$ref` property has no `type`,
+// which the Claude Connectors Directory flags. A fresh instance per field
+// keeps every parameter typed.
+const dateField = () =>
+  z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date, YYYY-MM-DD')
+    .refine((s) => {
+      const [y, m, d] = s.split('-').map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+    }, 'Not a valid calendar date');
+const timeField = () =>
+  z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, 'Use a 24h time, HH:MM');
 const currencyField = z
   .string()
   .regex(/^[A-Z]{3}$/, 'Use a 3-letter currency code, e.g. EUR');
-export const timezoneField = z
-  .string()
-  .refine(isValidTimeZone, 'Use an IANA timezone id, e.g. "Europe/Paris"');
+export const timezoneField = () =>
+  z
+    .string()
+    .refine(isValidTimeZone, 'Use an IANA timezone id, e.g. "Europe/Paris"');
 
 const ENTITY_TZ_DESCRIPTION =
   'IANA timezone the times are local to, e.g. "Asia/Tokyo". Only set it when it differs from ' +
@@ -94,8 +101,25 @@ export function registerWanderluxeTools(
   supabase: SupabaseClient,
   ctx: UserContext,
 ): void {
-  registerReadTools(server, supabase);
-  registerWriteTools(server, supabase, ctx);
+  const titled = withAnnotationTitles(server);
+  registerReadTools(titled, supabase);
+  registerWriteTools(titled, supabase, ctx);
+}
+
+/**
+ * The Connectors Directory reads the listing name from `annotations.title`,
+ * not the top-level `title`. Mirror one into the other so each tool states
+ * its name once.
+ */
+function withAnnotationTitles(server: McpServer): McpServer {
+  const titled = Object.create(server) as McpServer;
+  titled.registerTool = ((name: string, config: { title?: string; annotations?: object }, cb: unknown) =>
+    server.registerTool(
+      name,
+      { ...config, annotations: { ...config.annotations, title: config.title } },
+      cb as never,
+    )) as McpServer['registerTool'];
+  return titled;
 }
 
 function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
@@ -253,10 +277,10 @@ function registerWriteTools(
         'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read. Required: destination, arrival_date, and departure_date — if the traveler has not given specific arrival and departure dates, ask for them rather than inventing dates.',
       inputSchema: {
         destination: z.string().min(1).describe('Trip name / destination, e.g. "Paris, France"'),
-        arrival_date: dateField.describe('First day of the trip (YYYY-MM-DD)'),
-        departure_date: dateField.describe('Last day of the trip (YYYY-MM-DD)'),
+        arrival_date: dateField().describe('First day of the trip (YYYY-MM-DD)'),
+        departure_date: dateField().describe('Last day of the trip (YYYY-MM-DD)'),
         budget: z.number().positive().optional().describe('Total trip budget (optional)'),
-        timezone: timezoneField
+        timezone: timezoneField()
           .optional()
           .describe(
             'IANA timezone of the destination, e.g. "Asia/Tokyo" — the default zone trip times are read in. Set it when the destination is known. Label only; times are stored as wall-clock values and never converted.',
@@ -293,14 +317,14 @@ function registerWriteTools(
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
         destination: z.string().min(1).optional(),
         budget: z.number().positive().nullable().optional().describe('Set to null to clear the budget'),
-        timezone: timezoneField
+        timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
             'IANA default timezone for the trip, e.g. "Asia/Tokyo". Pass null to clear it (the app then re-resolves it from the destination). Label only; changing it never converts stored times.',
           ),
-        arrival_date: dateField.optional(),
-        departure_date: dateField.optional(),
+        arrival_date: dateField().optional(),
+        departure_date: dateField().optional(),
         confirm_remove_days: z
           .boolean()
           .optional()
@@ -326,17 +350,17 @@ function registerWriteTools(
         'Add an activity to a trip on a given date (the server resolves the trip day). Returns the created activity, including its id.',
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
-        date: dateField.describe('Date within the trip range (YYYY-MM-DD)'),
+        date: dateField().describe('Date within the trip range (YYYY-MM-DD)'),
         title: z.string().min(1),
         description: z.string().optional(),
-        start_time: timeField.optional(),
-        end_time: timeField.optional(),
+        start_time: timeField().optional(),
+        end_time: timeField().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -357,17 +381,17 @@ function registerWriteTools(
         'Update an existing activity by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
       inputSchema: {
         activity_id: z.string().uuid().describe('Activity id from get_trip'),
-        date: dateField.optional(),
+        date: dateField().optional(),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
-        start_time: timeField.optional(),
-        end_time: timeField.optional(),
+        start_time: timeField().optional(),
+        end_time: timeField().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this item is fully paid'),
         location_address: z.string().optional(),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -405,10 +429,10 @@ function registerWriteTools(
         'Add a dining reservation to a trip on a given date (the server resolves the trip day). Returns the created reservation, including its id.',
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
-        date: dateField.describe('Date within the trip range (YYYY-MM-DD)'),
+        date: dateField().describe('Date within the trip range (YYYY-MM-DD)'),
         restaurant_name: z.string().min(1),
-        reservation_time: timeField.optional(),
-        end_time: timeField
+        reservation_time: timeField().optional(),
+        end_time: timeField()
           .optional()
           .describe('When the meal ends, floating wall-clock HH:MM. Omit to let it default to 90 minutes after the start.'),
         number_of_people: z.number().int().positive().optional(),
@@ -419,7 +443,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -440,10 +464,10 @@ function registerWriteTools(
         'Update an existing dining reservation by its id (from get_trip). Changing date moves it to that trip day. Only the fields you pass are changed.',
       inputSchema: {
         reservation_id: z.string().uuid().describe('Reservation id from get_trip'),
-        date: dateField.optional(),
+        date: dateField().optional(),
         restaurant_name: z.string().min(1).optional(),
-        reservation_time: timeField.optional(),
-        end_time: timeField
+        reservation_time: timeField().optional(),
+        end_time: timeField()
           .optional()
           .describe('When the meal ends, floating wall-clock HH:MM. Omit to keep the reservation its current length: changing reservation_time alone shifts the end with it.'),
         number_of_people: z.number().int().positive().optional(),
@@ -454,7 +478,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this reservation is fully paid'),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -493,11 +517,11 @@ function registerWriteTools(
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
         hotel: z.string().min(1).describe('Hotel / property name'),
-        hotel_checkin_date: dateField,
-        hotel_checkout_date: dateField,
+        hotel_checkin_date: dateField(),
+        hotel_checkout_date: dateField(),
         hotel_address: z.string().optional(),
-        checkin_time: timeField.optional(),
-        checkout_time: timeField.optional(),
+        checkin_time: timeField().optional(),
+        checkout_time: timeField().optional(),
         hotel_phone: z.string().optional(),
         hotel_website: z.string().optional(),
         hotel_details: z.string().optional().describe('Free-text notes about the stay (room type, booking notes, etc.)'),
@@ -505,7 +529,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE,
     },
@@ -527,11 +551,11 @@ function registerWriteTools(
       inputSchema: {
         stay_id: z.string().uuid().describe('Accommodation stay_id from get_trip'),
         hotel: z.string().min(1).optional(),
-        hotel_checkin_date: dateField.optional(),
-        hotel_checkout_date: dateField.optional(),
+        hotel_checkin_date: dateField().optional(),
+        hotel_checkout_date: dateField().optional(),
         hotel_address: z.string().optional(),
-        checkin_time: timeField.optional(),
-        checkout_time: timeField.optional(),
+        checkin_time: timeField().optional(),
+        checkout_time: timeField().optional(),
         hotel_phone: z.string().optional(),
         hotel_website: z.string().optional(),
         hotel_details: z.string().optional().describe('Free-text notes about the stay (room type, booking notes, etc.)'),
@@ -539,7 +563,7 @@ function registerWriteTools(
         currency: currencyField.optional(),
         amount_paid: z.number().nonnegative().optional().describe('Amount already paid, in the same currency as cost'),
         is_paid: z.boolean().optional().describe('Whether this stay is fully paid'),
-        timezone: timezoneField.nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
+        timezone: timezoneField().nullable().optional().describe(ENTITY_TZ_DESCRIPTION),
       },
       annotations: WRITE_IDEMPOTENT,
     },
@@ -578,25 +602,25 @@ function registerWriteTools(
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
         type: transportTypeField,
-        start_date: dateField,
+        start_date: dateField(),
         provider: z.string().optional(),
         details: z.string().optional().describe('Free-text notes (terminal, gate, seat, baggage, etc.)'),
         flight_number: z.string().optional(),
         confirmation_number: z.string().optional(),
         departure_location: z.string().optional(),
         arrival_location: z.string().optional(),
-        start_time: timeField.optional(),
-        end_date: dateField.optional(),
-        end_time: timeField.optional(),
+        start_time: timeField().optional(),
+        end_date: dateField().optional(),
+        end_time: timeField().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
-        departure_timezone: timezoneField
+        departure_timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
             'IANA timezone the departure date/time are local to, e.g. "America/New_York". Set both zones on cross-timezone legs like international flights. Omit to inherit the trip default. Label only — times are never converted.',
           ),
-        arrival_timezone: timezoneField
+        arrival_timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
@@ -623,25 +647,25 @@ function registerWriteTools(
       inputSchema: {
         id: z.string().uuid().describe('Transportation id from get_trip'),
         type: transportTypeField.optional(),
-        start_date: dateField.optional(),
+        start_date: dateField().optional(),
         provider: z.string().optional(),
         details: z.string().optional().describe('Free-text notes (terminal, gate, seat, baggage, etc.)'),
         flight_number: z.string().optional(),
         confirmation_number: z.string().optional(),
         departure_location: z.string().optional(),
         arrival_location: z.string().optional(),
-        start_time: timeField.optional(),
-        end_date: dateField.optional(),
-        end_time: timeField.optional(),
+        start_time: timeField().optional(),
+        end_date: dateField().optional(),
+        end_time: timeField().optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
-        departure_timezone: timezoneField
+        departure_timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
             'IANA timezone the departure date/time are local to, e.g. "America/New_York". Pass null to clear back to inheriting the trip default. Label only — times are never converted.',
           ),
-        arrival_timezone: timezoneField
+        arrival_timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
@@ -687,7 +711,7 @@ function registerWriteTools(
         description: z.string().min(1),
         cost: z.number().nonnegative(),
         currency: currencyField,
-        date: dateField.optional().describe('Date the expense occurred (YYYY-MM-DD)'),
+        date: dateField().optional().describe('Date the expense occurred (YYYY-MM-DD)'),
         amount_paid: z.number().nonnegative().optional(),
         is_paid: z.boolean().optional(),
       },
@@ -713,7 +737,7 @@ function registerWriteTools(
         description: z.string().min(1).optional(),
         cost: z.number().nonnegative().optional(),
         currency: currencyField.optional(),
-        date: dateField.optional().describe('Date the expense occurred (YYYY-MM-DD)'),
+        date: dateField().optional().describe('Date the expense occurred (YYYY-MM-DD)'),
         amount_paid: z.number().nonnegative().optional(),
         is_paid: z.boolean().optional(),
       },
