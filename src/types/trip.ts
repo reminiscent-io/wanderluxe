@@ -214,4 +214,7 @@ export interface Trip {
   cover_image_photographer_username?: string | null;
   accommodations?: Accommodation[];
   timezone?: string | null;
+  /** Set by an admin (travel advisor) on a trip planned for someone else. Non-null marks a client trip. */
+  client_name?: string | null;
+  client_email?: string | null;
 }

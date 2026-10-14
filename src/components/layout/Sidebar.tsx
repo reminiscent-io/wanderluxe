@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useInviteLinks } from "@/hooks/useInviteLinks";
 import { useTripPermissions } from "@/hooks/use-trip-permissions";
+import { clientInviteDefaults, isClientTrip } from "@/utils/clientTrips";
 import { APP_VERSION_LABEL, APP_VERSION_FULL } from "@/config/version";
 
 export interface SidebarHandle {
@@ -135,6 +136,8 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
 
   const { canEdit } = useTripPermissions(tripId);
   const isOwner = !!trip && !!user && trip.user_id === user.id;
+  // A client trip's owner is the advisor; only they see the client details.
+  const ownsClientTrip = isOwner && isClientTrip(trip);
 
   const { createLink, creating } = useInviteLinks(tripId || "");
 
@@ -324,7 +327,9 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete this trip?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.
+                  {ownsClientTrip
+                    ? `This will remove the trip from your list and revoke access for ${trip.client_name} and anyone else it was shared with. You can restore it later from hidden trips, but you'll need to invite them again.`
+                    : 'This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -564,6 +569,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
         }}
         tripId={tripId}
         traveler={selectedTraveler}
+        suggested={ownsClientTrip ? clientInviteDefaults(trip) : undefined}
       />
 
       {tripId && (

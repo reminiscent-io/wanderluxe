@@ -21,7 +21,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lock, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft, Briefcase } from 'lucide-react';
+import { isClientTrip } from '@/utils/clientTrips';
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_TRIP_IMAGE } from '@/constants/unsplash';
 import SEO, { SITE_URL } from '@/components/SEO';
@@ -160,6 +161,9 @@ const TripDetails = () => {
 
   const displayData = trip || previousTrip;
   if (!displayData) return <TripDetailsError message="The requested trip could not be found." />;
+
+  // Only the advisor who owns a client trip sees it labelled as one.
+  const ownsClientTrip = !!session?.user?.id && displayData.user_id === session.user.id && isClientTrip(displayData);
 
   const handleTabChange = (tab: string) => {
     if (onExploreRoute && slug) {
@@ -306,6 +310,8 @@ const TripDetails = () => {
                   <li>
                     {isPublicTrip ? (
                       <a href="/explore" className="hover:text-earth-700 transition-colors">Explore</a>
+                    ) : ownsClientTrip ? (
+                      <a href="/my-trips?filter=clients" className="hover:text-earth-700 transition-colors">Client trips</a>
                     ) : (
                       <a href="/my-trips" className="hover:text-earth-700 transition-colors">My Trips</a>
                     )}
@@ -314,6 +320,14 @@ const TripDetails = () => {
                   <li className="text-earth-700 font-medium" aria-current="page">
                     {displayTitle}
                   </li>
+                  {ownsClientTrip && (
+                    <li className="ml-1.5 min-w-0">
+                      <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-sand-100 px-2 py-0.5 text-xs font-medium text-earth-700">
+                        <Briefcase className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">For {displayData.client_name}</span>
+                      </span>
+                    </li>
+                  )}
                 </ol>
               </nav>
 

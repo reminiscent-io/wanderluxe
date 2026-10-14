@@ -11,7 +11,11 @@ import { addOwnerToTripShares } from '@/services/travelers';
 import { track } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, MapPin, CalendarDays, Camera, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { clientFieldsForInsert, isValidClientEmail } from '@/utils/clientTrips';
+import { ArrowLeft, ArrowRight, MapPin, CalendarDays, Camera, Loader2, Briefcase } from 'lucide-react';
 
 interface CreateTripFormProps {
   onSubmit: (tripId: string) => void;
@@ -51,6 +55,13 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
   // True once the user picked or searched a photo themselves, so the
   // destination autofill never overwrites a deliberate choice.
   const [coverChosenByUser, setCoverChosenByUser] = useState(false);
+
+  // Admin-only: a trip planned for a client. The advisor stays the owner; the
+  // client is invited later from the Travelers panel, once the trip is ready.
+  const { isAdmin } = useIsAdmin();
+  const [showClient, setShowClient] = useState(false);
+  const [clientName, setClientName] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
 
   // Resolve the timezone in the background from the chosen place. Soft-fails
   // to null; useTripTimezone self-heals later if it is missing.
@@ -97,7 +108,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
 
   const canProceed = (): boolean => {
     switch (step) {
-      case 0: return primaryDestination.trim().length > 0;
+      case 0: return primaryDestination.trim().length > 0 && isValidClientEmail(clientEmail);
       // A day trip is a trip: same-day start and end is allowed.
       case 1: return !!startDate && !!endDate && new Date(startDate) <= new Date(endDate);
       case 2: return true; // Photo is optional
@@ -138,6 +149,9 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Only sent when set: the database rejects client fields from non-admins.
+      const client = isAdmin ? clientFieldsForInsert(clientName, clientEmail) : null;
+
       const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert([{
@@ -153,6 +167,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
           primary_destination: primaryDestination || null,
           primary_destination_place_id: primaryDestinationPlaceId || null,
           timezone: timeZoneId || null,
+          ...(client?.client_name ? client : {}),
         }])
         .select('trip_id')
         .single();
@@ -168,6 +183,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
           destination: primaryDestination || null,
           duration_days: days.length,
           has_cover_image: Boolean(coverImageUrl),
+          is_client_trip: Boolean(client?.client_name),
         });
         onSubmit(trip.trip_id);
       }
@@ -251,6 +267,46 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onSubmit, onCancel }) =
                   placeholder="e.g., Paris, Tokyo, Amalfi Coast..."
                   inputClassName="text-center text-lg py-4"
                 />
+                {isAdmin && (
+                  showClient ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="client-name" className="text-earth-600">Client name</Label>
+                        <Input
+                          id="client-name"
+                          value={clientName}
+                          onChange={(e) => setClientName(e.target.value)}
+                          placeholder="Jane Doe"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="client-email" className="text-earth-600">Client email (optional)</Label>
+                        <Input
+                          id="client-email"
+                          type="email"
+                          value={clientEmail}
+                          onChange={(e) => setClientEmail(e.target.value)}
+                          placeholder="jane@example.com"
+                          autoComplete="off"
+                          aria-invalid={!isValidClientEmail(clientEmail)}
+                        />
+                      </div>
+                      <p className="text-xs text-earth-500 sm:col-span-2">
+                        You stay the owner. Invite your client from Travelers when the trip is ready.
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowClient(true)}
+                      className="mx-auto flex items-center gap-1.5 text-sm text-earth-600 underline-offset-4 hover:text-earth-800 hover:underline"
+                    >
+                      <Briefcase className="h-3.5 w-3.5" />
+                      Planning this for a client?
+                    </button>
+                  )
+                )}
               </div>
             )}
 

@@ -20,7 +20,8 @@ type EnrichedTrip = Trip & {
 };
 import { useAuth } from "@/contexts/AuthContext";
 import { acceptTripShare, getSharedTrips, removeTripShare } from '@/services/tripSharingService';
-import { Share2, EyeOff } from 'lucide-react';
+import { Share2, EyeOff, Briefcase } from 'lucide-react';
+import { splitClientTrips } from '@/utils/clientTrips';
 import { differenceInDays } from 'date-fns';
 import { parseLocal } from '@/utils/dateUtils';
 
@@ -48,10 +49,12 @@ const MyTrips = () => {
   }, [session, navigate]);
 
   const [showHidden, setShowHidden] = useState(false);
-  const [tripFilter, setTripFilter] = useState<'all' | 'mine' | 'shared'>('all');
+  const [tripFilter, setTripFilter] = useState<'all' | 'mine' | 'shared' | 'clients'>(() =>
+    new URLSearchParams(window.location.search).get('filter') === 'clients' ? 'clients' : 'all'
+  );
 
   // Query for user's own trips with info on whether they're shared
-  const { data: myTrips, isLoading: isLoadingMyTrips } = useQuery({
+  const { data: ownedTrips, isLoading: isLoadingMyTrips } = useQuery({
     queryKey: ['my-trips', showHidden],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -113,6 +116,13 @@ const MyTrips = () => {
     enabled: !!session
   });
   
+  // Trips an admin planned for clients live in their own list. They stay out
+  // of the hero, travel stats and "All trips", which describe your own travel.
+  const { personal: myTrips, clients: clientTrips } = useMemo(
+    () => splitClientTrips<NonNullable<typeof ownedTrips>[number]>(ownedTrips ?? []),
+    [ownedTrips]
+  );
+
   // Extract actual trip data from the shared trips result
   const sharedTrips = useMemo(() => {
     return sharedTripsResult?.data?.map(share => {
@@ -217,7 +227,9 @@ const MyTrips = () => {
       .map(trip => ({ ...trip, isShared: true }));
 
     // Combine all trips
-    let combined = [...normalizedMyTrips, ...normalizedSharedTrips];
+    let combined = tripFilter === 'clients'
+      ? clientTrips.filter(trip => trip && trip.destination).map(trip => ({ ...trip, isShared: false }))
+      : [...normalizedMyTrips, ...normalizedSharedTrips];
 
     // Apply filter
     if (tripFilter === 'mine') {
@@ -232,6 +244,7 @@ const MyTrips = () => {
       const haystack: string[] = [
         trip.destination ?? '',
         (trip as Trip & { primary_destination?: string }).primary_destination ?? '',
+        trip.client_name ?? '',
       ];
       const arrival = trip.arrival_date ? new Date(trip.arrival_date) : null;
       const departure = trip.departure_date ? new Date(trip.departure_date) : null;
@@ -260,7 +273,7 @@ const MyTrips = () => {
       currentTrips: current,
       pastTrips: past
     };
-  }, [myTrips, sharedTrips, searchQuery, tripFilter]);
+  }, [myTrips, sharedTrips, clientTrips, searchQuery, tripFilter]);
 
   // Keep these for backward compatibility with hero logic
   const upcomingMyTrips = useMemo(() =>
@@ -332,6 +345,9 @@ const MyTrips = () => {
 
   const totalMyTrips = (myTrips || []).length;
   const totalSharedTrips = (sharedTrips || []).length;
+  const totalClientTrips = clientTrips.length;
+  // Section titles speak about your own travel; client trips are someone else's.
+  const showingClients = tripFilter === 'clients';
   const totalCurrentTrips = currentMyTrips.length + currentSharedTrips.length;
 
   return (
@@ -423,6 +439,15 @@ const MyTrips = () => {
               count={totalSharedTrips}
               icon={<Share2 className="h-3.5 w-3.5" />}
             />
+            {(totalClientTrips > 0 || tripFilter === 'clients') && (
+              <FilterChip
+                active={tripFilter === 'clients'}
+                onClick={() => setTripFilter('clients')}
+                label="Client trips"
+                count={totalClientTrips}
+                icon={<Briefcase className="h-3.5 w-3.5" />}
+              />
+            )}
           </div>
           {/* Edge fades only on mobile rail */}
           <div
@@ -468,7 +493,7 @@ const MyTrips = () => {
               <section className="relative" aria-labelledby="section-current">
                 <SectionHeader
                   id="section-current"
-                  title="Currently traveling"
+                  title={showingClients ? 'Clients traveling now' : 'Currently traveling'}
                   count={currentTrips.length}
                   countClassName="text-emerald-600"
                 />
@@ -497,7 +522,7 @@ const MyTrips = () => {
             <section className="relative" aria-labelledby="section-upcoming">
               <SectionHeader
                 id="section-upcoming"
-                title="On the horizon"
+                title={showingClients ? 'Upcoming client trips' : 'On the horizon'}
                 count={filteredUpcomingTrips.length}
               />
 
@@ -523,7 +548,9 @@ const MyTrips = () => {
                 <p className="text-earth-500 text-sm">
                   {tripFilter === 'shared'
                     ? 'Trips shared with you will appear here.'
-                    : 'Plan a trip to see it here.'}
+                    : tripFilter === 'clients'
+                      ? 'Trips you plan for clients will appear here.'
+                      : 'Plan a trip to see it here.'}
                 </p>
               )}
             </section>
@@ -532,7 +559,7 @@ const MyTrips = () => {
             <section className="relative" aria-labelledby="section-past">
               <SectionHeader
                 id="section-past"
-                title="Where you've been"
+                title={showingClients ? 'Past client trips' : "Where you've been"}
                 count={pastTrips.length}
                 muted
               />

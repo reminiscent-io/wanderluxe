@@ -16,12 +16,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { shareTrip } from "@/services/tripSharingService";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { getConnectedContacts, pickBestName, type ConnectedContact } from "@/services/contactsService";
+import { clientAlreadyOnTrip } from "@/utils/clientTrips";
 
 interface TravelerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tripId: string;
   traveler?: Traveler | null;
+  /** Prefill for a new traveler (a client trip's client). Skipped once they're on the trip. */
+  suggested?: { first_name: string; last_name: string; shared_with_email: string };
 }
 
 type Perm = "read" | "edit";
@@ -35,6 +38,7 @@ export default function TravelerDialog({
   onOpenChange,
   tripId,
   traveler,
+  suggested,
 }: TravelerDialogProps) {
   const queryClient = useQueryClient();
   const isEditing = !!traveler;
@@ -59,12 +63,15 @@ export default function TravelerDialog({
 
   useEffect(() => {
     if (!open) return;
+    // The Travelers panel that opens this dialog has already loaded the list.
+    const onTrip = queryClient.getQueryData<Traveler[]>(["travelers", tripId]) ?? [];
+    const prefill = !traveler && suggested && !clientAlreadyOnTrip(suggested, onTrip) ? suggested : null;
     form.reset({
-      first_name: traveler?.first_name || "",
-      last_name: traveler?.last_name || "",
-      shared_with_email: (traveler?.shared_with_email || "").trim(),
-      permission_level: isOwner ? "edit" : normalizePermission(traveler?.permission_level),
-    });
+      first_name: traveler?.first_name || prefill?.first_name || "",
+      last_name: traveler?.last_name || prefill?.last_name || "",
+      shared_with_email: (traveler?.shared_with_email || prefill?.shared_with_email || "").trim(),
+      permission_level: isOwner || prefill ? "edit" : normalizePermission(traveler?.permission_level),
+    }, prefill ? { keepDefaultValues: true } : undefined);
     if (isOwner) {
       form.setValue("permission_level", "edit", { shouldDirty: false, shouldTouch: false });
     }

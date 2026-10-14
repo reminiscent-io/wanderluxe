@@ -1285,6 +1285,8 @@ export type Database = {
           budget: number | null
           calendar_feed_enabled: boolean
           calendar_feed_token: string | null
+          client_email: string | null
+          client_name: string | null
           cover_image_photographer: string | null
           cover_image_photographer_username: string | null
           cover_image_position: string | null
@@ -1310,6 +1312,8 @@ export type Database = {
           budget?: number | null
           calendar_feed_enabled?: boolean
           calendar_feed_token?: string | null
+          client_email?: string | null
+          client_name?: string | null
           cover_image_photographer?: string | null
           cover_image_photographer_username?: string | null
           cover_image_position?: string | null
@@ -1335,6 +1339,8 @@ export type Database = {
           budget?: number | null
           calendar_feed_enabled?: boolean
           calendar_feed_token?: string | null
+          client_email?: string | null
+          client_name?: string | null
           cover_image_photographer?: string | null
           cover_image_photographer_username?: string | null
           cover_image_position?: string | null

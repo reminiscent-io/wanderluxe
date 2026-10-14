@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2, Share2, Users, Calendar, MapPin, LogOut, Check, X } from 'lucide-react';
+import { Trash2, Share2, Users, Calendar, MapPin, LogOut, Check, X, Briefcase } from 'lucide-react';
 import { format, getYear, parseISO, differenceInDays, isToday, isTomorrow } from 'date-fns';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWeather, getWeatherForDate, getWeatherEmoji } from '@/hooks/useWeather';
 import WeatherDetailModal from '@/components/trip/weather/WeatherDetailModal';
 import { buildTripPath, tripTitle } from '@/utils/tripUrl';
+import { isClientTrip } from '@/utils/clientTrips';
 
 async function resolveSupabaseSignedUrl(src: string): Promise<string | null> {
   const pathMatch = src.match(/\/storage\/v1\/object\/(?:public|sign)\/trip-images\/(.+?)(?:\?|$)/);
@@ -106,6 +107,8 @@ const TripCard = ({
   const canLeaveSharedTrip = !!isShared && !!trip.shareId && !!onLeaveSharedTrip;
   const isPendingInvite = !!isShared && trip.share_status === 'pending';
   const canAcceptInvite = isPendingInvite && !!trip.shareId && !!onAcceptInvite;
+  // Only the advisor who owns it sees the client label; to the client it is a shared trip.
+  const showClient = !isShared && isClientTrip(trip);
 
   // Check if trip starts within 5 days (forecast window)
   const daysUntilTrip = trip.arrival_date
@@ -299,7 +302,23 @@ const TripCard = ({
           </div>
 
           {/* Display shared badge in top-right corner */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            {showClient && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className="flex max-w-[11rem] items-center gap-1.5 bg-card text-foreground border-0 px-2.5 py-1">
+                      <Briefcase className="h-3 w-3 shrink-0 text-primary" />
+                      <span className="truncate font-medium text-xs">For {trip.client_name}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Planned for {trip.client_name}</p>
+                    {trip.client_email && <p className="text-xs opacity-75">{trip.client_email}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {/* Show "Shared by" badge for trips shared with user */}
             {isShared && (
               <TooltipProvider>
@@ -424,7 +443,9 @@ const TripCard = ({
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Trip</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.
+                          {showClient
+                            ? `This will remove the trip from your list and revoke access for ${trip.client_name} and anyone else it was shared with. You can restore it later from hidden trips, but you'll need to invite them again.`
+                            : 'This will remove the trip from your list and revoke access for anyone it was shared with. You can restore it later from hidden trips.'}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
