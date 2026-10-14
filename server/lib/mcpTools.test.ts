@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { timezoneField, GET_TRIP_SELECT, registerWanderluxeTools } from './mcpTools';
 
@@ -75,6 +77,37 @@ describe('tool registry', () => {
   });
 });
 
+// What the Connectors Directory reads: the live tools/list response, not the
+// zod config. Reused zod schemas used to serialize as a type-less `$ref`.
+describe('tools/list as the directory sees it', () => {
+  async function listTools() {
+    const server = new McpServer({ name: 'test', version: '0' });
+    registerWanderluxeTools(server, fakeSupabase().client, { userId: 'user-1', email: null });
+    const [serverSide, clientSide] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverSide);
+    const client = new Client({ name: 'test', version: '0' });
+    await client.connect(clientSide);
+    return (await client.listTools()).tools;
+  }
+
+  it('sets annotations.title to the tool title', async () => {
+    for (const tool of await listTools()) {
+      expect(tool.annotations?.title, tool.name).toBe(tool.title);
+      expect(tool.title, tool.name).toMatch(/\S/);
+    }
+  });
+
+  it('gives every parameter a type', async () => {
+    for (const tool of await listTools()) {
+      for (const [param, schema] of Object.entries(tool.inputSchema.properties ?? {})) {
+        const s = schema as { type?: unknown; anyOf?: { type?: unknown }[] };
+        const typed = s.type !== undefined || (s.anyOf?.length > 0 && s.anyOf.every((b) => b.type !== undefined));
+        expect(typed, `${tool.name}.${param}: ${JSON.stringify(schema)}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('create_trip', () => {
   it('stores the timezone it was given', async () => {
     const { client, calls } = fakeSupabase();
@@ -101,14 +134,14 @@ describe('get_trip_budget', () => {
 
 describe('timezoneField', () => {
   it('accepts real IANA zone ids', () => {
-    expect(timezoneField.safeParse('Europe/Paris').success).toBe(true);
-    expect(timezoneField.safeParse('Asia/Tokyo').success).toBe(true);
+    expect(timezoneField().safeParse('Europe/Paris').success).toBe(true);
+    expect(timezoneField().safeParse('Asia/Tokyo').success).toBe(true);
   });
 
   it('rejects strings Intl cannot resolve as a zone', () => {
-    expect(timezoneField.safeParse('Paris').success).toBe(false);
-    expect(timezoneField.safeParse('Not/AZone').success).toBe(false);
-    expect(timezoneField.safeParse('').success).toBe(false);
+    expect(timezoneField().safeParse('Paris').success).toBe(false);
+    expect(timezoneField().safeParse('Not/AZone').success).toBe(false);
+    expect(timezoneField().safeParse('').success).toBe(false);
   });
 });
 
