@@ -76,7 +76,7 @@ Travel planning is better together:
 Transform your itinerary into a beautifully formatted, print-ready PDF with one click — with toggles for pictures and prices, Letter/A4 paper sizes, timezone-labeled times, and identical output from mobile or desktop. Free on every account, entirely client-side.
 
 ### 🖋️ **Print Studio** *(Pro)*
-The paid feature. Give it an optional theme (“winter, quiet, lots of white space”) and a model art-directs a keepsake edition of your trip: a palette, a font pairing, a motif, and editorial copy down to a caption for each day. The division of labor is the point — the model is creative director only, and every itinerary item is drawn from your database by the same data layer the PDF export uses, so a bad generation can degrade the styling but never the facts. Output opens at its own route and prints through the browser, with app chrome deliberately absent from the page. The words stay yours: rewrite any line of AI copy right on the page, set in the face and colour it will print in, and revert a field to the model's version anytime. An edition keeps up with the plan until someone finalizes it, which freezes the itinerary as it stands. Editions are stored, so one stays openable after it's made.
+The paid feature. Give it an optional theme (“winter, quiet, lots of white space”) and a model art-directs a keepsake edition of your trip: a palette, a font pairing, a motif, and editorial copy down to a caption for each day. The division of labor is the point — the model is creative director only, and every itinerary item is drawn from your database by the same data layer the PDF export uses, so a bad generation can degrade the styling but never the facts. Output opens at its own route and prints through the browser, with app chrome deliberately absent from the page. The words stay yours: rewrite any line of AI copy right on the page, set in the face and colour it will print in, and revert a field to the model's version anytime. An edition keeps up with the plan until someone finalizes it, which freezes the itinerary as it stands. Editions are stored, so one stays openable after it's made, and they never print prices unless you opt into the budget ledger for that print. Free members can preview the Studio on their own trip in a fixed sample design, with no AI call.
 
 ### 💰 **Smart Budget Tracking**
 Track expenses across accommodations, transportation, activities, dining, and everything else — with paid/unpaid status, multi-currency support, and exchange rates refreshed automatically.
@@ -148,7 +148,7 @@ The map view projects the same five data sources the calendar reads through a pu
 Fully client-side PDF generation using `pdfmake`, organized into a modular pipeline (`src/services/pdf/` — theme tokens, image cropping, a pure doc builder, and locale-pinned formatters). No server-side rendering, no external services — and device-independent output, so a trip looks identical exported from mobile or desktop.
 
 ### AI as Art Director, Not Author 🖋️
-The Print Studio splits generation cleanly: the model returns only a design spec (palette, font-pairing id, motif id, editorial copy) through a strict `json_schema`, and `sanitizePrintDesign` clamps it before anything renders — hex normalization, WCAG contrast enforcement (ink ≥ 4.5:1, accents ≥ 3:1, falling back to a known-good palette), registry-id fallbacks, and copy-length caps. Itinerary content is drawn from the database by the same module the PDF export uses. The user's theme text is quoted and pinned as a styling preference, so the blast radius of a prompt injection is length-clamped copy. Prose that breaks the house voice (banned words, travel clichés, puffery) is dropped to its fallback rather than printed. Human edits live in a separate override layer over the model's design, so per-field revert is free, and the voice gate deliberately never runs on them.
+The Print Studio splits generation cleanly: the model returns only a design spec (palette, font-pairing id, motif id, layout, editorial copy) through a strict `json_schema`, and `sanitizePrintDesign` clamps it before anything renders. It fixes legibility, not taste: page colours and fills pass through untouched, and only text colours move, in OKLCH lightness with hue and chroma held, until they clear WCAG floors (ink ≥ 4.5:1, accents ≥ 3:1). Registry-id fallbacks and copy-length caps round it out. Itinerary content is drawn from the database by the same module the PDF export uses. The user's theme text is quoted and pinned as a styling preference, so the blast radius of a prompt injection is length-clamped copy. Prose that breaks the house voice (banned words, travel clichés, puffery) is dropped to its fallback rather than printed. Human edits live in a separate override layer over the model's design, so per-field revert is free, and the voice gate deliberately never runs on them.
 
 ### Model Context Protocol 🔌
 A built-in MCP server (`server/routes/mcp.ts`) exposes your trips to Claude and other MCP clients over streamable HTTP, authenticated with Supabase OAuth 2.1 (with RFC 9728 discovery). 20 tools: `list_trips`, `get_trip`, `get_trip_budget`, `create_trip`, `update_trip`, and add/update/delete for activities, dining, accommodations, transportation, and expenses. Setup, the full tool reference, auth flow and privacy notes are in [docs/mcp.md](docs/mcp.md).
@@ -164,7 +164,7 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Node.js 18+** — Modern JavaScript runtime (Node 24 recommended)
+- **Node.js 22+** — `npm run dev` uses `concurrently` 10, which requires it (production runs Node 24)
 - **Supabase Account** — For database and authentication
 - **API Keys** — Google Places, Google Gemini, and friends (see below)
 
@@ -175,8 +175,8 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 git clone https://github.com/reminiscent-io/wanderluxe.git
 cd wanderluxe
 
-# Install dependencies
-npm install
+# Install dependencies (off Replit — see the note below)
+npm install --no-package-lock --no-save
 
 # Set up environment variables
 cp .env.example .env
@@ -188,7 +188,11 @@ npm run dev
 
 Visit **http://localhost:8080** and start planning your next adventure! 🌴
 
-> Database migrations live in `supabase/migrations/` and are applied via the Supabase dashboard or CLI.
+> **Why the install flags?** Every `resolved` URL in `package-lock.json` points at Replit's internal package firewall, which only resolves on Replit (where deploys run `npm ci`). Elsewhere a lockfile install fails with `ENOTFOUND`, so install without the lockfile. `.npmrc` sets `legacy-peer-deps=true`.
+>
+> Database migrations live in `supabase/migrations/` and are applied by hand via the Supabase dashboard, CLI, or MCP. Nothing applies them automatically.
+>
+> Places, timezone, and map-coordinate lookups go through Edge Functions whose CORS allowlist excludes `localhost`, so they fail in local dev by design.
 
 ### ⚙️ Configuration
 
@@ -216,14 +220,17 @@ OPENAI_API_KEY=sk-your-openai-api-key
 # OPENAI_MODEL=gpt-4.1                            # Optional override; defaults to gpt-4.1
 
 # Optional
-VITE_UNSPLASH_ACCESS_KEY=your-unsplash-access-key # Trip imagery (placeholders used if missing)
-VITE_ADMIN_EMAIL=you@example.com                  # Grants admin dashboard access
 VITE_PARSE_TRAVEL_DOC_URL=your-fn-url             # Travel-doc parsing endpoint override
 MCP_PUBLIC_BASE_URL=https://wanderluxe.io         # Public base URL for the MCP server
 VITE_GOOGLE_MAPS_MAP_ID=your-cloud-map-id         # Map styling for the trip map (falls back to a demo ID)
 SITE_URL=https://wanderluxe.io                    # Canonical URL for sitemap, prerender & share links
 ALLOWED_ORIGINS=https://wanderluxe.io             # Comma-separated CORS allowlist for the Express server
+VITE_POSTHOG_KEY=phc_your-posthog-key             # Product analytics (consent-gated)
+VITE_POSTHOG_HOST=https://us.i.posthog.com
+VITE_PLACE_PHOTO_CACHE_TTL_MS=3600000             # Client-side place-photo cache TTL
 ```
+
+Admin access comes from `profiles.is_admin` in the database, not from an env var. (`VITE_ADMIN_EMAIL` and `VITE_UNSPLASH_ACCESS_KEY` are still declared in `src/config/env.ts` but nothing reads them; Unsplash runs server-side with the Edge Function secret below.)
 
 Edge Functions read their secrets from Supabase (set via dashboard or `supabase secrets set`):
 
@@ -264,7 +271,7 @@ ALLOWED_ORIGIN=...            # CORS origin for Edge Functions (defaults to http
 wanderluxe/
 ├── 📱 src/
 │   ├── components/
-│   │   ├── trip/              # 17 trip feature modules
+│   │   ├── trip/              # 18 trip feature modules
 │   │   │   ├── accommodation/ # Hotel & lodging management
 │   │   │   ├── ai-assistant/  # AI chat + document extraction + paywall
 │   │   │   ├── budget/        # Expense tracking & currencies
@@ -278,11 +285,13 @@ wanderluxe/
 │   │   │   └── ...           # Activities, dining, travelers, hero, stats
 │   │   ├── admin/            # Admin dashboard (metrics + AI insights)
 │   │   ├── discovery/        # One-time first-run hints
-│   │   ├── layout/           # AppLayout, Sidebar, Navigation
-│   │   └── ui/               # 55 Shadcn/ui components
+│   │   ├── landing/          # Landing sections + interactive Print Studio showcase
+│   │   ├── layout/           # AppLayout, Sidebar, mobile BottomNavigation, QuickAddSheet
+│   │   └── ui/               # ~30 Shadcn/ui primitives
 │   ├── pages/                # Routes (MyTrips, TripDetails, Explore, Guide, Profile, InviteRedeem, etc.)
 │   ├── hooks/                # Custom hooks (useTripQuery, useAIAssistant, useWeather, etc.)
 │   ├── services/             # Business logic (pdf/ export pipeline, flightStatus, sharing, etc.)
+│   ├── lib/printDesign/      # Print Studio spec, sanitizer, palette, house voice, edits
 │   ├── contexts/             # React Context (AuthContext, ConsentContext)
 │   ├── integrations/supabase/# Supabase client & auto-generated types
 │   └── types/                # TypeScript definitions
@@ -305,12 +314,14 @@ wanderluxe/
 │   ├── migrations/          # SQL schema migrations
 │   └── config.toml         # Supabase configuration
 ├── 🧪 evals/                # On-demand eval harness (chat, parsing, MCP)
-├── 🔧 scripts/              # Build scripts (sitemap, prerender)
+├── 🔧 scripts/              # Build scripts (sitemap, prerender, print showcase)
+├── 📚 docs/                 # mcp.md (MCP setup + tool reference), print-studio.md (Print Studio contract)
 └── 📦 Other
-    ├── .env                # Environment variables
+    ├── .env.example        # Every env var, annotated
     ├── vite.config.ts      # Vite configuration
     ├── tailwind.config.ts  # Design system configuration
-    └── CLAUDE.md           # AI assistant instructions
+    ├── DESIGN.md           # Full design-system spec (palette, type scale, component rules)
+    └── CLAUDE.md           # Architecture notes + gotchas for AI assistants (and humans)
 ```
 
 ## 🎨 Design Philosophy
@@ -329,7 +340,7 @@ WanderLuxe is built with security at its core:
 
 - 🔐 **Row Level Security (RLS)** — PostgreSQL policies enforce access control at the database level
 - 🔑 **Supabase Auth** — Secure authentication with Google OAuth and auto-refresh tokens
-- 🛡️ **Input Validation** — Zod schemas validate all user input on frontend and backend
+- 🛡️ **Input Validation** — Zod schemas on forms and on every MCP tool parameter; Express routes run their own auth and trip-access checks, since they use the service-role key
 - 🚫 **CORS & CSP Protection** — Strict API access controls and a content security policy on the Express server
 - 🔒 **Session Management** — Automatic session refresh with tab visibility detection
 - 👥 **Permission System** — Granular view/edit permissions for shared trips; revocable, expiring invite links
@@ -345,8 +356,9 @@ WanderLuxe is built with security at its core:
 npm run dev              # Start dev server — Express + Vite (http://localhost:8080)
 npm run dev:frontend     # Vite only (no Express backend)
 npm run dev:server       # Express server only
-npm run type-check       # TypeScript type checking
+npm run type-check       # TypeScript (tsc -b) — has a pre-existing error backlog; compare before/after
 npm run lint             # ESLint code quality checks
+npx knip                 # Dead files, exports, and dependencies
 
 # 🏗️ Building
 npm run build            # Production build (sitemap → vite build → prerender → server bundle)
@@ -354,12 +366,12 @@ npm run build:dev        # Development build
 npm run preview          # Preview production build (port 8080)
 
 # 🧪 Testing
-npm run test             # Run tests (Vitest)
+npm run test             # Run tests (Vitest) — there's no CI, so run this before pushing
 npm run test:watch       # Watch mode
 npm run test:coverage    # Coverage report
 npm run test:ui          # Vitest browser UI
 
-# 📊 Evals (on-demand only, never CI)
+# 📊 Evals (on-demand only, never part of npm test; they hit the prod Supabase project)
 npm run evals:seed       # Seed eval-user fixtures (run first)
 npm run evals            # Full eval harness (chat + parsing + MCP)
 npm run evals:chat       # One suite at a time: evals:chat | evals:parsing | evals:mcp
@@ -381,7 +393,8 @@ npm run evals:chat       # One suite at a time: evals:chat | evals:parsing | eva
 <td width="50%">
 
 ### 📱 Mobile Experience
-- **Touch-Optimized** — Large tap targets, bottom-sheet dialogs, full-screen AI drawer
+- **Bottom Navigation** — Timeline, quick-add sheet, a center AI button, Budget, and People, all within thumb reach
+- **Touch-Optimized** — 44px tap targets, bottom-sheet dialogs, full-screen AI drawer
 - **Installable PWA** — Home-screen app with "Create Trip" / "My Trips" shortcuts and update toasts
 - **Adaptive Layout** — Content reflows beautifully on all screens
 - **Offline-Ready PDFs** — Take your itinerary anywhere
@@ -427,8 +440,9 @@ We welcome contributions from developers who share our passion for elegant trave
 - Follow existing code style and patterns
 - Write meaningful commit messages
 - Add TypeScript types for new features
-- Test your changes thoroughly
-- Update documentation as needed
+- Run `npm run test` before opening a PR (nothing runs it for you)
+- Read `CLAUDE.md`'s Gotchas before adding an entity column; there are several write sites
+- Update documentation as needed, including `docs/mcp.md` when an MCP tool changes
 
 **Found a bug?** Open an issue with reproduction steps.
 **Have an idea?** Open an issue describing it.
