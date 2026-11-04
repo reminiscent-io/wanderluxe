@@ -114,7 +114,8 @@ export interface EditionPlan {
  * long is tightened before it is split, so a few pixels never cost a page:
  *   solo:<date>                 the day may not share a sheet
  *   tight:<date>                close that day's spacing (first remedy)
- *   break:day:<date>:<i>        start a new page at item i of that day
+ *   break:day:<date>:<i>        start a new page at item i of that day (0: the
+ *                               schedule starts on the page after the header)
  *   compact:overview            one line of summary per day (first remedy)
  *   break:overview:<i>          start a new overview page at day row i
  *   break:details:<i>           start a new bookings page at row i
@@ -246,9 +247,15 @@ function hasDetails(trip: PrintTrip): boolean {
    The plan
    ========================================================================= */
 
-/** Split [0, count) at the given indices into page ranges. */
-function ranges(count: number, breaks: number[]): Array<[number, number]> {
-  const cuts = [...new Set(breaks)].filter((b) => b > 0 && b < count).sort((a, b) => a - b);
+/**
+ * Split [0, count) at the given indices into page ranges. A day may also break
+ * at 0: its header, photo and notes take a page and the schedule starts on the
+ * next, for a day whose first item would not fit under them.
+ */
+function ranges(count: number, breaks: number[], allowLeadingBreak = false): Array<[number, number]> {
+  const cuts = [...new Set(breaks)]
+    .filter((b) => (b > 0 || (allowLeadingBreak && b === 0)) && b < count)
+    .sort((a, b) => a - b);
   const out: Array<[number, number]> = [];
   let from = 0;
   for (const cut of cuts) {
@@ -361,7 +368,7 @@ export function planEdition(
         continue;
       }
       const day = trip.days[i];
-      const parts = ranges(day.items.length, breaksFor(feedback, `day:${day.date}`));
+      const parts = ranges(day.items.length, breaksFor(feedback, `day:${day.date}`), true);
       parts.forEach(([from, to], p) => {
         pages.push({
           kind: 'day',

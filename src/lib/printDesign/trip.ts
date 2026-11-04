@@ -193,13 +193,19 @@ function withZone(time: string, entityTz: unknown, tripTz: string | null, onDate
 
 const URL_RE = /https?:\/\/[^\s<>"'()[\]{}]+/gi;
 
+/** Words that label a link: "Link for tickets", "Ticket Link", "Tickets", "Book here". */
+const LINK_LABEL =
+  '(?:(?:ticket|booking|reservation|registration)s?\\s+)?(?:link|url|tickets?|book(?:\\s+here)?|reserve|register|website|info|details)(?:\\s+(?:for|to)\\s+[a-z]+(?:\\s+[a-z]+){0,2})?';
+
 /**
- * A lead-in that only announces the link after it: "Link for tickets:",
- * "Ticket Link:", "Tickets:", "Book here:". Anchored to the end of the text
- * before the URL, so words earlier in the note are never touched.
+ * A lead-in that only announces the link after it. Either an explicit label
+ * ending in a colon or dash ("Link for tickets:", "Ticket Link -"), or a label
+ * standing alone at the start of a line or sentence ("Tickets https://…").
+ * "Bring printed tickets https://…" keeps every word: there "tickets" is part
+ * of a sentence.
  */
-const LEAD_IN_RE =
-  /(?:^|(?<=[\s.;,(]))((?:(?:ticket|booking|reservation|registration)s?\s+)?(?:link|url|tickets?|book(?:\s+here)?|reserve|register|website|info|details)(?:\s+(?:for|to)\s+[a-z]+(?:\s+[a-z]+){0,2})?)\s*[:\-–]?\s*$/i;
+const LEAD_IN_LABELLED = new RegExp(`(?:^|(?<=[\\s.;,(]))(${LINK_LABEL})\\s*[:\\-–]\\s*$`, 'i');
+const LEAD_IN_ALONE = new RegExp(`(?:^|(?<=[\\n.;!?]\\s*))(${LINK_LABEL})\\s*$`, 'i');
 
 function shortDisplay(url: URL): string {
   const host = url.hostname.replace(/^www\./i, '');
@@ -227,7 +233,7 @@ export function extractLinks(text: string | undefined): { notes?: string; links:
     const raw = m[0].replace(/[.,;:!?]+$/, '');
     let before = text.slice(last, m.index);
     let label = '';
-    const lead = LEAD_IN_RE.exec(before);
+    const lead = LEAD_IN_LABELLED.exec(before) ?? LEAD_IN_ALONE.exec(before);
     if (lead) {
       label = /ticket/i.test(lead[1]) ? 'Tickets' : /book|reserv|regist/i.test(lead[1]) ? 'Booking' : '';
       before = before.slice(0, lead.index);
@@ -380,7 +386,8 @@ export function buildPrintTrip(rows: PrintTripRows): PrintTrip {
       const checkIn = isoDate(s.hotel_checkin_date);
       const checkOut = isoDate(s.hotel_checkout_date);
       if (!checkIn) continue;
-      if (date >= checkIn && (!checkOut || date < checkOut)) stayTonight ??= name;
+      // A stay with no check-out date covers its first night, not the rest of the trip.
+      if (date >= checkIn && (checkOut ? date < checkOut : date === checkIn)) stayTonight ??= name;
 
       if (date === checkIn) {
         const phone = str(s.hotel_phone);
@@ -398,7 +405,9 @@ export function buildPrintTrip(rows: PrintTripRows): PrintTrip {
           facts: phone ? [phone] : [],
           sortKey: sortKey(s.checkin_time, UNTIMED_CHECK_IN),
         });
-      } else if (date === checkOut) {
+      }
+      // Not an else: a day-use stay checks in and out on the same date.
+      if (checkOut && date === checkOut) {
         items.push({
           kind: 'stay',
           label: 'Check-out',
@@ -499,7 +508,7 @@ export function buildPrintTrip(rows: PrintTripRows): PrintTrip {
 
     /* activities ----------------------------------------------------------- */
     for (const a of acts) {
-      if (a.day_id !== row.day_id) continue;
+      if (!a.day_id || a.day_id !== row.day_id) continue;
       const { notes, links } = extractLinks(str(a.description));
       const site = websiteLink(a.location_website);
       const phone = str(a.location_phone);

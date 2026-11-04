@@ -282,3 +282,41 @@ describe('helpers', () => {
     expect(extractLinks('No links here')).toEqual({ notes: 'No links here', links: [] });
   });
 });
+
+describe('review fixes', () => {
+  it('keeps a word the link did not announce', () => {
+    expect(extractLinks('Bring printed tickets https://x.example.com/a').notes).toBe('Bring printed tickets');
+    expect(extractLinks('Check the website https://x.example.com').notes).toBe('Check the website');
+    expect(extractLinks('Tickets https://x.example.com/t')).toMatchObject({ notes: undefined, links: [{ label: 'Tickets' }] });
+    expect(extractLinks('Arrive early.\nTickets https://x.example.com/t').notes).toBe('Arrive early.');
+  });
+
+  const base = (patch: Partial<PrintTripRows>): PrintTripRows => ({
+    trip: { destination: 'Edge cases', arrival_date: '2026-03-01', departure_date: '2026-03-03' },
+    days: [
+      { day_id: 'a', date: '2026-03-01' },
+      { day_id: 'b', date: '2026-03-02' },
+      { day_id: 'c', date: '2026-03-03' },
+    ],
+    stays: [],
+    trans: [],
+    acts: [],
+    dine: [],
+    ...patch,
+  });
+
+  it('prints an activity with no day on no day', () => {
+    const trip = buildPrintTrip(base({ days: [{ date: '2026-03-01' }, { date: '2026-03-02' }], acts: [{ title: 'Orphan', start_time: '10:00' }] }));
+    expect(trip.days.every((d) => d.items.length === 0)).toBe(true);
+  });
+
+  it('prints both ends of a day-use stay', () => {
+    const trip = buildPrintTrip(base({ stays: [{ hotel: 'Day Spa Hotel', hotel_checkin_date: '2026-03-02', hotel_checkout_date: '2026-03-02', checkin_time: '10:00', checkout_time: '18:00' }] }));
+    expect(trip.days[1].items.map((i) => i.label)).toEqual(['Check-in', 'Check-out']);
+  });
+
+  it('gives a stay with no check-out date its first night only', () => {
+    const trip = buildPrintTrip(base({ stays: [{ hotel: 'Open-ended Inn', hotel_checkin_date: '2026-03-01' }] }));
+    expect(trip.days.map((d) => d.stay ?? null)).toEqual(['Open-ended Inn', null, null]);
+  });
+});

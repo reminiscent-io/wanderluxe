@@ -118,12 +118,16 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({
     }
   });
 
+  // Report the plan when the pages change, not when the plan object does: a
+  // caller that stores it in state and re-renders this with a new design
+  // object would otherwise loop. onSettled is read from a ref for the same
+  // reason, so an inline callback is fine.
+  const planKey = useMemo(() => JSON.stringify([plan.pages, plan.dayPages]), [plan]);
+  const latest = useRef({ plan, onSettled });
+  latest.current = { plan, onSettled };
   useEffect(() => {
-    if (settled) onSettled?.(plan);
-    // onSettled is a callback prop; firing on its identity would loop a caller
-    // that passes an inline function.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settled, plan]);
+    if (settled) latest.current.onSettled?.(latest.current.plan);
+  }, [settled, planKey]);
 
   const fillVars: Record<string, string> = {};
   for (let i = 0; i < 4; i++) {

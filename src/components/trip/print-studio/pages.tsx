@@ -294,6 +294,8 @@ function DayHead({ env, day, variant, part = 1, banner }: DayHeadProps) {
 
 function DayItems({ day, from, to }: { day: PrintDay; from: number; to: number }) {
   const items = day.items.slice(from, to);
+  // A header page of a busy day: its schedule starts on the next page.
+  if (items.length === 0 && day.items.length > 0) return null;
   if (items.length === 0) {
     return (
       <p className="pd-day-open" data-pd-block={`day:${day.date}:${from}`}>

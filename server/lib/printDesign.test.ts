@@ -5,6 +5,7 @@ import {
   buildDesignMessages,
   formatPaletteAudit,
   PRINT_DESIGN_SCHEMA,
+  scrub,
   stripMoney,
   tripTiming,
   type PrintTripRows,
@@ -240,5 +241,29 @@ describe('formatPaletteAudit', () => {
     ).toBe(
       'primary #f654a6 (2.96:1 < 4.5) → #d02d86 | ink missing → #2b2620 | fills dropped "pink" | fills dropped (not a string)'
     );
+  });
+});
+
+describe('scrub', () => {
+  it('takes money out wherever it is written', () => {
+    expect(scrub('Tickets USD 45 at the door')).toBe('Tickets at the door');
+    expect(scrub('EUR 20 deposit')).toBe('deposit');
+    expect(scrub('Dinner ($80 pp)')).toBe('Dinner (pp)');
+  });
+
+  it('takes out a booking reference typed into a note, and keeps ordinary words', () => {
+    expect(scrub('Confirmation # YB9FMQ, two bags')).toBe(', two bags');
+    expect(scrub('ref: 88213 for the transfer')).toBe('for the transfer');
+    expect(scrub('Bring the booking details')).toBe('Bring the booking details');
+  });
+
+  it('scrubs titles and places as well as notes before the model reads them', () => {
+    const { payload } = buildTripPayload(
+      rows({ acts: [{ day_id: 'd1', title: 'Dinner ($80 pp)', description: 'Conf. AB12CD', start_time: '20:00' }] }),
+      '2026-05-01'
+    );
+    const json = JSON.stringify(payload);
+    expect(json).not.toContain('$80');
+    expect(json).not.toContain('AB12CD');
   });
 });

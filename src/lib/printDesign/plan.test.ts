@@ -126,9 +126,18 @@ describe('fit feedback', () => {
     expect(plan.pages.find((p) => p.kind === 'overview')).toMatchObject({ compact: true, parts: 1 });
   });
 
+  it('gives a day whose first item will not fit under its header a page of its own first', () => {
+    const trip = makeTrip([2, 3, 2]);
+    const plan = planEdition(trip, NO_DESIGN, { feedback: [`break:day:${trip.days[1].date}:0`] });
+    expect(plan.pages.filter((p) => p.kind === 'day' && p.day === 1)).toMatchObject([
+      { from: 0, to: 0, part: 1, parts: 2 },
+      { from: 0, to: 3, part: 2, parts: 2 },
+    ]);
+  });
+
   it('ignores breaks outside the day', () => {
     const trip = makeTrip([3]);
-    const plan = planEdition(trip, NO_DESIGN, { feedback: [`break:day:${trip.days[0].date}:0`, `break:day:${trip.days[0].date}:99`] });
+    const plan = planEdition(trip, NO_DESIGN, { feedback: [`break:day:${trip.days[0].date}:-1`, `break:day:${trip.days[0].date}:99`] });
     expect(kinds(plan.pages)).toEqual(['cover', 'day0', 'back']);
   });
 

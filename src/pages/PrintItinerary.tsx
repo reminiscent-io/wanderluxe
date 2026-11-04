@@ -300,7 +300,12 @@ const PrintItinerary: React.FC = () => {
   );
 
   const activeOverrides = isEditing ? draft : savedOverrides;
-  const design = baseDesign ? applyCopyOverrides(baseDesign, activeOverrides) : null;
+  // Memoized: a fresh design object on every render would hand the document a
+  // fresh plan on every render, and its onSettled would re-render this page.
+  const design = useMemo(
+    () => (baseDesign ? applyCopyOverrides(baseDesign, activeOverrides) : null),
+    [baseDesign, activeOverrides]
+  );
   const editCount = baseDesign ? countCopyEdits(baseDesign, savedOverrides) : 0;
 
   useEffect(() => {

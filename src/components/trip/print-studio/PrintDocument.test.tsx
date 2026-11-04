@@ -1,9 +1,11 @@
+import React, { useState } from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import PrintDocument from './PrintDocument';
 import { sanitizePrintDesign } from '@/lib/printDesign/spec';
 import { applyCopyOverrides } from '@/lib/printDesign/edits';
 import { buildPrintTrip, type PrintTripRows } from '@/lib/printDesign/trip';
+import type { EditionPlan } from '@/lib/printDesign/plan';
 
 /** Three days in Rome, every money path filled in: item costs, a stay, other spend, a budget. */
 function romeRows(overrides: Partial<PrintTripRows> = {}): PrintTripRows {
@@ -175,5 +177,29 @@ describe('PrintDocument layouts', () => {
   it('borrows fills from the palette for an edition stored without them', () => {
     const { container } = render(<PrintDocument design={editorial} trip={romeTrip()} />);
     expect(docOf(container).style.getPropertyValue('--pd-fill-1')).toBe(editorial.palette.primary);
+  });
+});
+
+describe('PrintDocument settling', () => {
+  it('reports its plan once, even to a parent that rebuilds the design on every render', () => {
+    const trip = romeTrip();
+    let reports = 0;
+    function Parent() {
+      const [, setPlan] = useState<EditionPlan | null>(null);
+      // A new design object every render, as an edited edition produces.
+      const design = applyCopyOverrides(designFor(), { closing: 'Ciao.' });
+      return (
+        <PrintDocument
+          design={design}
+          trip={trip}
+          onSettled={(plan) => {
+            reports += 1;
+            setPlan(plan);
+          }}
+        />
+      );
+    }
+    render(<Parent />);
+    expect(reports).toBe(1);
   });
 });

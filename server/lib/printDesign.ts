@@ -51,15 +51,44 @@ const MAX_DAYS = 40;
 const MAX_PER_DAY = 20;
 
 /**
- * Amounts of money in free text: "$20–$22.97", "€110", "45 USD". The model
- * writes keepsake copy, never prices, and a number it never saw is a number it
- * cannot quote, so they leave the traveler's notes before the model reads them.
+ * Amounts of money in free text: "$20–$22.97", "€110", "USD 45", "45 dollars".
+ * The model writes keepsake copy, never prices, and a number it never saw is a
+ * number it cannot quote, so they leave every free-text field before the model
+ * reads it.
  */
 const MONEY_RE =
-  /(?:[$€£¥]\s?\d[\d,.]*(?:\s?[–-]\s?[$€£¥]?\s?\d[\d,.]*)?|\b\d[\d,.]*\s?(?:usd|eur|gbp|dollars?|euros?|pounds?)\b)/gi;
+  /(?:[$€£¥]\s?\d[\d,.]*(?:\s?[–-]\s?[$€£¥]?\s?\d[\d,.]*)?|\b(?:usd|eur|gbp|cad|aud)\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:usd|eur|gbp|cad|aud|dollars?|euros?|pounds?)\b)/gi;
 
 export function stripMoney(text: string | undefined): string | undefined {
-  return text?.replace(MONEY_RE, '').replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim() || undefined;
+  return (
+    text
+      ?.replace(MONEY_RE, '')
+      .replace(/\(\s*\)/g, '')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s{2,}/g, ' ')
+      .trim() || undefined
+  );
+}
+
+/**
+ * A booking reference typed into a note: "Confirmation # YB9FMQ", "ref: 88213".
+ * Only a token that looks like a code (a digit in it, or all capitals) goes,
+ * so "booking details" keeps its words.
+ */
+const CODE_RE = /\b(?:confirmation|conf\.?|booking|reservation|reference|ref\.?|record locator|pnr)\s*(?:number|no\.?|code)?\s*[:#]?\s*([A-Za-z0-9-]{5,})\b/gi;
+
+function stripCodes(text: string | undefined): string | undefined {
+  return (
+    text
+      ?.replace(CODE_RE, (whole, code: string) => (/\d/.test(code) || code === code.toUpperCase() ? '' : whole))
+      .replace(/\s{2,}/g, ' ')
+      .trim() || undefined
+  );
+}
+
+/** Every free-text field the model reads goes through this: no money, no codes. */
+export function scrub(text: string | undefined): string | undefined {
+  return stripCodes(stripMoney(text));
 }
 
 /** Confirmation codes and phone numbers print on the page; the copy has no use for them. */
@@ -82,7 +111,8 @@ export function tripTiming(trip: Pick<PrintTrip, 'startDate' | 'endDate'>, today
  * its weekday, and a rental car has both its ends.
  *
  * Money is left out on purpose: no costs, no budget, and no amounts quoted in
- * the traveler's notes. Confirmation codes and phone numbers stay out too.
+ * any free-text field. Confirmation codes and phone numbers stay out too,
+ * structured or typed into a note.
  */
 export function buildTripPayload(
   rows: PrintTripRows,
@@ -92,25 +122,25 @@ export function buildTripPayload(
   const days = trip.days.slice(0, MAX_DAYS);
 
   const payload: Row = {
-    destination: clamp(trip.destination, 140),
+    destination: clamp(scrub(trip.destination), 140),
     dates: trip.dateRange || undefined,
     nights: trip.nights,
     timing: tripTiming(trip, today),
     days: days.map((d) => ({
       date: d.date,
       weekday: d.weekday,
-      traveler_title: clamp(d.title, 120),
-      traveler_notes: clamp(stripMoney(d.description), 400),
+      traveler_title: clamp(scrub(d.title), 120),
+      traveler_notes: clamp(scrub(d.description), 400),
       sleeping_at: clamp(d.stay, 140),
       items: d.items.slice(0, MAX_PER_DAY).map((item) => ({
         time: item.time || undefined,
         until: item.endTime || undefined,
         kind: item.kind === 'journey' ? (item.mode ?? 'journey') : item.kind,
         label: item.label,
-        title: clamp(item.title, 140),
-        place: clamp(item.place, 160),
-        notes: clamp(stripMoney(item.notes), 260),
-        details: item.facts.filter((fact) => !PRIVATE_FACT.test(fact)).join(' · ') || undefined,
+        title: clamp(scrub(item.title), 140),
+        place: clamp(scrub(item.place), 160),
+        notes: clamp(scrub(item.notes), 260),
+        details: scrub(item.facts.filter((fact) => !PRIVATE_FACT.test(fact)).join(' · ')),
       })),
     })),
     stays: trip.stays.slice(0, 15).map((s) => ({

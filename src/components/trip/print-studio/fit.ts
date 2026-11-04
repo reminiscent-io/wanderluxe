@@ -49,9 +49,13 @@ export function measureOverflow(root: ParentNode): string[] {
       tokens.push(`tight:${sheet.dataset.pdDates}`);
       continue;
     }
-    // The first unit on a page has nowhere earlier to break. Leave it; the
-    // page clips rather than loop.
-    if (over === blocks[0]) continue;
+    if (over === blocks[0]) {
+      // Nothing earlier on the page to break before. A day's first item can
+      // still move to the next page, leaving its header, photo and notes this
+      // one. Past that (one item taller than a page) there is nothing to do.
+      if (sheet.dataset.pdKind === 'day' && /^day:[^:]+:0$/.test(block)) tokens.push(`break:${block}`);
+      continue;
+    }
     tokens.push(`break:${block}`);
   }
   return tokens;
