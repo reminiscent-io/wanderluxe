@@ -7,14 +7,14 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPdfTripData } from '@/services/pdf/data';
 import { getFontPairing } from '@/lib/printDesign/spec';
 import { teaserDesign } from '@/lib/printDesign/sample';
 import PrintDocument from './PrintDocument';
 import PageThumbnail from './PageThumbnail';
 import ProFeatureList from './ProFeatureList';
 import { useGoogleFonts } from './useGoogleFonts';
-import { PRINT_OPTS, CONTENT_WIDTH, printTripDataKey } from './printTripData';
+import { fetchPrintTripData, printTripDataKey } from './printTripData';
+import { SHEET } from '@/lib/printDesign/plan';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface StudioTeaserProps {
@@ -33,7 +33,7 @@ const StudioTeaser: React.FC<StudioTeaserProps> = ({ tripId, destination, enable
     // fetch already done.
     queryKey: printTripDataKey(tripId, null),
     enabled,
-    queryFn: () => fetchPdfTripData(tripId, PRINT_OPTS, CONTENT_WIDTH),
+    queryFn: () => fetchPrintTripData(tripId),
     staleTime: 60_000,
   });
 
@@ -46,17 +46,23 @@ const StudioTeaser: React.FC<StudioTeaserProps> = ({ tripId, destination, enable
     <div className="flex items-start gap-4">
       <div className="w-[10rem] shrink-0">
         {data ? (
-          <PageThumbnail label="Preview of this trip in a sample Print Studio style" aspect={1.3}>
-            <PrintDocument design={design} data={data} />
+          <PageThumbnail
+            label="Preview of this trip in a sample Print Studio style"
+            pageWidth={SHEET.width}
+            aspect={SHEET.height / SHEET.width}
+          >
+            {/* The first page of days: their own plans, set as the Studio sets them. */}
+            <PrintDocument design={design} trip={data} select="first-day" />
           </PageThumbnail>
         ) : (
-          <Skeleton className="w-full rounded-card" style={{ aspectRatio: '1 / 1.3' }} />
+          <Skeleton className="w-full rounded-card" style={{ aspectRatio: `1 / ${SHEET.height / SHEET.width}` }} />
         )}
       </div>
       <div className="min-w-0">
         <p className="text-sm text-earth-600">
-          Your trip, in a sample style. Pro designs one around it: a palette, typefaces and a line
-          for every day, and every line is yours to rewrite.
+          Your trip, in a sample style. Pro lays the whole trip out on Letter pages and designs it
+          around your theme: palette, typefaces, illustration and a headline for every day, all
+          yours to rewrite.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           <span className="font-semibold tabular-nums text-foreground">$3.99</span> / month

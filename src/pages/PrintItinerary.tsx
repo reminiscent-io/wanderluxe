@@ -20,11 +20,13 @@ import { ArrowLeft, Check, Lock, LockOpen, Pencil, Printer, Receipt, X } from 'l
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { buildPdfTripData, fetchPdfTripData, type PdfTripRows } from '@/services/pdf/data';
+import type { PrintTripRows } from '@/lib/printDesign/trip';
+import { hasPrintLedger } from '@/lib/printDesign/trip';
+import { describePlan, type EditionPlan } from '@/lib/printDesign/plan';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { getFontPairing, themeNameEndsInEdition, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import { getFontPairing, sanitizePrintDesign, themeNameEndsInEdition, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import {
   applyCopyOverrides,
   countCopyEdits,
@@ -32,14 +34,15 @@ import {
   originalCopy,
   pruneCopyOverrides,
   sanitizeCopyOverrides,
+  withDayTitles,
   type PrintCopyOverrides,
 } from '@/lib/printDesign/edits';
 import PrintDocument, { type CopyRenderer } from '@/components/trip/print-studio/PrintDocument';
-import { hasLedgerData } from '@/components/trip/print-studio/ledger';
+import SheetStack from '@/components/trip/print-studio/SheetStack';
 import EditableCopy from '@/components/trip/print-studio/EditableCopy';
 import { useTripPermissions } from '@/hooks/use-trip-permissions';
 import { track } from '@/lib/analytics';
-import { PRINT_OPTS, CONTENT_WIDTH, printTripDataKey } from '@/components/trip/print-studio/printTripData';
+import { buildPrintTripData, fetchPrintTripData, printTripDataKey } from '@/components/trip/print-studio/printTripData';
 import { useGoogleFonts } from '@/components/trip/print-studio/useGoogleFonts';
 
 const isValidUUID = (s: string | undefined): s is string =>
@@ -51,7 +54,7 @@ interface DesignRow {
   theme_prompt: string | null;
   design: PrintDesignSpec;
   copy_overrides: PrintCopyOverrides | null;
-  content_snapshot: PdfTripRows | null;
+  content_snapshot: PrintTripRows | null;
   finalized_at: string | null;
   created_at: string;
 }
@@ -147,16 +150,25 @@ const PrintItinerary: React.FC = () => {
     // swaps the source of the itinerary rather than serving a stale render.
     queryKey: printTripDataKey(tripId, designRow?.finalized_at ?? null),
     enabled: validParams && !!designRow,
-    queryFn: () =>
-      snapshot
-        ? buildPdfTripData(snapshot, PRINT_OPTS, CONTENT_WIDTH)
-        : fetchPdfTripData(tripId!, PRINT_OPTS, CONTENT_WIDTH),
+    queryFn: () => (snapshot ? buildPrintTripData(snapshot) : fetchPrintTripData(tripId!)),
     // A frozen edition cannot change, so it never needs refetching.
     staleTime: isFinalized ? Infinity : 60_000,
   });
 
-  const baseDesign = designRow?.design && designRow.design.palette ? designRow.design : null;
   const dayDates = useMemo(() => tripData?.days.map((d) => d.date) ?? [], [tripData]);
+
+  // The stored model output goes back through the sanitizer on the way in, so
+  // an edition made before a rule existed (a weekday check, a banned phrase)
+  // still meets it. Only the model's words are touched: the traveler's own
+  // edits live in copy_overrides and are layered on afterwards. Their day
+  // titles then outrank the model's headlines.
+  const baseDesign = useMemo(
+    () =>
+      designRow?.design?.palette && tripData
+        ? withDayTitles(sanitizePrintDesign(designRow.design, dayDates), tripData.days)
+        : null,
+    [designRow?.design, tripData, dayDates]
+  );
 
   // Sanitized on the way in, not just on the way out. The browser writes this
   // column directly, so what comes back is checked before it is set in type.
@@ -288,7 +300,12 @@ const PrintItinerary: React.FC = () => {
   );
 
   const activeOverrides = isEditing ? draft : savedOverrides;
-  const design = baseDesign ? applyCopyOverrides(baseDesign, activeOverrides) : null;
+  // Memoized: a fresh design object on every render would hand the document a
+  // fresh plan on every render, and its onSettled would re-render this page.
+  const design = useMemo(
+    () => (baseDesign ? applyCopyOverrides(baseDesign, activeOverrides) : null),
+    [baseDesign, activeOverrides]
+  );
   const editCount = baseDesign ? countCopyEdits(baseDesign, savedOverrides) : 0;
 
   useEffect(() => {
@@ -317,25 +334,25 @@ const PrintItinerary: React.FC = () => {
   const pairing = design ? getFontPairing(design.fontPairing) : null;
   const fontsReady = useGoogleFonts(pairing?.googleQuery ?? null);
 
-  // The paper colour belongs to the whole sheet, not just the document's box,
-  // so printDocument.css paints the root with it (see "sheet" there).
-  // "bleed" also takes the colour to the paper's edge, which needs the page
-  // inset repeated at every break: box-decoration-break: clone on blocks.
-  // Tested here, not in an @supports block, because the CSS minifier widens
-  // that condition to the -webkit- form, which Safari passes on its
-  // inline-only support.
-  const sheetColor = design?.palette.background;
+  // Each page of an edition is a Letter sheet edge to edge, so while this page
+  // is open the browser prints on Letter with no margins: no header, no footer,
+  // no white frame. Injected here rather than in the stylesheet so the rule
+  // never reaches a print of any other page in the app.
   useEffect(() => {
-    if (!sheetColor) return;
-    const root = document.documentElement;
-    const bleed = typeof CSS !== 'undefined' && CSS.supports('box-decoration-break', 'clone');
-    root.style.setProperty('--pd-sheet', sheetColor);
-    root.setAttribute('data-pd-sheet', bleed ? 'bleed' : 'inset');
-    return () => {
-      root.style.removeProperty('--pd-sheet');
-      root.removeAttribute('data-pd-sheet');
-    };
-  }, [sheetColor]);
+    const style = document.createElement('style');
+    style.setAttribute('data-pd-page', '');
+    style.textContent = '@page { size: 8.5in 11in; margin: 0; }';
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, []);
+
+  // The plan, once every page fits. Print waits for it, and for the type: the
+  // pages were measured in the edition's faces, and a fallback face would break
+  // them differently.
+  // Reported by the document each time it settles; no reset here, because a
+  // child's effect runs before its parent's and a reset would land last.
+  const [plan, setPlan] = useState<EditionPlan | null>(null);
+  const layoutKey = `${fontsReady ? 'type' : 'fallback'}|${isEditing ? 'editing' : JSON.stringify(savedOverrides)}`;
 
   const handlePrint = () => {
     if (tripId) track('print_studio_print_clicked', { trip_id: tripId });
@@ -359,7 +376,7 @@ const PrintItinerary: React.FC = () => {
   const isSaving = saveMutation.isPending;
   const isFinalizing = finalizeMutation.isPending;
   const canEditCopy = canEdit && !isFinalized && isReady;
-  const canShowBudget = isReady && hasLedgerData(tripData!);
+  const canShowBudget = isReady && hasPrintLedger(tripData!);
 
   return (
     <div className="min-h-screen bg-sand-100 safe-pl safe-pr print:bg-transparent">
@@ -373,7 +390,7 @@ const PrintItinerary: React.FC = () => {
       {/* Screen-only toolbar. Opaque rather than blurred: this page is a paper
           simulation, and a glass bar floating over it breaks the illusion. */}
       <div className="print:hidden sticky top-0 z-20 border-b border-border bg-background safe-pt">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2 sm:px-4 sm:py-3">
+        <div className="mx-auto flex max-w-[880px] items-center gap-2 px-3 py-2 sm:px-4 sm:py-3">
           {isEditing ? (
             <>
               <Button
@@ -481,7 +498,7 @@ const PrintItinerary: React.FC = () => {
                 variant="sunset"
                 size="sm"
                 onClick={handlePrint}
-                disabled={!isReady || !fontsReady}
+                disabled={!isReady || !fontsReady || !plan}
                 className="h-11 shrink-0 sm:h-9"
               >
                 <Printer className="mr-2 h-4 w-4" />
@@ -491,27 +508,31 @@ const PrintItinerary: React.FC = () => {
           )}
         </div>
 
-        {/* One line of state, only when there is something to say. */}
-        {isReady && !isEditing && (isFinalized || editCount > 0) && (
-          <div className="mx-auto max-w-3xl px-3 pb-2 sm:px-4">
+        {/* One line of state: how the Studio laid the trip out, and what has
+            happened to the edition since. */}
+        {isReady && !isEditing && (plan || isFinalized || editCount > 0) && (
+          <div className="mx-auto max-w-[880px] px-3 pb-2 sm:px-4">
             <p className="text-xs text-muted-foreground">
+              {plan && <span className="font-medium text-foreground">{describePlan(plan, tripData!)}. </span>}
               {isFinalized ? (
                 <>
                   Finalized {new Date(designRow!.finalized_at!).toLocaleDateString()} — the itinerary in
                   this edition is fixed and no longer follows the trip.
                 </>
-              ) : (
+              ) : editCount > 0 ? (
                 <>
                   {editCount} {editCount === 1 ? 'line' : 'lines'} rewritten. The itinerary still follows
                   the trip; finalize to fix it in place.
                 </>
+              ) : (
+                <>Letter pages, ready to print or save as a PDF.</>
               )}
             </p>
           </div>
         )}
       </div>
 
-      <div className="mx-auto max-w-3xl px-0 pt-8 pb-[calc(2rem_+_env(safe-area-inset-bottom,0px))] print:max-w-none print:p-0 sm:px-4">
+      <div className="mx-auto max-w-[880px] px-2 pt-6 pb-[calc(2rem_+_env(safe-area-inset-bottom,0px))] print:max-w-none print:p-0 sm:px-4 sm:pt-8">
         {isLoading && (
           <div className="shadow-warm-lg print:hidden" aria-busy="true">
             <span className="sr-only" role="status">
@@ -538,15 +559,17 @@ const PrintItinerary: React.FC = () => {
         )}
 
         {isReady && (
-          <div className="shadow-warm-lg print:shadow-none">
+          <SheetStack>
             <PrintDocument
               design={design!}
-              data={tripData!}
+              trip={tripData!}
               renderCopy={isEditing ? renderCopy : undefined}
               isEditing={isEditing}
               showBudget={showBudget}
+              layoutKey={layoutKey}
+              onSettled={setPlan}
             />
-          </div>
+          </SheetStack>
         )}
       </div>
     </div>

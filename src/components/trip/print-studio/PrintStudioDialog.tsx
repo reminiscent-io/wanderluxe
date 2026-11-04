@@ -77,21 +77,23 @@ function editionState(d: DesignListRow): string {
 /** Named so the wait reads as work being done, not a spinner being spun. */
 const GENERATING_STEPS = [
   'Reading every day of your trip',
-  'Choosing a palette and typefaces',
-  'Writing captions for each day',
-  'Setting the cover',
-];
+  'Choosing a palette, typefaces and art',
+  'Writing a headline for each day',
+  'Laying it out on Letter pages',
+]
 
 /**
  * Starting points, so the answer to "theme?" is a tap rather than typing on a
- * phone. Each maps onto a motif the renderer already knows how to draw.
+ * phone. Each maps onto a motif the renderer draws (holly, waves, deco,
+ * leaves, botanical) and a cue in the generation prompt.
  */
 const THEME_SUGGESTIONS = [
+  'Christmas card',
   'Sun-bleached coast',
   'Art deco poster',
+  'Autumn leaves',
   'Botanical notes',
-  'Desert night sky',
-];
+]
 
 /** Past this, the 300-character limit starts silently eating keystrokes. */
 const THEME_MAX = 300;
@@ -433,8 +435,8 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
               </span>
             </div>
             <p className="mt-1 mb-3 text-sm text-muted-foreground">
-              The same itinerary, art-directed: a palette, typefaces, a motif, and a line for every
-              day.
+              Your whole trip laid out on Letter pages and art-directed: palette, typefaces,
+              illustration, and a headline for every day.
             </p>
 
             {isGenerating ? (

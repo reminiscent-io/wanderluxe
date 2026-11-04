@@ -38,9 +38,19 @@ export interface EditableField {
   multiline: boolean;
 }
 
-/** Day captions are keyed `day.<ISO date>`; everything else is fixed. */
+/** Day captions are keyed `day.<ISO date>`, day headlines `headline.<ISO date>`; everything else is fixed. */
 export const DAY_CAPTION_PREFIX = 'day.';
 export const DAY_CAPTION_MAX = 140;
+const DAY_HEADLINE_PREFIX = 'headline.';
+/** The traveler gets the same hard stop the sanitizer gives the model (DAY_HEADLINE_MAX in ./spec). */
+export const DAY_HEADLINE_MAX = 60;
+
+/** The per-day prefix a key carries, or null for a fixed field. */
+function dayPrefix(key: string): string | null {
+  if (key.startsWith(DAY_CAPTION_PREFIX)) return DAY_CAPTION_PREFIX;
+  if (key.startsWith(DAY_HEADLINE_PREFIX)) return DAY_HEADLINE_PREFIX;
+  return null;
+}
 
 export const EDITABLE_FIELDS: readonly EditableField[] = [
   {
@@ -156,15 +166,16 @@ export function sanitizeCopyOverrides(raw: unknown, dayDates: string[] = []): Pr
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     let max: number;
 
-    if (key.startsWith(DAY_CAPTION_PREFIX)) {
+    const prefix = dayPrefix(key);
+    if (prefix) {
       // An override for a day the trip no longer has would be invisible and
       // would linger through date changes, so it does not survive the round
       // trip. When dayDates is empty the caller does not know the trip shape,
-      // so captions pass through unfiltered.
-      const date = key.slice(DAY_CAPTION_PREFIX.length);
+      // so per-day lines pass through unfiltered.
+      const date = key.slice(prefix.length);
       if (!date) continue;
       if (dayDates.length > 0 && !validDates.has(date)) continue;
-      max = DAY_CAPTION_MAX;
+      max = prefix === DAY_HEADLINE_PREFIX ? DAY_HEADLINE_MAX : DAY_CAPTION_MAX;
     } else {
       const field = FIELD_BY_KEY.get(key);
       if (!field) continue;
@@ -190,6 +201,16 @@ export function sanitizeCopyOverrides(raw: unknown, dayDates: string[] = []): Pr
  * contract allows.
  */
 export function fieldForKey(key: string): EditableField {
+  if (key.startsWith(DAY_HEADLINE_PREFIX)) {
+    return {
+      key,
+      label: 'Day headline',
+      hint: 'A name for this day. Leave empty to head it with the date alone.',
+      max: DAY_HEADLINE_MAX,
+      required: false,
+      multiline: false,
+    };
+  }
   if (key.startsWith(DAY_CAPTION_PREFIX)) {
     return {
       key,
@@ -230,6 +251,9 @@ export function pruneCopyOverrides(
 
 /** The AI's text for one editable key, so the editor can show what it replaced. */
 export function originalCopy(design: PrintDesignSpec, key: string): string {
+  if (key.startsWith(DAY_HEADLINE_PREFIX)) {
+    return design.dayHeadlines?.[key.slice(DAY_HEADLINE_PREFIX.length)] ?? '';
+  }
   if (key.startsWith(DAY_CAPTION_PREFIX)) {
     return design.dayCaptions[key.slice(DAY_CAPTION_PREFIX.length)] ?? '';
   }
@@ -267,15 +291,25 @@ export function applyCopyOverrides(
   if (!overrides || Object.keys(overrides).length === 0) return design;
 
   const dayCaptions = { ...design.dayCaptions };
+  const dayHeadlines = { ...(design.dayHeadlines ?? {}) };
   for (const [key, value] of Object.entries(overrides)) {
-    if (!key.startsWith(DAY_CAPTION_PREFIX)) continue;
-    const date = key.slice(DAY_CAPTION_PREFIX.length);
-    if (value) dayCaptions[date] = value;
-    else delete dayCaptions[date];
+    const prefix = dayPrefix(key);
+    if (!prefix) continue;
+    const date = key.slice(prefix.length);
+    if (prefix === DAY_HEADLINE_PREFIX) {
+      // A blanked headline stays as an explicit '' so it also beats the
+      // traveler's day title, which the renderer otherwise falls back to.
+      dayHeadlines[date] = value;
+    } else if (value) {
+      dayCaptions[date] = value;
+    } else {
+      delete dayCaptions[date];
+    }
   }
 
   return {
     ...design,
+    ...(design.dayHeadlines || Object.keys(dayHeadlines).length > 0 ? { dayHeadlines } : {}),
     themeName: resolve(design, overrides, 'themeName'),
     themeRationale: resolve(design, overrides, 'themeRationale'),
     cover: {
@@ -300,4 +334,20 @@ export function countCopyEdits(
     if (value !== originalCopy(design, key)) n += 1;
   }
   return n;
+}
+
+/**
+ * The traveler's own day titles as the headlines the edition starts from.
+ * Their title is content and outranks the model's suggestion; an edit made in
+ * the edition (copy_overrides) still layers over both.
+ */
+export function withDayTitles(
+  design: PrintDesignSpec,
+  days: ReadonlyArray<{ date: string; title?: string }>
+): PrintDesignSpec {
+  const titled = days.filter((d) => d.title);
+  if (titled.length === 0) return design;
+  const dayHeadlines = { ...(design.dayHeadlines ?? {}) };
+  for (const day of titled) dayHeadlines[day.date] = day.title!;
+  return { ...design, dayHeadlines };
 }

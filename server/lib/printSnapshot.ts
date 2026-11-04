@@ -57,10 +57,14 @@ export async function fetchTripSnapshot(
   ] = await Promise.all([
     supabase
       .from('trips')
-      .select('destination,arrival_date,departure_date,cover_image_url,budget,timezone')
+      .select('destination,arrival_date,departure_date,cover_image_url,cover_image_position,budget,timezone')
       .eq('trip_id', tripId)
       .single(),
-    supabase.from('trip_days').select('day_id,date,title,description').eq('trip_id', tripId).order('date'),
+    supabase
+      .from('trip_days')
+      .select('day_id,date,title,description,image_url,image_position')
+      .eq('trip_id', tripId)
+      .order('date'),
     supabase.from('accommodations').select('*').eq('trip_id', tripId),
     supabase.from('transportation').select('*').eq('trip_id', tripId),
     supabase.from('day_activities').select('*').eq('trip_id', tripId),

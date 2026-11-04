@@ -4,32 +4,47 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import StudioTeaser from './StudioTeaser';
 import { PRO_FEATURES } from './ProFeatureList';
 import { printTripDataKey } from './printTripData';
-import type { PdfTripData } from '@/services/pdf/types';
+import type { PrintItem, PrintTrip } from '@/lib/printDesign/trip';
 
-const fetchPdfTripData = vi.fn();
-vi.mock('@/services/pdf/data', () => ({
-  fetchPdfTripData: (...args: unknown[]) => fetchPdfTripData(...args),
+// The data module reaches the Supabase client, which validates env at import.
+vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+
+const fetchPrintTripData = vi.fn();
+vi.mock('./printTripData', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./printTripData')>()),
+  fetchPrintTripData: (...args: unknown[]) => fetchPrintTripData(...args),
 }));
 
-const tripData: PdfTripData = {
+const item = (title: string, time: string, sortKey: number, kind: 'journey' | 'stay'): PrintItem => ({
+  kind,
+  title,
+  time,
+  endTime: '',
+  links: [],
+  facts: [],
+  sortKey,
+});
+
+const tripData: PrintTrip = {
   destination: 'Lisbon',
-  dateRange: 'May 4 – May 11',
-  coverImageDataUri: '',
-  coverImageRequested: false,
+  startDate: '2026-05-04',
+  endDate: '2026-05-11',
+  dateRange: 'May 4–11, 2026',
+  nights: 7,
+  timezone: null,
   days: [
     {
       date: '2026-05-04',
+      index: 0,
+      weekday: 'Monday',
       title: 'Arrival',
-      items: [
-        { type: 'transportation', title: 'Flight lands, LIS', time: '2:10 PM', sortKey: 850 },
-        { type: 'accommodation', title: 'Check in, Bairro Alto', time: '4:00 PM', sortKey: 960 },
-      ],
+      items: [item('Flight lands, LIS', '2:10 PM', 850, 'journey'), item('Check in, Bairro Alto', '4:00 PM', 960, 'stay')],
     },
   ],
   stays: [],
-  transports: [],
-  diningRefs: [],
-  budgetData: { budget: null, categories: [], total: 0 },
+  journeys: [],
+  reservations: [],
+  budget: { budget: null, categories: [], total: 0 },
 };
 
 const renderTeaser = (
@@ -42,7 +57,7 @@ const renderTeaser = (
   );
 
 beforeEach(() => {
-  fetchPdfTripData.mockReset().mockResolvedValue(tripData);
+  fetchPrintTripData.mockReset().mockResolvedValue(tripData);
 });
 
 describe('StudioTeaser', () => {
@@ -60,7 +75,7 @@ describe('StudioTeaser', () => {
   });
 
   it('falls back to the feature list when trip data cannot be loaded', async () => {
-    fetchPdfTripData.mockRejectedValue(new Error('offline'));
+    fetchPrintTripData.mockRejectedValue(new Error('offline'));
     renderTeaser();
     await waitFor(() => expect(screen.getByText(PRO_FEATURES[0])).toBeInTheDocument());
     expect(screen.queryByText('Flight lands, LIS')).not.toBeInTheDocument();
@@ -71,7 +86,7 @@ describe('StudioTeaser', () => {
     renderTeaser(client);
     await waitFor(() => expect(screen.getByText('Flight lands, LIS')).toBeInTheDocument());
 
-    fetchPdfTripData.mockRejectedValue(new Error('offline'));
+    fetchPrintTripData.mockRejectedValue(new Error('offline'));
     await act(() => client.refetchQueries());
     // React Query tells its observers about the failure on a zero-delay timer.
     // Without letting that land, the assertions below read the page from
