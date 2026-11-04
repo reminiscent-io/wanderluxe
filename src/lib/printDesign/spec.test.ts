@@ -7,6 +7,9 @@ import {
   FONT_PAIRINGS,
   getFontPairing,
   isHexColor,
+  MOTIF_NOTES,
+  MOTIFS,
+  namesWrongWeekday,
   PALETTE_FLOORS,
   relativeLuminance,
   sanitizePrintDesign,
@@ -339,5 +342,98 @@ describe('auditPrintPalette', () => {
 
   it('reports nothing for a legible palette', () => {
     expect(auditPrintPalette(VALID_RAW)).toEqual([]);
+  });
+});
+
+describe('per-day copy: headlines, places, features', () => {
+  // Friday through Monday.
+  const WEEKEND = ['2026-12-18', '2026-12-19', '2026-12-20', '2026-12-21'];
+  const raw = {
+    ...VALID_RAW,
+    days: [
+      { date: '2026-12-18', headline: 'Lights at Sayville Falls', caption: 'The rental car still needs car seats.', place: 'Huntington', feature: false },
+      { date: '2026-12-19', headline: 'Heckscher Park', caption: 'Coffee first, then the playground.', place: 'Huntington', feature: false },
+      // The real failure: Dec 20, 2026 is a Sunday.
+      { date: '2026-12-20', headline: 'Christmas Land', caption: 'Saturday brings Christmas Land at Deer Park.', place: 'Huntington', feature: true },
+      { date: '2026-12-21', headline: 'Monday: flying home', caption: 'Return the car before the 3:02 flight.', place: 'Huntington', feature: true },
+      { date: '2027-01-01', headline: 'Not a trip day', caption: 'Nope.', place: 'Nowhere', feature: true },
+    ],
+  };
+  const spec = sanitizePrintDesign(raw, WEEKEND);
+
+  it('folds the model’s days array into records keyed by date', () => {
+    expect(spec.dayHeadlines).toEqual({
+      '2026-12-18': 'Lights at Sayville Falls',
+      '2026-12-19': 'Heckscher Park',
+      '2026-12-20': 'Christmas Land',
+      '2026-12-21': 'Monday: flying home',
+    });
+    expect(spec.dayPlaces?.['2026-12-18']).toBe('Huntington');
+    expect(Object.keys(spec.dayPlaces ?? {})).toHaveLength(4);
+  });
+
+  it('drops a line that puts the day on the wrong weekday', () => {
+    expect(spec.dayCaptions['2026-12-20']).toBeUndefined();
+    expect(spec.dayCaptions['2026-12-18']).toBe('The rental car still needs car seats.');
+    expect(namesWrongWeekday('Sunday breakfast, then the outlets.', '2026-12-20')).toBe(false);
+    expect(namesWrongWeekday('Saturday brings Christmas Land.', '2026-12-20')).toBe(true);
+    expect(namesWrongWeekday('The lights run Sundays 5 to 10.', '2026-12-19')).toBe(false);
+  });
+
+  it('keeps feature days to real dates, in date order, capped', () => {
+    expect(spec.featureDays).toEqual(['2026-12-20', '2026-12-21']);
+    const many = sanitizePrintDesign({ ...raw, featureDays: WEEKEND, days: [] }, WEEKEND);
+    expect(many.featureDays).toEqual(['2026-12-18', '2026-12-19']);
+  });
+
+  it('drops a headline too long to set rather than cutting it', () => {
+    const long = sanitizePrintDesign(
+      { days: [{ date: '2026-12-18', headline: 'A headline that keeps on going well past the point any page could set it', caption: '', place: '', feature: false }] },
+      WEEKEND
+    );
+    expect(long.dayHeadlines).toBeUndefined();
+  });
+
+  // Headlines are asked for in sentence case, so a capital mid-line is a name
+  // ("Hyde Park Winter Wonderland" is a real fair) and lowercase is the model.
+  it('holds sentence-case headlines to the house voice', () => {
+    const slop = sanitizePrintDesign(
+      { days: [{ date: '2026-12-18', headline: 'A winter wonderland awaits', caption: '', place: '', feature: false }] },
+      WEEKEND
+    );
+    expect(slop.dayHeadlines).toBeUndefined();
+  });
+
+  it('drops trip copy that names a weekday the trip never reaches', () => {
+    const wrong = sanitizePrintDesign({ ...VALID_RAW, intro: 'We land on Wednesday and drive north.' }, WEEKEND);
+    expect(wrong.intro).toBe('');
+    const right = sanitizePrintDesign({ ...VALID_RAW, intro: 'We land on Friday and drive north.' }, WEEKEND);
+    expect(right.intro).toBe('We land on Friday and drive north.');
+  });
+
+  it('is idempotent with the new fields', () => {
+    expect(sanitizePrintDesign(spec, WEEKEND)).toEqual(spec);
+  });
+
+  it('adds nothing to an edition stored before these fields existed', () => {
+    const old = sanitizePrintDesign(VALID_RAW, DATES);
+    expect('dayHeadlines' in old).toBe(false);
+    expect('dayPlaces' in old).toBe(false);
+    expect('featureDays' in old).toBe(false);
+  });
+
+  it('reports a wrong weekday in the copy audit', () => {
+    const audit = auditPrintCopy(raw);
+    expect(audit).toContainEqual({
+      field: 'days.2026-12-20.caption',
+      findings: [{ rule: 'wrong weekday', match: 'saturday on a Sunday' }],
+    });
+  });
+
+  it('accepts the new seasonal motifs', () => {
+    for (const motif of ['holly', 'snowflakes', 'pines', 'ornaments', 'leaves', 'blossoms', 'citrus']) {
+      expect(sanitizePrintDesign({ ...VALID_RAW, motif }, DATES).motif).toBe(motif);
+    }
+    expect(MOTIFS.every((m) => typeof MOTIF_NOTES[m] === 'string')).toBe(true);
   });
 });

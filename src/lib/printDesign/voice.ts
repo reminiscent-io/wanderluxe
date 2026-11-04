@@ -73,6 +73,16 @@ export const TRAVEL_CLICHES = [
   'steeped in history',
   'culinary journey',
   'awaits',
+  // The holiday-card register: what a model writes when the theme is a season.
+  'winter wonderland',
+  'holiday magic',
+  'magic of the season',
+  'sparkle of the season',
+  'festive cheer',
+  'yuletide cheer',
+  'making memories',
+  'memories to last',
+  'cherished memories',
 ] as const;
 
 /**
@@ -172,13 +182,44 @@ export function findSlop(text: string): SlopFinding[] {
 }
 
 /**
+ * Words that open a new independent clause. After a lone em dash they mean the
+ * dash was joining two sentences, and a comma there is a comma splice ("Hold
+ * onto these details, this December was full of small, good things").
+ */
+const CLAUSE_START =
+  /^(?:i|we|you|they|he|she|it|this|that|these|those|there|here|our|your|their|everyone|everything|nothing|someone|nobody)\b/i;
+
+/**
  * Safe repairs — changes that cannot alter meaning, applied before the text is
- * judged. Only the em-dash rule qualifies: a dash between clauses is a rhythm
- * crutch, and a comma always carries the same sentence.
+ * judged. Only the em-dash rule qualifies: a dash is a rhythm crutch, and
+ * ordinary punctuation carries the same sentence.
+ *  - A pair of dashes sets off an aside: commas.
+ *  - A lone dash before a new clause joins two sentences: a full stop.
+ *  - A lone dash before anything else introduces a phrase: a comma.
  */
 export function repairCopy(text: string): string {
-  return text
-    .replace(/\s*—\s*/g, ', ')
+  // Pairs first, within one sentence, so an aside is never read as two lone dashes.
+  const paired = text.replace(/\s*—\s*([^—.!?]+?)\s*—\s*/g, ', $1, ');
+
+  let out = '';
+  let from = 0;
+  const dash = /\s*—\s*/g;
+  let m: RegExpExecArray | null;
+  while ((m = dash.exec(paired)) !== null) {
+    out += paired.slice(from, m.index);
+    from = m.index + m[0].length;
+    const rest = paired.slice(from);
+    if (rest && CLAUSE_START.test(rest)) {
+      // Two sentences: close the first and capitalize the second.
+      out = `${out.replace(/[\s,;:]+$/, '')}. ${rest.charAt(0).toUpperCase()}`;
+      from += 1;
+    } else {
+      out += ', ';
+    }
+  }
+  out += paired.slice(from);
+
+  return out
     .replace(/([,;:])\s*,/g, '$1')
     .replace(/\s+([,.!?;:])/g, '$1')
     .replace(/,\s*$/, '')

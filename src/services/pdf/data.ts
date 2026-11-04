@@ -60,7 +60,13 @@ function withTzSuffix(formatted: string, entityTz: string | null | undefined, tr
 export interface PdfTripRows {
   trip: Pick<
     TripRow,
-    'destination' | 'arrival_date' | 'departure_date' | 'cover_image_url' | 'budget' | 'timezone'
+    | 'destination'
+    | 'arrival_date'
+    | 'departure_date'
+    | 'cover_image_url'
+    | 'cover_image_position'
+    | 'budget'
+    | 'timezone'
   > | null;
   days: TripDayRow[];
   stays: AccommodationRow[];
@@ -83,10 +89,14 @@ export async function fetchTripRows(tripId: string): Promise<PdfTripRows> {
   ] = await Promise.all([
     supabase
       .from(TABLES.trip)
-      .select('destination,arrival_date,departure_date,cover_image_url,budget,timezone')
+      .select('destination,arrival_date,departure_date,cover_image_url,cover_image_position,budget,timezone')
       .eq('trip_id', tripId)
       .single(),
-    supabase.from(TABLES.days).select('day_id,date,title,description').eq('trip_id', tripId).order('date'),
+    supabase
+      .from(TABLES.days)
+      .select('day_id,date,title,description,image_url,image_position')
+      .eq('trip_id', tripId)
+      .order('date'),
     supabase.from(TABLES.stays).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.transport).select('*').eq('trip_id', tripId),
     supabase.from(TABLES.activities).select('*').eq('trip_id', tripId),

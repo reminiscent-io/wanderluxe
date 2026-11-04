@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import ShowcaseStage from './ShowcaseStage';
-import tripJson from './tokyoTrip.json';
+import { buildPrintTrip } from '@/lib/printDesign/trip';
+import { TOKYO_ROWS } from './tokyoRows';
 
 const reducedMotion = { current: false };
 vi.mock('framer-motion', async () => {
@@ -96,7 +97,7 @@ describe('ShowcaseStage', () => {
     // The whole plan, in order, straight from the fixture. Comparing the full
     // ordered list is what makes a dropped or reordered item fail; counting one
     // title could not, since the AI's captions mention it too.
-    const plan = tripJson.days.flatMap((d) => d.items.map((i) => i.title));
+    const plan = buildPrintTrip(TOKYO_ROWS).days.flatMap((d) => d.items.map((i) => i.title));
     const { container } = render(<ShowcaseStage />);
     const itemTitles = () =>
       Array.from(container.querySelectorAll('.pd-item-title'), (node) => node.textContent);

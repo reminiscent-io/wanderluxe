@@ -70,7 +70,7 @@ src/
 │   │   ├── dining/        # Restaurant reservations
 │   │   ├── hero/          # Trip hero/header
 │   │   ├── map/           # Interactive trip map (Google Maps + route playback)
-│   │   ├── print-studio/  # Print dialog (Simple PDF + Studio edition), PrintDocument renderer
+│   │   ├── print-studio/  # Print dialog (Simple PDF + Studio edition), Letter-page PrintDocument, art, fit loop
 │   │   ├── stats/         # Trip statistics
 │   │   ├── timeline/      # Itinerary display
 │   │   ├── transportation/# Flight/train/car bookings
@@ -361,12 +361,14 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 
 #### 23. **Print Studio (Pro feature)**
 Full contract: **`docs/print-studio.md` — read it before changing `src/lib/printDesign/`, `components/trip/print-studio/`, `components/landing/print-showcase/`, `server/routes/print-design.ts` or `server/lib/print*.ts`.** Core rules:
-- One **Print** button (TimelineView toolbar) opens `PrintStudioDialog`: a free Simple PDF section (§7) above the Studio edition. Free members see their own trip in the fixed `SAMPLE_TEASER_DESIGN` (no AI call)
-- **The model is creative director only**: OpenAI returns a `PrintDesignSpec` (palette, font pairing, motif, layout, copy) through a strict json_schema; every itinerary item is drawn from the DB via the PDF export's data module, so model output can degrade style, never content
-- `sanitizePrintDesign` (`src/lib/printDesign/spec.ts`, shared client/server) fixes **legibility, not taste**: only text colours move (OKLCH lightness, hue and chroma held) until they clear `PALETTE_FLOORS`. AI prose that fails the house voice (`voice.ts` `findSlop`) is dropped to its fallback
-- Traveler edits live in `copy_overrides`, a layer over `design`; **the house-voice gate never applies to human writing** (`edits.ts`)
-- An edition renders from live trip data until finalized; finalizing (server route, service role) freezes raw rows into `content_snapshot`, replayed through `buildPdfTripData`
-- An edition never prints prices: the Ledger is opt-in per print (`?budget=1`) and the generation payload omits all costs
+- One **Print** button (TimelineView toolbar) opens `PrintStudioDialog`: a free Simple PDF section (§7) above the Studio edition. Free members see the first day page of their own trip in the fixed `SAMPLE_TEASER_DESIGN` (no AI call)
+- **An edition is fixed Letter pages** (816 × 1056 CSS px, `@page { size: 8.5in 11in; margin: 0 }` injected by the edition page). `buildPrintTrip` (`src/lib/printDesign/trip.ts`, shared client/server) reads every field of the trip; `planEdition` (`plan.ts`) decides the pages from day density, trip length and the design's per-day places (pairs, chapters, banners, bookings); `PrintDocument` measures every page and replans on overflow (`fit.ts`: tighten first, split only between items). Photos are never cropped
+- **The model is creative director only**: OpenAI returns a `PrintDesignSpec` (palette, font pairing, motif, layout, cover copy, and per day a headline, caption, place and feature flag) through a strict json_schema; it never decides pages, and every item prints from the trip rows, so model output can degrade style, never content. The payload is built from the same projection (weekdays included, money and codes stripped)
+- `sanitizePrintDesign` (`spec.ts`) fixes **legibility and facts, not taste**: only text colours move (OKLCH lightness) until they clear `PALETTE_FLOORS`; prose that fails the house voice (`voice.ts` `findSlop`) or names the wrong weekday is dropped. The edition page re-sanitizes the stored model output on read
+- Art (`art.tsx`) is filled SVG illustration per motif, inks picked from the edition's fills by hue; it never sits behind words
+- Traveler edits live in `copy_overrides`, a layer over `design` (captions `day.<date>`, headlines `headline.<date>`); **the house-voice gate never applies to human writing** (`edits.ts`). The traveler's own day titles outrank model headlines (`withDayTitles`)
+- An edition renders from live trip data until finalized; finalizing (server route, service role) freezes raw rows into `content_snapshot`, replayed through `buildPrintTrip`
+- An edition never prints prices: the Ledger is an opt-in page per print (`?budget=1`) and the generation payload omits all costs
 - Output page `/trip/:tripId/print/:designId` renders with no app chrome (AppLayout skips nav/footer there)
 
 ## Common Development Tasks
@@ -407,7 +409,7 @@ Full contract: **`docs/print-studio.md` — read it before changing `src/lib/pri
 | `server/routes/stripe.ts` | Stripe payment routes |
 | `server/routes/mcp.ts` + `server/lib/mcpTools.ts` | MCP server & 20-tool registry |
 | `server/routes/calendar.ts` + `server/lib/icalFeed.ts` | Token-gated iCal feed |
-| `docs/print-studio.md` | Print Studio contract + file map (generation, sanitizer, voice, edits, finalize, showcase) |
+| `docs/print-studio.md` | Print Studio contract + file map (trip projection, page planner, fit loop, art, generation, sanitizer, voice, edits, finalize, showcase) |
 | `components/trip/calendar/` | FullCalendar view, sync sheet, calendar hooks |
 | `components/trip/map/` | Trip map view — stop model, route playback, geocoding |
 | `components/trip/day/components/timeline-utils.ts` | Pure timeline logic (periods, grouping, categories) |

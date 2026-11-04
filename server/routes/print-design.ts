@@ -20,7 +20,7 @@
 import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import rateLimit from 'express-rate-limit';
-import { generatePrintDesign, PrintDesignError, type PrintTripRows } from '../lib/printDesign';
+import { generatePrintDesign, PrintDesignError } from '../lib/printDesign';
 import { fetchTripSnapshot } from '../lib/printSnapshot';
 
 const router = Router();
@@ -193,36 +193,13 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
       });
     }
 
-    // Every item on the trip, fetched server-side so the payload is truthful.
-    // No money columns: the model writes keepsake copy, never prices.
-    const [
-      { data: trip, error: tripErr },
-      { data: days },
-      { data: activities },
-      { data: stays },
-      { data: transportation },
-      { data: reservations },
-    ] = await Promise.all([
-      supabase.from('trips').select('destination, arrival_date, departure_date, timezone').eq('trip_id', tripId).single(),
-      supabase.from('trip_days').select('day_id, date, title, description').eq('trip_id', tripId).order('date'),
-      supabase.from('day_activities').select('day_id, title, description, start_time, end_time').eq('trip_id', tripId),
-      supabase.from('accommodations').select('hotel, hotel_address, hotel_checkin_date, hotel_checkout_date').eq('trip_id', tripId),
-      supabase.from('transportation').select('type, provider, departure_location, arrival_location, start_date, start_time').eq('trip_id', tripId),
-      supabase.from('reservations').select('restaurant_name, reservation_time, notes').eq('trip_id', tripId),
-    ]);
-
-    if (tripErr || !trip) {
+    // Every row on the trip, read server-side so the payload is truthful: the
+    // same reads a finalized edition snapshots, projected the way the page
+    // prints them. buildTripPayload drops every cost before the model sees it.
+    const rows = await fetchTripSnapshot(supabase, tripId);
+    if (!rows) {
       return res.status(404).json({ code: 'NOT_FOUND', message: 'Trip not found' });
     }
-
-    const rows: PrintTripRows = {
-      trip: trip as Record<string, unknown>,
-      days: (days ?? []) as Record<string, unknown>[],
-      activities: (activities ?? []) as Record<string, unknown>[],
-      stays: (stays ?? []) as Record<string, unknown>[],
-      transportation: (transportation ?? []) as Record<string, unknown>[],
-      reservations: (reservations ?? []) as Record<string, unknown>[],
-    };
 
     const { design, model } = await generatePrintDesign(OPENAI_API_KEY, rows, themePrompt);
 

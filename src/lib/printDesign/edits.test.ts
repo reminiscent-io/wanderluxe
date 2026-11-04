@@ -7,6 +7,8 @@ import {
   originalCopy,
   EDITABLE_FIELDS,
   DAY_CAPTION_MAX,
+  DAY_HEADLINE_MAX,
+  fieldForKey,
 } from './edits';
 import { sanitizePrintDesign } from './spec';
 import type { PrintDesignSpec } from './spec';
@@ -216,5 +218,51 @@ describe('field registry', () => {
   it('has a unique key per field', () => {
     const keys = EDITABLE_FIELDS.map((f) => f.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('day headlines', () => {
+  const dates = ['2026-12-18', '2026-12-19'];
+  const design = {
+    ...sanitizePrintDesign({}, dates),
+    dayHeadlines: { '2026-12-18': 'Lights at Sayville Falls' },
+  };
+
+  it('are editable per day, held to real dates and their own limit', () => {
+    const clean = sanitizeCopyOverrides(
+      {
+        'headline.2026-12-18': '  Lights,   then dinner  ',
+        'headline.2027-01-01': 'Not a trip day',
+        'headline.2026-12-19': 'x'.repeat(200),
+      },
+      dates
+    );
+    expect(clean['headline.2026-12-18']).toBe('Lights, then dinner');
+    expect('headline.2027-01-01' in clean).toBe(false);
+    expect(clean['headline.2026-12-19'].length).toBe(DAY_HEADLINE_MAX);
+  });
+
+  it('layer over the model’s headline and revert by deletion', () => {
+    const applied = applyCopyOverrides(design, { 'headline.2026-12-18': 'Our lights night', 'headline.2026-12-19': 'Park day' });
+    expect(applied.dayHeadlines).toEqual({ '2026-12-18': 'Our lights night', '2026-12-19': 'Park day' });
+    // Blank is kept as '' so it beats the traveler's own day title too.
+    const blanked = applyCopyOverrides(design, { 'headline.2026-12-18': '' });
+    expect(blanked.dayHeadlines).toEqual({ '2026-12-18': '' });
+    expect(originalCopy(design, 'headline.2026-12-18')).toBe('Lights at Sayville Falls');
+    expect(originalCopy(design, 'headline.2026-12-19')).toBe('');
+  });
+
+  it('count as edits only when they differ', () => {
+    expect(countCopyEdits(design, { 'headline.2026-12-18': 'Lights at Sayville Falls' })).toBe(0);
+    expect(countCopyEdits(design, { 'headline.2026-12-18': 'Something else' })).toBe(1);
+  });
+
+  it('describe themselves to the editor', () => {
+    expect(fieldForKey('headline.2026-12-18')).toMatchObject({ label: 'Day headline', max: DAY_HEADLINE_MAX, required: false });
+  });
+
+  it('leave an edition without headlines without them', () => {
+    const plain = sanitizePrintDesign({}, dates);
+    expect('dayHeadlines' in applyCopyOverrides(plain, { closing: 'Bye.' })).toBe(false);
   });
 });

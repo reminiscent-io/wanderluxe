@@ -1,50 +1,43 @@
-// Print Studio document renderer — pure presentation.
+// Print Studio document — an edition as a stack of Letter pages.
 //
-// Takes the AI design spec + the same trip data module the PDF export uses,
-// and renders the keepsake document. Every itinerary item comes from the
-// database via fetchPdfTripData, so the document is complete regardless of
-// what the model wrote; the spec only styles and captions it.
+// Takes the design spec and the trip (src/lib/printDesign/trip.ts), plans the
+// pages (src/lib/printDesign/plan.ts), draws them (./pages.tsx), and then
+// checks them: after every render it measures each page for overflow
+// (./fit.ts) and, when something ran off the paper, replans with that remedy.
+// The loop only ever adds constraints, so it settles in a few passes, before
+// the browser paints.
+//
+// Every itinerary item comes from the trip, so the document is complete
+// regardless of what the model wrote; the design only styles and captions it.
 
-import React from 'react';
-import { BedDouble, Compass, UtensilsCrossed, Plane } from 'lucide-react';
-import { fmtDate, fmtMoney } from '@/services/pdf/format';
-import type { PdfTripData, Item } from '@/services/pdf/types';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { getFontPairing, resolveFills, type PrintDesignSpec } from '@/lib/printDesign/spec';
+import { planEdition, type EditionPlan } from '@/lib/printDesign/plan';
+import type { PrintTrip } from '@/lib/printDesign/trip';
+import { artPaletteOf } from './artInks';
+import { measureOverflow } from './fit';
 import {
-  getFontPairing,
-  resolveFills,
-  themeNameEndsInEdition,
-  type PrintDesignSpec,
-} from '@/lib/printDesign/spec';
-import { MotifBand, MotifMark } from './motifs';
-import { hasLedgerData } from './ledger';
+  BackPage,
+  ChapterPage,
+  CoverPage,
+  DayPage,
+  DetailsPage,
+  LedgerPage,
+  OverviewPage,
+  PairPage,
+  type CopyRenderer,
+  type PageEnv,
+} from './pages';
 import './printDocument.css';
 
-const ITEM_ICONS: Record<Item['type'], React.ComponentType<{ className?: string }>> = {
-  accommodation: BedDouble,
-  transportation: Plane,
-  activity: Compass,
-  dining: UtensilsCrossed,
-};
+export type { CopyRenderer } from './pages';
 
-// The icon ring is the only thing that says what kind of item this is, so the
-// same distinction has to reach a screen reader as words.
-const ITEM_TYPE_LABELS: Record<Item['type'], string> = {
-  accommodation: 'Stay',
-  transportation: 'Journey',
-  activity: 'Activity',
-  dining: 'Reservation',
-};
-
-/**
- * Wraps one editable copy slot. Defaults to plain text, so the printed path
- * and the read-only path stay exactly what they were — editing is something
- * the page opts into, not something the document knows about.
- */
-export type CopyRenderer = (key: string, value: string) => React.ReactNode;
+/** A safety stop for the fit loop; real editions settle in a handful of passes. */
+const MAX_FIT_TOKENS = 240;
 
 interface PrintDocumentProps {
   design: PrintDesignSpec;
-  data: PdfTripData;
+  trip: PrintTrip;
   renderCopy?: CopyRenderer;
   /**
    * Reveal optional slots that are currently empty. Without this an edition
@@ -52,42 +45,92 @@ interface PrintDocumentProps {
    */
   isEditing?: boolean;
   /**
-   * Draw the Ledger (spend by category, against the trip budget). Off unless
+   * Add the Ledger (spend by category, against the trip budget). Off unless
    * the traveler opts in, so money never reaches a keepsake by default.
    */
   showBudget?: boolean;
+  /**
+   * Changing this re-runs pagination from the estimates: the fonts landing, an
+   * edit saved. Between changes the fit only ever adds page breaks, so typing
+   * in place never reshuffles pages that already fit.
+   */
+  layoutKey?: string;
+  /** Called with the plan once every page fits (or the fit loop has done all it can). */
+  onSettled?: (plan: EditionPlan) => void;
+  /** Draw one page only, for a thumbnail: the cover, or the first page of days. */
+  select?: 'all' | 'cover' | 'first-day';
 }
 
-const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h2 className="pd-section-label">
-    <span>{children}</span>
-  </h2>
-);
-
-const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy, isEditing, showBudget = false }) => {
+const PrintDocument: React.FC<PrintDocumentProps> = ({
+  design,
+  trip,
+  renderCopy,
+  isEditing = false,
+  showBudget = false,
+  layoutKey = '',
+  onSettled,
+  select = 'all',
+}) => {
   const copy: CopyRenderer = renderCopy ?? ((_key, value) => value);
   const pairing = getFontPairing(design.fontPairing);
   const { palette } = design;
-
   const layout = design.layout ?? 'editorial';
-
-  // Solid shape colours for the bold layout. Editions stored without fills
-  // borrow primary, accent and secondary. Four slots, cycling when there are
-  // fewer, so the stylesheet can always name --pd-fill-1 through -4.
   const fills = resolveFills(palette);
+  // Remedies belong to one version of the content: a refetch that shortens a
+  // day must not keep the page break the longer day needed.
+  const contentKey = useMemo(
+    () =>
+      trip.days
+        .map((d) => `${d.date}:${d.items.length}:${d.items.reduce((n, i) => n + i.title.length + (i.notes?.length ?? 0) + (i.place?.length ?? 0), 0)}`)
+        .join('|'),
+    [trip]
+  );
+  const fitKey = `${layoutKey}|${showBudget ? 'b' : ''}|${contentKey}`;
+
+  const [fit, setFit] = useState<{ key: string; tokens: string[]; settled: boolean }>({
+    key: fitKey,
+    tokens: [],
+    settled: false,
+  });
+  const tokens = useMemo(() => (fit.key === fitKey ? fit.tokens : []), [fit, fitKey]);
+  const settled = fit.key === fitKey && fit.settled;
+
+  const plan = useMemo(
+    () => planEdition(trip, design, { showBudget, feedback: tokens }),
+    [trip, design, showBudget, tokens]
+  );
+
+  const rootRef = useRef<HTMLElement>(null);
+
+  // Measure after every render, before paint: any render can change a page's
+  // height (fonts, an edit, new trip data), so this deliberately has no
+  // dependency list. It cannot loop: it only sets state when it finds a new
+  // remedy or first settles, and tokens only ever grow (capped above).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const fresh = measureOverflow(root).filter((t) => !tokens.includes(t));
+    if (fresh.length > 0 && tokens.length < MAX_FIT_TOKENS) {
+      setFit({ key: fitKey, tokens: [...tokens, ...fresh], settled: false });
+    } else if (!settled) {
+      setFit({ key: fitKey, tokens, settled: true });
+    }
+  });
+
+  useEffect(() => {
+    if (settled) onSettled?.(plan);
+    // onSettled is a callback prop; firing on its identity would loop a caller
+    // that passes an inline function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settled, plan]);
+
   const fillVars: Record<string, string> = {};
   for (let i = 0; i < 4; i++) {
     const fill = fills[i % fills.length];
     fillVars[`--pd-fill-${i + 1}`] = fill.color;
     fillVars[`--pd-on-fill-${i + 1}`] = fill.text;
   }
-
-  // Each day takes the next fill, so the day badges and icon discs step
-  // through the palette down the page.
-  const dayFillVars = (index: number) => {
-    const fill = fills[index % fills.length];
-    return { '--pd-day-fill': fill.color, '--pd-day-on-fill': fill.text } as React.CSSProperties;
-  };
 
   const styleVars = {
     '--pd-primary': palette.primary,
@@ -102,229 +145,57 @@ const PrintDocument: React.FC<PrintDocumentProps> = ({ design, data, renderCopy,
     ...fillVars,
   } as React.CSSProperties;
 
-  const diningCount = data.days.reduce((n, d) => n + d.items.filter((i) => i.type === 'dining').length, 0);
-  const activityCount = data.days.reduce((n, d) => n + d.items.filter((i) => i.type === 'activity').length, 0);
+  const env: PageEnv = {
+    design,
+    trip,
+    plan,
+    copy,
+    isEditing,
+    layout,
+    art: artPaletteOf(palette),
+    motif: design.motif,
+    seed: `${design.themeName}|${design.motif}|${trip.startDate ?? ''}`,
+    fills,
+  };
 
-  const facts: Array<{ label: string; value: string }> = [
-    { label: 'Days', value: String(data.days.length) },
-    ...(data.stays.length ? [{ label: data.stays.length === 1 ? 'Stay' : 'Stays', value: String(data.stays.length) }] : []),
-    ...(activityCount ? [{ label: 'Activities', value: String(activityCount) }] : []),
-    ...(diningCount ? [{ label: 'Reservations', value: String(diningCount) }] : []),
-    ...(data.transports.length ? [{ label: 'Journeys', value: String(data.transports.length) }] : []),
-  ];
-
-  const hasParticulars = data.stays.length > 0 || data.transports.length > 0 || data.diningRefs.length > 0;
-  const hasLedger = showBudget && hasLedgerData(data);
+  const firstDay = plan.pages.findIndex((p) => p.kind === 'day' || p.kind === 'pair');
+  const shown =
+    select === 'cover' ? [0] : select === 'first-day' ? [firstDay >= 0 ? firstDay : 0] : plan.pages.map((_, i) => i);
 
   return (
-    <article className="print-doc" data-layout={layout} style={styleVars} lang="en">
-      <div className="pd-page">
-        {/* ------------------------------------------------ cover */}
-        <header className="pd-cover">
-          <MotifBand motif={design.motif} height={16} className="pd-cover-band" />
-          <div className="pd-cover-panel">
-            <p className="pd-eyebrow">WanderLuxe · Print Studio Edition</p>
-            <h1 className="pd-cover-title">{copy('cover.title', design.cover.title)}</h1>
-            {(design.cover.tagline || isEditing) && (
-              <p className="pd-cover-tagline">{copy('cover.tagline', design.cover.tagline)}</p>
-            )}
-            {(design.cover.subtitle || isEditing) && (
-              <div className="pd-cover-route">
-                <span>{copy('cover.subtitle', design.cover.subtitle)}</span>
-              </div>
-            )}
-            {data.dateRange && <p className="pd-cover-dates">{data.dateRange}</p>}
-          </div>
-          {data.coverImageDataUri && (
-            <figure className="pd-cover-photo">
-              <img
-                src={data.coverImageDataUri}
-                alt={data.destination ? `Photograph of ${data.destination}` : ''}
-              />
-            </figure>
-          )}
-          <div className="pd-cover-foot">
-            <div className="pd-theme-plate">
-              <strong>
-                The {copy('themeName', design.themeName)}
-                {themeNameEndsInEdition(design.themeName) ? null : ' Edition'}
-              </strong>
-              {(design.themeRationale || isEditing) && (
-                <em>{copy('themeRationale', design.themeRationale)}</em>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* ------------------------------------------------ intro */}
-        {(design.intro || isEditing) && (
-          <section className="pd-section pd-intro">
-            <SectionLabel>Welcome</SectionLabel>
-            <p>{copy('intro', design.intro)}</p>
-            {facts.length > 1 && (
-              <dl className="pd-facts">
-                {facts.map((f) => (
-                  <div className="pd-fact" key={f.label}>
-                    <dt>{f.label}</dt>
-                    <dd>{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </section>
-        )}
-
-        {/* ------------------------------------------------ days */}
-        <section className="pd-section">
-          <SectionLabel>The Itinerary</SectionLabel>
-          {data.days.map((day, i) => {
-            const caption = design.dayCaptions[day.date];
-            return (
-              <section className="pd-day" key={day.date} style={dayFillVars(i)}>
-                <header className="pd-day-head">
-                  <span className="pd-day-num">{String(i + 1).padStart(2, '0')}</span>
-                  <div>
-                    <p className="pd-day-date">{fmtDate(day.date, 'EEEE · MMMM d')}</p>
-                    {day.title && <p className="pd-day-title">{day.title}</p>}
-                  </div>
-                  {(caption || isEditing) && (
-                    <p className="pd-day-caption">{copy(`day.${day.date}`, caption ?? '')}</p>
-                  )}
-                </header>
-                {day.description && <p className="pd-day-desc">{day.description}</p>}
-                {day.items.length > 0 ? (
-                  <div className="pd-items">
-                    {day.items.map((item, j) => {
-                      const Icon = ITEM_ICONS[item.type];
-                      return (
-                        <div className="pd-item" key={`${day.date}-${j}`}>
-                          <span className="pd-item-icon">
-                            <span className="pd-sr-only">{ITEM_TYPE_LABELS[item.type]}</span>
-                            <Icon aria-hidden />
-                          </span>
-                          <span className="pd-item-time">{item.time}</span>
-                          <div className="pd-item-body">
-                            {/* No price on an item, ever. The opt-in Ledger is the one place money appears. */}
-                            <p className="pd-item-title">{item.title}</p>
-                            {item.details && <p className="pd-item-details">{item.details}</p>}
-                            {item.location && <p className="pd-item-location">{item.location}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="pd-day-empty">An open day — no plans yet, and that is the point.</p>
-                )}
-              </section>
-            );
-          })}
-        </section>
-
-        {/* ------------------------------------------------ particulars */}
-        {hasParticulars && (
-          <section className="pd-section pd-break-before">
-            <SectionLabel>The Particulars</SectionLabel>
-
-            {data.stays.length > 0 && (
-              <table className="pd-table">
-                <caption className="pd-sr-only">Where you are staying</caption>
-                <thead>
-                  <tr>
-                    <th>Stay</th>
-                    <th>Dates</th>
-                    <th>Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.stays.map((s, i) => (
-                    <tr key={`${s.hotel}-${i}`}>
-                      <td>{s.hotel}{s.phone ? <div className="pd-cell-muted">{s.phone}</div> : null}</td>
-                      <td className="pd-cell-num">{s.checkIn} – {s.checkOut}</td>
-                      <td className="pd-cell-muted">{s.address || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            {data.transports.length > 0 && (
-              <table className="pd-table">
-                <caption className="pd-sr-only">Flights and other journeys</caption>
-                <thead>
-                  <tr>
-                    <th>Journey</th>
-                    <th>Date</th>
-                    <th>Confirmation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.transports.map((t, i) => (
-                    <tr key={`${t.from}-${t.to}-${i}`}>
-                      <td>{t.type}: {t.from} → {t.to}</td>
-                      <td className="pd-cell-num">{t.date}</td>
-                      <td>{t.confirmationNumber ? <span className="pd-confirmation">{t.confirmationNumber}</span> : <span className="pd-cell-muted">—</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            {data.diningRefs.length > 0 && (
-              <table className="pd-table">
-                <caption className="pd-sr-only">Dining reservations</caption>
-                <thead>
-                  <tr>
-                    <th>Reservation</th>
-                    <th>Confirmation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.diningRefs.map((r, i) => (
-                    <tr key={`${r.restaurant}-${i}`}>
-                      <td>{r.restaurant}</td>
-                      <td>{r.confirmationNumber ? <span className="pd-confirmation">{r.confirmationNumber}</span> : <span className="pd-cell-muted">—</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        )}
-
-        {/* ------------------------------------------------ ledger */}
-        {hasLedger && (
-          <section className="pd-section">
-            <SectionLabel>The Ledger</SectionLabel>
-            {data.budgetData.categories.map((c) => (
-              <div className="pd-ledger-row" key={c.category}>
-                <span>{c.category}</span>
-                <span className="pd-leader" />
-                <span className="pd-ledger-amount">{fmtMoney(c.amount)}</span>
-              </div>
-            ))}
-            <div className="pd-ledger-row pd-ledger-total">
-              <span>Planned spend</span>
-              <span className="pd-leader" />
-              <span className="pd-ledger-amount">{fmtMoney(data.budgetData.total)}</span>
-            </div>
-            {data.budgetData.budget != null && (
-              <p className="pd-ledger-note">
-                Against a trip budget of {fmtMoney(data.budgetData.budget)}.
-              </p>
-            )}
-          </section>
-        )}
-
-        {/* ------------------------------------------------ closing */}
-        <footer className="pd-closing">
-          <div className="pd-closing-mark">
-            <MotifMark motif={design.motif} size={44} />
-          </div>
-          <p className="pd-closing-line">{copy('closing', design.closing)}</p>
-          <p className="pd-credit">Made with WanderLuxe · wanderluxe.io</p>
-        </footer>
-      </div>
+    <article
+      ref={rootRef}
+      className="print-doc"
+      data-layout={layout}
+      data-pages={plan.pages.length}
+      data-settled={settled || undefined}
+      style={styleVars}
+      lang="en"
+    >
+      {shown.map((i) => {
+        const page = plan.pages[i];
+        const number = i + 1;
+        switch (page.kind) {
+          case 'cover':
+            return <CoverPage key="cover" env={env} number={number} />;
+          case 'overview':
+            return <OverviewPage key={`overview-${page.part}`} env={env} page={page} number={number} />;
+          case 'chapter':
+            return <ChapterPage key={`chapter-${page.leg}`} env={env} leg={page.leg} number={number} />;
+          case 'day':
+            return <DayPage key={`day-${page.day}-${page.part}`} env={env} page={page} number={number} />;
+          case 'pair':
+            return <PairPage key={`pair-${page.days[0]}`} env={env} page={page} number={number} />;
+          case 'details':
+            return <DetailsPage key={`details-${page.part}`} env={env} page={page} number={number} />;
+          case 'ledger':
+            return <LedgerPage key="ledger" env={env} number={number} />;
+          case 'back':
+            return <BackPage key="back" env={env} number={number} />;
+          default:
+            return null;
+        }
+      })}
     </article>
   );
 };

@@ -1,47 +1,43 @@
-/* Print Studio document — editorial and bold keepsake layouts.
+/* Print Studio document — Letter pages, portrait.
  *
- * All colors and families arrive as CSS custom properties set inline by
- * PrintDocument from the AI design spec:
+ * Every page is a fixed 8.5in × 11in sheet: 816 × 1056 CSS px at 96 per inch,
+ * the same box on screen and on paper, so what the traveler sees is what
+ * prints. The edition page injects @page { size: 8.5in 11in; margin: 0 } while
+ * it is open, so each sheet fills one sheet of paper exactly.
+ *
+ * Colours and families arrive as custom properties set inline by
+ * PrintDocument from the design spec:
  *   --pd-primary --pd-secondary --pd-bg --pd-surface --pd-ink --pd-muted
  *   --pd-accent --pd-display --pd-body
  *   --pd-fill-1..4 and --pd-on-fill-1..4 (solid shapes, and the text on them)
- *   --pd-day-fill and --pd-day-on-fill (set on each day, cycling the fills)
+ * and per day: --pd-day-fill, --pd-day-on-fill, and --pd-day-ink (the day's
+ * colour as type on the paper, chosen to clear 3:1 at display size).
  *
- * The editorial layout carries structure in typography and hairline rules.
- * The bold layout ([data-layout='bold'], at the end of this file) moves the
- * fills into panels, bands and badges. Both print their colour: .print-doc
- * sets print-color-adjust: exact.
+ * Legibility rules this file keeps:
+ *  - Text on the paper uses the palette's text roles, which the sanitizer
+ *    holds to 4.5:1 against the paper. Text on a fill uses that fill's on-fill
+ *    colour, which it holds to 4.5:1 against the fill. No text uses a fill as
+ *    its colour, and no text sits on a tint.
+ *  - Nothing smaller than 11px, and body copy at 15px.
+ *  - Art never sits behind words: it takes corners, edges and the space a
+ *    page leaves empty.
  */
 
 .print-doc {
-  background: var(--pd-bg);
-  color: var(--pd-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
   font-family: var(--pd-body);
-  font-size: 14.5px;
-  line-height: 1.58;
+  color: var(--pd-ink);
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
-
-  /* One measure for every left-aligned text block, ~66 characters at this
-     size. Centered cover elements set their own narrower widths on purpose. */
-  --pd-measure: 33rem;
-
-  /* Itinerary content is user-supplied: booking URLs, long confirmation codes
-     and single-token addresses all turn up. Without this the document scrolls
-     sideways on a phone. */
+  /* Itinerary content is user-supplied: long codes and single-token addresses
+     turn up, and must wrap rather than run off the sheet. */
   overflow-wrap: break-word;
-}
-
-/* `anywhere` rather than `break-word` on the elements whose intrinsic width
-   sizes a track — grid columns and table columns only shrink for `anywhere`. */
-.pd-item-title,
-.pd-item-details,
-.pd-item-location,
-.pd-table th,
-.pd-table td,
-.pd-ledger-row > span:first-child {
-  overflow-wrap: anywhere;
 }
 
 .print-doc *,
@@ -50,16 +46,21 @@
   box-sizing: border-box;
 }
 
-.pd-page {
-  max-width: 46rem;
-  margin: 0 auto;
-  padding: 3.5rem 3rem;
+/* Zero specificity, so every class below can set its own spacing. */
+:where(.print-doc) :where(p, h1, h2, h3, ol, figure) {
+  margin: 0;
 }
 
-/* ---------- shared primitives ---------- */
+/* `anywhere`, not `break-word`, where an intrinsic width sizes a grid track. */
+.pd-item-title,
+.pd-item-place,
+.pd-item-notes,
+.pd-detail-name,
+.pd-detail-sub,
+.pd-glance-items {
+  overflow-wrap: anywhere;
+}
 
-/* Scoped rather than Tailwind's .sr-only so this stylesheet stays the single
-   source of truth for how the document renders. */
 .pd-sr-only {
   position: absolute;
   width: 1px;
@@ -72,398 +73,964 @@
   border: 0;
 }
 
-.pd-eyebrow {
-  font-family: var(--pd-body);
-  font-size: 10.5px;
+/* =========================================================================
+   The sheet
+   ========================================================================= */
+
+.pd-sheet {
+  position: relative;
+  flex: none;
+  width: 816px;
+  height: 1056px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 60px 64px 36px;
+  background: var(--pd-bg);
+  color: var(--pd-ink);
+  isolation: isolate;
+  box-shadow:
+    0 1px 2px rgb(40 28 18 / 0.08),
+    0 18px 40px -18px rgb(40 28 18 / 0.35);
+}
+
+/* A sheet painted with a fill: covers, chapters, a bold back page. */
+.pd-sheet--fill {
+  --pd-sheet-fill: var(--pd-fill-1);
+  --pd-sheet-on-fill: var(--pd-on-fill-1);
+  background: var(--pd-sheet-fill);
+}
+
+.pd-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+}
+
+.pd-corner {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pd-corner--tr {
+  top: 0;
+  right: 0;
+}
+
+.pd-corner--tl {
+  top: 0;
+  left: 0;
+}
+
+/* Holds the top of a paper cover open when its art sits in the corners. */
+.pd-cover-spacer {
+  flex: none;
+  height: 150px;
+}
+
+/* The running foot: the edition, where you are, which page. */
+.pd-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--pd-ink) 16%, transparent);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--pd-muted);
 }
 
-.pd-section-label {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin: 0 0 1.4rem;
-  break-after: avoid-page;
-}
-
-.pd-section-label::after {
-  content: '';
+.pd-foot-title {
   flex: 1;
-  border-top: 1px solid color-mix(in srgb, var(--pd-primary) 30%, transparent);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.pd-section-label span {
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--pd-primary);
+.pd-foot-label {
+  white-space: nowrap;
 }
 
-/* ---------- cover ---------- */
+.pd-foot-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--pd-ink);
+}
 
-.pd-cover {
-  display: flex;
-  flex-direction: column;
-  min-height: 88vh;
+.pd-sheet--fill .pd-foot {
+  color: var(--pd-sheet-on-fill);
+  border-top-color: color-mix(in srgb, var(--pd-sheet-on-fill) 40%, transparent);
+}
+
+.pd-sheet--fill .pd-foot-num {
+  color: var(--pd-sheet-on-fill);
+}
+
+/* A photograph in a mat, at its own proportions. Never cropped. */
+.pd-photo {
+  flex: none;
+  padding: 10px;
+  background: var(--pd-surface);
+  box-shadow:
+    0 1px 2px rgb(40 28 18 / 0.12),
+    0 14px 28px -14px rgb(40 28 18 / 0.45);
+}
+
+.pd-photo img {
+  display: block;
+  max-width: none;
+}
+
+/* =========================================================================
+   Cover
+   ========================================================================= */
+
+.pd-sheet--cover {
+  padding: 0;
+  align-items: center;
   text-align: center;
 }
 
-.pd-cover-band {
-  color: var(--pd-accent);
-  opacity: 0.85;
-  margin-bottom: 3.2rem;
+.pd-cover-frieze {
+  flex: none;
+  display: block;
+  width: 816px;
 }
 
-/* The cover's title block. Generates no box in the editorial layout, so the
-   cover's flex column is exactly what it was; the bold layout paints it. */
-.pd-cover-panel {
-  display: contents;
+.pd-cover-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.pd-cover-card {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 660px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* On a painted cover the type sits on a card of paper, never on the field. */
+.pd-sheet--fill .pd-cover-card {
+  flex: none;
+  width: 640px;
+  margin: auto 0;
+  padding: 54px 56px 50px;
+  background: var(--pd-bg);
+  border-radius: 6px;
+  box-shadow: 0 24px 48px -22px rgb(0 0 0 / 0.5);
+}
+
+.pd-cover-kicker {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+  font-variant-numeric: lining-nums;
 }
 
 .pd-cover-title {
+  margin-top: 18px;
   font-family: var(--pd-display);
   font-weight: 400;
-  font-size: clamp(2.6rem, 7vw, 3.9rem);
-  line-height: 1.06;
-  letter-spacing: -0.01em;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
   color: var(--pd-primary);
-  margin: 1.1rem auto 0;
-  max-width: 34rem;
   text-wrap: balance;
+  max-width: 100%;
+}
+
+.pd-cover-title--xl {
+  font-size: 88px;
+}
+
+.pd-cover-title--lg {
+  font-size: 70px;
+}
+
+.pd-cover-title--md {
+  font-size: 56px;
+}
+
+.pd-cover-title--sm {
+  font-size: 44px;
 }
 
 .pd-cover-tagline {
-  font-size: 1.05rem;
-  color: var(--pd-muted);
-  margin: 1.3rem auto 0;
-  max-width: 28rem;
+  margin-top: 18px;
+  max-width: 520px;
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--pd-ink);
   text-wrap: balance;
 }
 
 .pd-cover-route {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
-  margin: 2.6rem 0 0;
+  gap: 14px;
+  width: 100%;
+  margin-top: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
 }
 
 .pd-cover-route::before,
 .pd-cover-route::after {
   content: '';
   flex: 1;
-  border-top: 1px solid color-mix(in srgb, var(--pd-primary) 35%, transparent);
+  min-width: 24px;
+  border-top: 2px solid var(--pd-accent);
 }
 
 .pd-cover-route span {
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--pd-secondary);
-  max-width: 30rem;
+  max-width: 480px;
+  text-wrap: balance;
 }
 
-.pd-cover-dates {
-  margin-top: 1.1rem;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--pd-muted);
-  font-variant-numeric: tabular-nums;
+.pd-cover-intro {
+  margin-top: 22px;
+  max-width: 540px;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .pd-cover-photo {
-  margin: 2.8rem auto 0;
-  width: 100%;
-  max-width: 34rem;
-  border: 1px solid color-mix(in srgb, var(--pd-primary) 25%, transparent);
-  padding: 0.45rem;
-  background: var(--pd-surface);
+  margin-top: 30px;
+  transform: rotate(-1.4deg);
 }
 
-.pd-cover-photo img {
-  display: block;
-  width: 100%;
-  height: auto;
-  /* Paired with the print-only max-height below. On screen there is no page to
-     overflow, so the photo keeps its full height. */
-  object-fit: cover;
-}
-
-.pd-cover-foot {
-  margin-top: auto;
-  padding-top: 3rem;
-}
-
-.pd-theme-plate {
-  display: inline-block;
-  border-top: 1px solid color-mix(in srgb, var(--pd-accent) 60%, transparent);
-  padding-top: 0.9rem;
-}
-
-.pd-theme-plate strong {
-  display: block;
-  font-family: var(--pd-display);
-  font-weight: 400;
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
-  color: var(--pd-secondary);
-}
-
-.pd-theme-plate em {
-  display: block;
-  font-style: normal;
-  font-size: 12px;
-  color: var(--pd-muted);
-  margin-top: 0.35rem;
-  max-width: 26rem;
-}
-
-/* ---------- intro ---------- */
-
-.pd-intro p {
-  font-size: 1.02rem;
-  line-height: 1.75;
-  max-width: var(--pd-measure);
-  margin: 0;
-}
-
-.pd-intro p::first-letter {
-  font-family: var(--pd-display);
-  font-size: 2.6em;
-  line-height: 0.85;
-  float: left;
-  padding: 0.08em 0.12em 0 0;
-  color: var(--pd-primary);
-}
-
-.pd-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.1rem 2.6rem;
-  border-block: 1px solid color-mix(in srgb, var(--pd-primary) 28%, transparent);
-  padding: 1rem 0;
-  margin-top: 2.4rem;
-  break-inside: avoid;
-}
-
-.pd-fact {
-  min-width: 4.5rem;
-}
-
-.pd-fact dt {
-  font-size: 10.5px;
-  font-weight: 600;
+.pd-cover-credit {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--pd-bg);
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--pd-muted);
-  margin: 0 0 0.3rem;
+  white-space: nowrap;
 }
 
-.pd-fact dd {
-  margin: 0;
+/* =========================================================================
+   Page headers (overview, bookings, ledger)
+   ========================================================================= */
+
+.pd-pagehead {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+}
+
+.pd-pagehead-title {
+  margin-top: 10px;
   font-family: var(--pd-display);
   font-weight: 400;
-  font-size: 1.45rem;
+  font-size: 46px;
+  line-height: 1.04;
   color: var(--pd-primary);
-  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
 }
 
-/* ---------- days ---------- */
-
-.pd-day {
-  break-inside: auto;
-  margin-top: 3rem;
+.pd-pagehead-title--glance {
+  font-size: 42px;
 }
 
-.pd-day-head {
+.pd-pagehead-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--pd-muted);
+  font-variant-numeric: lining-nums;
+}
+
+.pd-intro {
+  position: relative;
+  z-index: 1;
+  margin-top: 22px;
+  max-width: 620px;
+  font-size: 17.5px;
+  line-height: 1.58;
+  text-wrap: pretty;
+}
+
+/* The region a page can run out of. Its blocks are what fit.ts measures. */
+.pd-flow {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Clip what runs off the bottom (fit.ts measures it), but let art bleed
+     sideways to the paper's edge. */
+  overflow-x: visible;
+  overflow-y: clip;
+  margin-top: 24px;
+}
+
+/* =========================================================================
+   The trip at a glance
+   ========================================================================= */
+
+.pd-glance {
+  list-style: none;
+  padding: 0;
+  flex: none;
+}
+
+.pd-glance-row {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1.1rem;
-  align-items: baseline;
-  break-inside: avoid;
-  break-after: avoid-page;
-  border-top: 2px solid var(--pd-primary);
-  padding-top: 0.9rem;
+  grid-template-columns: 46px 1fr auto;
+  gap: 18px;
+  align-items: start;
+  padding: 14px 0;
+  border-top: 1px solid color-mix(in srgb, var(--pd-ink) 14%, transparent);
 }
 
-.pd-day-num {
+.pd-glance-row:last-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--pd-ink) 14%, transparent);
+}
+
+.pd-glance-num {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
   font-family: var(--pd-display);
-  font-weight: 400;
-  font-size: 2.35rem;
+  font-size: 22px;
   line-height: 1;
-  color: var(--pd-primary);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums;
 }
 
-.pd-day-date {
+.pd-glance-date {
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--pd-secondary);
 }
 
-.pd-day-title {
-  font-family: var(--pd-display);
-  font-weight: 400;
-  font-size: 1.25rem;
-  color: var(--pd-ink);
-  margin-top: 0.15rem;
-}
-
-.pd-day-caption {
-  grid-column: 2;
-  font-family: var(--pd-display);
-  font-weight: 400;
-  font-size: 1.02rem;
-  line-height: 1.45;
+.pd-glance-place {
   color: var(--pd-muted);
-  margin-top: 0.5rem;
-  max-width: var(--pd-measure);
-  text-wrap: pretty;
 }
 
-.pd-items {
-  margin-top: 1.3rem;
-  display: grid;
-  gap: 1.05rem;
+.pd-glance-title {
+  margin-top: 3px;
+  font-family: var(--pd-display);
+  font-size: 23px;
+  line-height: 1.18;
+  color: var(--pd-ink);
 }
 
-.pd-item {
-  display: grid;
-  grid-template-columns: 1.6rem 5.2rem 1fr;
-  gap: 0.85rem;
-  break-inside: avoid;
+.pd-glance-items {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--pd-muted);
 }
 
-.pd-item-icon {
-  width: 1.6rem;
-  height: 1.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--pd-accent) 70%, transparent);
-  border-radius: 999px;
-  color: var(--pd-accent);
-  margin-top: 0.1rem;
+/* With the bookings on the page, each day keeps to one line of summary; the
+   day's own page has the rest. */
+.pd-glance--compact .pd-glance-row {
+  padding: 10px 0;
 }
 
-.pd-item-icon svg {
-  width: 0.8rem;
-  height: 0.8rem;
+.pd-glance--compact .pd-glance-title {
+  font-size: 21px;
 }
 
-.pd-item-time {
-  font-size: 12px;
+.pd-glance-bookings .pd-detail-row {
+  padding: 8px 0;
+}
+
+.pd-glance--compact .pd-glance-items {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pd-glance-page {
+  padding-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--pd-muted);
-  padding-top: 0.28rem;
-  letter-spacing: 0.02em;
 }
 
-.pd-item-body {
-  min-width: 0;
+.pd-glance-bookings {
+  flex: none;
+  margin-top: 22px;
+  padding: 14px 20px 4px;
+  border: 2px solid var(--pd-fill-2);
+  border-radius: 10px;
 }
 
-.pd-item-title {
-  font-weight: 600;
-  font-size: 14.5px;
-  color: var(--pd-ink);
-  /* Same measure as the details and location lines, so the item block keeps
-     one right edge. */
-  max-width: var(--pd-measure);
-}
-
-.pd-item-details {
-  font-size: 13px;
-  color: var(--pd-muted);
-  margin-top: 0.2rem;
-  max-width: var(--pd-measure);
-}
-
-.pd-item-location {
+.pd-glance-bookings-title {
   font-size: 12px;
-  color: var(--pd-muted);
-  margin-top: 0.15rem;
-}
-
-.pd-day-empty {
-  margin-top: 1.2rem;
-  font-size: 13px;
-  color: var(--pd-muted);
-}
-
-.pd-day-desc {
-  margin: 1.1rem 0 0;
-  font-size: 13.5px;
-  color: var(--pd-ink);
-  max-width: var(--pd-measure);
-}
-
-/* ---------- particulars & ledger ---------- */
-
-.pd-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-/* Stacked tables in The Particulars — replaces per-table inline margins. */
-.pd-table + .pd-table {
-  margin-top: 2rem;
-}
-
-.pd-table th {
-  text-align: left;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--pd-muted);
-  border-bottom: 1px solid color-mix(in srgb, var(--pd-primary) 35%, transparent);
-  padding: 0 0.6rem 0.45rem 0;
+  color: var(--pd-secondary);
+  margin-bottom: 4px;
 }
 
-.pd-table td {
-  vertical-align: top;
-  border-bottom: 1px solid color-mix(in srgb, var(--pd-ink) 12%, transparent);
-  padding: 0.55rem 0.6rem 0.55rem 0;
+/* =========================================================================
+   Bookings rows (overview box and the bookings page)
+   ========================================================================= */
+
+.pd-details {
+  flex: none;
+}
+
+.pd-detail-section {
+  margin: 20px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pd-primary);
+}
+
+.pd-detail:first-child .pd-detail-section {
+  margin-top: 4px;
+}
+
+.pd-glance-bookings .pd-detail-section {
+  margin: 12px 0 2px;
+  font-size: 11px;
+  color: var(--pd-muted);
+}
+
+.pd-detail-row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 16px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid color-mix(in srgb, var(--pd-ink) 12%, transparent);
+}
+
+.pd-detail-section + .pd-detail-row {
+  border-top: 0;
+}
+
+.pd-detail-when {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--pd-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-detail-time {
+  font-weight: 600;
   color: var(--pd-ink);
 }
 
-.pd-table td.pd-cell-muted {
-  color: var(--pd-muted);
-  font-size: 12.5px;
+.pd-detail-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
-.pd-table td.pd-cell-num {
+.pd-detail-sub {
+  margin-top: 2px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--pd-muted);
+}
+
+.pd-detail-code {
+  text-align: right;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--pd-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.pd-confirmation {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-  color: var(--pd-secondary);
+.pd-detail-code span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
+}
+
+/* =========================================================================
+   Chapter
+   ========================================================================= */
+
+.pd-sheet--chapter {
+  align-items: center;
+  text-align: center;
+}
+
+.pd-chapter-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.pd-chapter-card {
+  position: relative;
+  z-index: 1;
+  margin: auto 0;
+  width: 600px;
+  padding: 50px 48px 46px;
+  background: var(--pd-bg);
+  border-radius: 6px;
+  box-shadow: 0 24px 48px -22px rgb(0 0 0 / 0.5);
+}
+
+.pd-chapter-place {
+  margin-top: 14px;
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 76px;
+  line-height: 1;
+  color: var(--pd-primary);
+  text-wrap: balance;
+}
+
+.pd-chapter-dates {
+  margin-top: 18px;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--pd-muted);
+}
+
+/* =========================================================================
+   Days
+   ========================================================================= */
+
+/* The header region. On a banded page (bold layout, feature days) it is a
+   block of the day's fill, edge to edge. */
+.pd-band {
+  position: relative;
+  flex: none;
+  margin: -60px -64px 0;
+  padding: 58px 64px 6px;
+}
+
+.pd-sheet--band .pd-band {
+  padding-bottom: 34px;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
+}
+
+.pd-sheet--feature .pd-band {
+  min-height: 380px;
+  padding-top: 72px;
+}
+
+.pd-dayhead {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 26px;
+  align-items: start;
+  max-width: 580px;
+}
+
+.pd-dayhead-num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  color: var(--pd-day-ink);
+}
+
+.pd-dayhead-kicker {
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  padding-left: 0.32em;
+}
+
+.pd-dayhead-numeral {
+  font-family: var(--pd-display);
+  font-size: 112px;
+  line-height: 0.9;
+  font-variant-numeric: lining-nums;
+}
+
+.pd-dayhead-text {
+  padding-top: 8px;
+  min-width: 0;
+}
+
+.pd-dayhead-date {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+}
+
+.pd-dayhead-of {
+  font-weight: 600;
+  color: var(--pd-muted);
+}
+
+.pd-dayhead-banner {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 12px 3px;
+  border-radius: 999px;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pd-dayhead-title {
+  margin-top: 10px;
+  font-family: var(--pd-display);
+  font-weight: 400;
+  font-size: 42px;
+  line-height: 1.06;
+  color: var(--pd-ink);
+  text-wrap: balance;
+}
+
+.pd-dayhead-caption {
+  margin-top: 10px;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--pd-muted);
+  text-wrap: pretty;
+}
+
+.pd-dayhead-stay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pd-secondary);
+}
+
+.pd-dayhead-stay svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Every word in a band takes the band's on-fill colour. */
+.pd-sheet--band .pd-dayhead-num,
+.pd-sheet--band .pd-dayhead-date,
+.pd-sheet--band .pd-dayhead-of,
+.pd-sheet--band .pd-dayhead-title,
+.pd-sheet--band .pd-dayhead-caption,
+.pd-sheet--band .pd-dayhead-stay {
+  color: var(--pd-day-on-fill);
+}
+
+.pd-sheet--band .pd-dayhead-banner {
+  background: var(--pd-bg);
+  color: var(--pd-ink);
+}
+
+.pd-sheet--feature .pd-dayhead-numeral {
+  font-size: 150px;
+}
+
+.pd-sheet--feature .pd-dayhead-title {
+  font-size: 50px;
+}
+
+.pd-day-photo {
+  align-self: flex-start;
+  margin-top: 22px;
+  transform: rotate(-0.8deg);
+}
+
+.pd-day-desc {
+  flex: none;
+  margin-top: 18px;
+  max-width: 620px;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.pd-day-open {
+  flex: none;
+  padding: 18px 0 0 122px;
+  font-size: 16px;
+  color: var(--pd-muted);
+}
+
+/* The schedule: time, a node on a rail, and the item. */
+.pd-items {
+  position: relative;
+  flex: none;
+  list-style: none;
+  padding: 0;
+}
+
+.pd-items::before {
+  content: '';
+  position: absolute;
+  left: 139px;
+  top: 20px;
+  bottom: 36px;
+  width: 2px;
+  background: color-mix(in srgb, var(--pd-day-fill) 55%, transparent);
+}
+
+.pd-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 108px 36px 1fr;
+  column-gap: 14px;
+  padding-bottom: 20px;
+}
+
+.pd-item-when {
+  padding-top: 7px;
+  text-align: right;
+}
+
+.pd-item-time {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pd-ink);
+  white-space: nowrap;
+}
+
+.pd-item-end {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--pd-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pd-item-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--pd-day-fill);
+  color: var(--pd-day-on-fill);
+  box-shadow: 0 0 0 4px var(--pd-bg);
+}
+
+.pd-item-node svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pd-item-body {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.pd-item-label {
+  margin-bottom: 1px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pd-secondary);
+}
+
+.pd-item-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--pd-ink);
+}
+
+.pd-item-place {
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--pd-muted);
+}
+
+.pd-item-notes {
+  margin-top: 6px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--pd-ink);
+  white-space: pre-line;
+}
+
+.pd-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pd-item-fact {
+  font-weight: 700;
+  color: var(--pd-secondary);
+}
+
+.pd-item-link {
+  font-weight: 700;
+  color: var(--pd-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* A day that ran a little long, closed up before it is split over two pages. */
+.pd-sheet--tight .pd-flow {
+  margin-top: 16px;
+}
+
+.pd-sheet--tight .pd-item {
+  padding-bottom: 12px;
+}
+
+.pd-sheet--tight .pd-item-notes {
+  margin-top: 4px;
+  line-height: 1.42;
+}
+
+.pd-sheet--tight .pd-item-meta {
+  margin-top: 5px;
+}
+
+/* Art in whatever height a page leaves under its last item. A container
+   query hides it when the gap is too small to hold a picture. */
+.pd-artfill {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 0 -64px;
+}
+
+.pd-artfill-art {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+}
+
+/* Two days on one sheet. */
+.pd-sheet--pair .pd-flow {
+  margin-top: 0;
+}
+
+.pd-pair-day {
+  flex: none;
+}
+
+.pd-dayhead--pair {
+  gap: 20px;
+}
+
+.pd-dayhead--pair .pd-dayhead-num {
+  min-width: 70px;
+}
+
+.pd-dayhead--pair .pd-dayhead-numeral {
+  font-size: 76px;
+}
+
+.pd-dayhead--pair .pd-dayhead-text {
+  padding-top: 4px;
+}
+
+.pd-dayhead--pair .pd-dayhead-title {
+  font-size: 30px;
+}
+
+.pd-dayhead--pair .pd-dayhead-caption {
+  font-size: 15px;
+}
+
+.pd-pair-day .pd-items {
+  margin-top: 20px;
+}
+
+.pd-pair-divider {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 22px;
+}
+
+.pd-pair-divider::before,
+.pd-pair-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1.5px dashed color-mix(in srgb, var(--pd-ink) 30%, transparent);
+}
+
+/* =========================================================================
+   Ledger
+   ========================================================================= */
+
+.pd-ledger {
+  margin-top: 34px;
+  max-width: 560px;
 }
 
 .pd-ledger-row {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.42rem 0;
+  gap: 10px;
+  padding: 9px 0;
+  font-size: 16px;
 }
 
-.pd-ledger-row .pd-leader {
+.pd-leader {
   flex: 1;
-  border-bottom: 1px dotted color-mix(in srgb, var(--pd-ink) 35%, transparent);
-  transform: translateY(-0.28em);
+  border-bottom: 1.5px dotted color-mix(in srgb, var(--pd-ink) 40%, transparent);
+  transform: translateY(-0.3em);
 }
 
 .pd-ledger-amount {
@@ -471,222 +1038,107 @@
 }
 
 .pd-ledger-total {
-  border-top: 1px solid var(--pd-primary);
-  margin-top: 0.5rem;
-  padding-top: 0.6rem;
-  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 2px solid var(--pd-primary);
+  font-weight: 700;
 }
 
 .pd-ledger-note {
-  margin-top: 0.8rem;
-  font-size: 12.5px;
+  margin-top: 12px;
+  font-size: 14px;
   color: var(--pd-muted);
 }
 
-/* ---------- closing ---------- */
+/* =========================================================================
+   Back page
+   ========================================================================= */
 
-.pd-closing {
-  text-align: center;
-  margin-top: 5.5rem;
-  break-inside: avoid;
-}
-
-.pd-closing-mark {
-  color: var(--pd-accent);
-  display: flex;
+.pd-sheet--back {
+  padding: 0;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 1.1rem;
+  text-align: center;
 }
 
-.pd-closing-line {
+.pd-sheet--back .pd-cover-frieze--bottom {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.pd-back-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin-bottom: 120px;
+  padding: 0 40px;
+}
+
+.pd-sheet--fill .pd-back-card {
+  margin-bottom: 0;
+  padding: 50px 56px 46px;
+  background: var(--pd-bg);
+  border-radius: 6px;
+  box-shadow: 0 24px 48px -22px rgb(0 0 0 / 0.5);
+}
+
+.pd-back-line {
+  margin-top: 20px;
   font-family: var(--pd-display);
   font-weight: 400;
-  font-size: 1.3rem;
+  font-size: 46px;
+  line-height: 1.1;
   color: var(--pd-primary);
   text-wrap: balance;
-  max-width: 28rem;
-  margin: 0 auto;
 }
 
-.pd-credit {
-  margin-top: 1.6rem;
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
+.pd-back-credit {
+  margin-top: 26px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.9;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--pd-muted);
 }
 
-/* ---------- sections ---------- */
+/* =========================================================================
+   Screen stack (SheetStack) and print
+   ========================================================================= */
 
-.pd-section {
-  margin-top: 3.4rem;
+.pd-stack {
+  position: relative;
+  width: 100%;
 }
-
-.pd-section.pd-break-before {
-  break-before: page;
-  margin-top: 0;
-  padding-top: 3.4rem;
-}
-
-/* ---------- narrow screens ---------- */
-
-/* The phone is a primary surface for this document: people open the edition
-   link from the trip long before they ever print it. */
-@media (max-width: 40rem) {
-  .pd-page {
-    padding: 2.25rem 1.25rem;
-  }
-
-  /* The fixed 5.2rem time column left roughly 150px for the title on a 390px
-     phone, so every item name broke over two or three lines. Below this width
-     the time sits above the title and the body gets the full measure. */
-  .pd-item {
-    grid-template-columns: 1.6rem 1fr;
-    column-gap: 0.75rem;
-    row-gap: 0.1rem;
-  }
-
-  .pd-item-time {
-    grid-column: 2;
-    padding-top: 0.15rem;
-  }
-
-  .pd-item-body {
-    grid-column: 2;
-  }
-
-  .pd-day-head {
-    gap: 0.85rem;
-  }
-
-  .pd-day-num {
-    font-size: 2rem;
-  }
-
-  /* At this width the head's numeral indent costs the caption a whole line,
-     so it drops below the numeral and takes the full measure. */
-  .pd-day-caption {
-    grid-column: 1 / -1;
-    font-size: 0.97rem;
-    margin-top: 0.65rem;
-  }
-
-  .pd-facts {
-    gap: 0.9rem 1.8rem;
-  }
-
-  .pd-cover-route {
-    gap: 0.8rem;
-  }
-
-  .pd-cover-photo {
-    margin-top: 2.2rem;
-  }
-}
-
-/* ---------- print ---------- */
 
 @media print {
-  /* Deliberately no root font-size override. Almost every element here sets an
-     absolute size, so shrinking the root only shrank inherited text while
-     times, details and table cells stayed put — an uneven scale that read as a
-     rendering fault. The document prints at the size it was designed at. */
-  .pd-page {
-    max-width: none;
-    padding: 0;
+  /* The page is the paper: no screen scaling, no shadows, one sheet a page. */
+  .pd-stack {
+    height: auto !important;
   }
 
-  .pd-cover {
-    /* vh resolves against the page box when printing, so this is one page. */
-    min-height: 100vh;
-    break-after: page;
+  .pd-stack-inner {
+    transform: none !important;
+    width: auto !important;
   }
 
-  .pd-cover-band {
-    margin-bottom: 2.4rem;
+  .print-doc {
+    display: block;
+    gap: 0;
   }
 
-  /* A tall cover photo would otherwise push the cover foot onto a second page,
-     leaving page 2 holding one line of type. Crop instead of overflowing. */
-  .pd-cover-photo img {
-    max-height: 84mm;
-  }
-
-  .pd-cover-foot {
-    padding-top: 2rem;
-  }
-
-  .pd-cover-title {
-    font-size: 3.1rem;
-  }
-
-  .pd-day,
-  .pd-section {
-    margin-top: 2.2rem;
-  }
-
-  /* Blocks that mean nothing when split across the fold. */
-  .pd-table tr,
-  .pd-ledger-row,
-  .pd-theme-plate,
-  .pd-fact {
+  .pd-sheet {
+    box-shadow: none;
+    margin: 0;
     break-inside: avoid;
   }
 
-  /* A table continuing onto the next page keeps its column headings. */
-  .pd-table thead {
-    display: table-header-group;
-  }
-
-  .pd-ledger-total {
-    break-before: avoid;
-  }
-
-  .pd-intro p,
-  .pd-day-desc,
-  .pd-item-details,
-  .pd-ledger-note {
-    orphans: 2;
-    widows: 2;
-  }
-
-  /* ---------- sheet ----------
-     PrintItinerary sets data-pd-sheet and --pd-sheet (the edition's paper
-     colour) on the root.
-
-     The colour covers the sheet, not just the document's box: without this
-     the last page's colour stops in a hard edge where the itinerary runs out. */
-  html[data-pd-sheet],
-  html[data-pd-sheet] body {
-    background: var(--pd-sheet);
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* "bleed": zero page margins let the colour reach the edge of the paper (a
-     page margin never takes the root's colour) and leave Chrome no room for
-     its date, title and URL header and footer. The 15mm × 16mm inset moves
-     into the document, and clone repeats it at every page break. Browsers
-     without clone on blocks (Safari) get "inset" and keep the page margins.
-     The page name goes on body, not .print-doc: a change of page name forces
-     a break, and the empty elements ahead of the document would spend a blank
-     first page on it. */
-  @page pd-edition {
-    margin: 0;
-  }
-
-  html[data-pd-sheet='bleed'] body {
-    page: pd-edition;
-  }
-
-  html[data-pd-sheet='bleed'] .pd-page {
-    padding: 15mm 16mm;
-    box-decoration-break: clone;
-  }
-
-  /* 100vh is now the whole sheet, and the cover's page also carries the inset. */
-  html[data-pd-sheet='bleed'] .pd-cover {
-    min-height: calc(100vh - 30mm);
+  .pd-sheet + .pd-sheet {
+    break-before: page;
   }
 }
 
@@ -741,31 +1193,32 @@
   overflow: hidden;
   background: transparent;
   border-radius: 2px;
-  /* The affordance: a hairline in the edition's own accent, under the words. */
-  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, var(--pd-accent) 55%, transparent);
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  /* The affordance: a hairline under the words, in their own colour. */
+  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, currentColor 45%, transparent);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .pd-edit-input::placeholder {
-  color: var(--pd-muted);
-  opacity: 0.55;
+  color: inherit;
+  opacity: 0.5;
   font-style: italic;
 }
 
 .pd-edit-input:hover {
-  background: color-mix(in srgb, var(--pd-accent) 7%, transparent);
+  background: color-mix(in srgb, currentColor 7%, transparent);
 }
 
 .pd-edit-input:focus {
   outline: none;
-  background: color-mix(in srgb, var(--pd-accent) 10%, transparent);
-  box-shadow: inset 0 -2px 0 0 var(--pd-accent);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  box-shadow: inset 0 -2px 0 0 currentColor;
 }
 
-/* An edited slot keeps a quiet mark so you can see what you have touched
-   without diffing against memory. */
+/* An edited slot keeps a quiet mark so you can see what you have touched. */
 .pd-edit[data-edited] .pd-edit-input {
-  box-shadow: inset 0 -1px 0 0 var(--pd-accent);
+  box-shadow: inset 0 -1px 0 0 currentColor;
 }
 
 .pd-edit-tools {
@@ -776,12 +1229,12 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  /* Never inherits the slot's display type — a 42pt cover title would
+  /* Never inherits the slot's display type: an 88px cover title would
      otherwise hand its metrics to a 10px counter. */
   font: 500 10px/1 ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--pd-muted);
+  color: inherit;
 }
 
 .pd-edit-count {
@@ -799,13 +1252,12 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--pd-muted);
+  color: inherit;
   cursor: pointer;
 }
 
 .pd-edit-revert:hover {
-  background: color-mix(in srgb, var(--pd-accent) 15%, transparent);
-  color: var(--pd-primary);
+  background: color-mix(in srgb, currentColor 15%, transparent);
 }
 
 .pd-edit-revert svg {
@@ -813,21 +1265,10 @@
   height: 0.75rem;
 }
 
-/* On a narrow screen there is no margin to hang the tools in, so they tuck
-   back under the field rather than pushing the measure around. */
-@media (max-width: 640px) {
-  .pd-edit-tools {
-    right: 0;
-    top: auto;
-    bottom: -1.1rem;
-    transform: none;
-  }
-}
-
-/* Editing is a screen state. If a print somehow starts mid-edit, the words
-   still print as words — no boxes, no hairlines, no counters. */
+/* Editing is a screen state. If a print starts mid-edit, the words still
+   print as words: no boxes, no hairlines, no counters. */
 @media print {
-  /* !important because the hover, focus and edited rules above outrank a plain (0,1,0) reset. */
+  /* !important because the hover, focus and edited rules outrank a plain reset. */
   .pd-edit-input {
     box-shadow: none !important;
     background: transparent !important;
@@ -836,190 +1277,4 @@
   .pd-edit-tools {
     display: none;
   }
-}
-
-/* =========================================================================
-   Bold layout
-   -------------------------------------------------------------------------
-   The same document, with colour moved from hairlines into shapes. Every piece
-   of text inside a shape takes that shape's on-fill colour, which the
-   sanitizer chose to clear 4.5:1 against it. Text on the page keeps the
-   palette's text roles, which clear their floors against the page. A fill is
-   never used as a text colour: fills carry no floor against the page.
-   ========================================================================= */
-
-.print-doc[data-layout='bold'] .pd-cover-band {
-  color: var(--pd-fill-2);
-  opacity: 1;
-  margin-bottom: 1.6rem;
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--pd-fill-1);
-  color: var(--pd-on-fill-1);
-  border-radius: 1.1rem;
-  padding: 2.6rem 2.2rem 2.4rem;
-  break-inside: avoid;
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-eyebrow,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-title,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-tagline,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route span,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-dates {
-  color: var(--pd-on-fill-1);
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route {
-  align-self: stretch;
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route::before,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-cover-route::after {
-  border-top-color: color-mix(in srgb, var(--pd-on-fill-1) 45%, transparent);
-}
-
-.print-doc[data-layout='bold'] .pd-theme-plate {
-  border-top: 3px solid var(--pd-fill-2);
-}
-
-.print-doc[data-layout='bold'] .pd-section-label::after {
-  border-top: 2px solid var(--pd-fill-2);
-}
-
-.print-doc[data-layout='bold'] .pd-section-label span {
-  background: var(--pd-fill-2);
-  color: var(--pd-on-fill-2);
-  padding: 0.45rem 0.9rem 0.4rem;
-  border-radius: 999px;
-}
-
-.print-doc[data-layout='bold'] .pd-facts {
-  border-block: 2px solid var(--pd-fill-2);
-}
-
-.print-doc[data-layout='bold'] .pd-day-head {
-  border-top: 3px solid var(--pd-day-fill);
-  padding-top: 1rem;
-  align-items: center;
-}
-
-.print-doc[data-layout='bold'] .pd-day-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.2rem;
-  height: 3.2rem;
-  padding: 0 0.5rem;
-  border-radius: 0.9rem;
-  background: var(--pd-day-fill);
-  color: var(--pd-day-on-fill);
-  font-size: 1.7rem;
-}
-
-.print-doc[data-layout='bold'] .pd-item-icon {
-  border: 0;
-  background: var(--pd-day-fill);
-  color: var(--pd-day-on-fill);
-}
-
-.print-doc[data-layout='bold'] .pd-table th {
-  background: var(--pd-fill-3);
-  color: var(--pd-on-fill-3);
-  border-bottom: 0;
-  padding: 0.5rem 0.6rem;
-}
-
-.print-doc[data-layout='bold'] .pd-table th:first-child {
-  border-radius: 0.5rem 0 0 0.5rem;
-}
-
-.print-doc[data-layout='bold'] .pd-table th:last-child {
-  border-radius: 0 0.5rem 0.5rem 0;
-}
-
-.print-doc[data-layout='bold'] .pd-table td {
-  padding-left: 0.6rem;
-}
-
-.print-doc[data-layout='bold'] .pd-closing {
-  background: var(--pd-fill-1);
-  color: var(--pd-on-fill-1);
-  border-radius: 1.1rem;
-  padding: 2.6rem 2rem 2.2rem;
-}
-
-.print-doc[data-layout='bold'] .pd-closing-mark,
-.print-doc[data-layout='bold'] .pd-closing-line,
-.print-doc[data-layout='bold'] .pd-closing .pd-credit {
-  color: var(--pd-on-fill-1);
-}
-
-/* Editing inside a panel: the accent hairline could vanish on a fill, so the
-   affordance follows the text colour instead. */
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-input {
-  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, currentColor 55%, transparent);
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input:hover,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-input:hover {
-  background: color-mix(in srgb, currentColor 10%, transparent);
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input:focus,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-input:focus {
-  background: color-mix(in srgb, currentColor 14%, transparent);
-  box-shadow: inset 0 -2px 0 0 currentColor;
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit[data-edited] .pd-edit-input,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit[data-edited] .pd-edit-input {
-  box-shadow: inset 0 -1px 0 0 currentColor;
-}
-
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-input::placeholder,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-input::placeholder,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-tools,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-tools,
-.print-doc[data-layout='bold'] .pd-cover-panel .pd-edit-revert,
-.print-doc[data-layout='bold'] .pd-closing .pd-edit-revert {
-  color: inherit;
-}
-
-@media (max-width: 40rem) {
-  .print-doc[data-layout='bold'] .pd-cover-panel,
-  .print-doc[data-layout='bold'] .pd-closing {
-    padding: 2rem 1.25rem 1.8rem;
-    border-radius: 0.9rem;
-  }
-
-  .print-doc[data-layout='bold'] .pd-day-num {
-    min-width: 2.7rem;
-    height: 2.7rem;
-    font-size: 1.45rem;
-  }
-}
-
-@media print {
-  .print-doc[data-layout='bold'] .pd-cover-panel,
-  .print-doc[data-layout='bold'] .pd-closing,
-  .print-doc[data-layout='bold'] .pd-day-num {
-    break-inside: avoid;
-  }
-
-  /* The panel editing rules above outrank any plain print reset (their
-     edited and focus states most of all), so on paper this one is final:
-     words print as words. */
-  .print-doc[data-layout='bold'] .pd-edit-input {
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-}
-
-@page {
-  margin: 15mm 16mm;
 }

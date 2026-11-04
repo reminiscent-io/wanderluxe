@@ -12,6 +12,7 @@
 // must stay dependency-free and DOM-free.
 
 import { findSlop, repairCopy, type SlopFinding } from './voice';
+import { weekdayOf } from './dates';
 import { resolvePalette, type PaletteAdjustment } from './palette';
 import type { PrintPalette } from './palette';
 
@@ -63,6 +64,20 @@ export interface PrintDesignSpec {
   intro: string;
   /** One editorial line per trip day, keyed by the day's ISO date. */
   dayCaptions: Record<string, string>;
+  /**
+   * A short name for each day ("Lights at Sayville Falls"), keyed by ISO date.
+   * Absent on editions stored before 2026-11; a day without one is headed by
+   * its date alone.
+   */
+  dayHeadlines?: Record<string, string>;
+  /**
+   * The town or region the traveler is based in each day, keyed by ISO date.
+   * Consecutive days in one place make a chapter; one place for the whole trip
+   * makes none. Absent on older editions.
+   */
+  dayPlaces?: Record<string, string>;
+  /** Up to MAX_FEATURE_DAYS dates the edition gives a feature page. */
+  featureDays?: string[];
   /** Short sign-off line for the closing block. */
   closing: string;
 }
@@ -199,20 +214,56 @@ export function getFontPairing(id: string): FontPairing {
 }
 
 export const MOTIFS = [
-  'waves', // coastal / island trips
-  'palms', // tropical
-  'mountains', // alpine / hiking
-  'deco', // art-deco cities, glamour
-  'stars', // desert nights, northern lights
-  'botanical', // gardens, countryside
-  'geometric', // modern cities
-  'confetti', // birthdays, parties, celebrations
-  'dots', // playful, retro, pop
-  'sunburst', // sunny, mid-century, festive
-  'none', // let the typography carry it
+  'waves',
+  'palms',
+  'mountains',
+  'deco',
+  'stars',
+  'botanical',
+  'geometric',
+  'confetti',
+  'dots',
+  'sunburst',
+  'holly',
+  'snowflakes',
+  'pines',
+  'ornaments',
+  'leaves',
+  'blossoms',
+  'citrus',
+  'none',
 ] as const;
 
 export type MotifId = (typeof MOTIFS)[number];
+
+/**
+ * What each motif is for, in the words the model is given. A season or a
+ * holiday has to be drawable: before the winter motifs existed, a "Christmas"
+ * request could only reach the palette, and came back as stars.
+ */
+export const MOTIF_NOTES: Record<MotifId, string> = {
+  waves: 'coast, islands, harbours, lakes',
+  palms: 'tropics, beach resorts',
+  mountains: 'alpine, hiking, national parks, ski',
+  deco: 'art-deco cities, glamour, jazz-age hotels',
+  stars: 'desert nights, northern lights, stargazing, New Year',
+  botanical: 'gardens, countryside, weddings, anniversaries',
+  geometric: 'modern cities, architecture, design trips',
+  confetti: 'birthdays, parties, celebrations',
+  dots: 'playful, retro, pop, family fun',
+  sunburst: 'sunny, mid-century, festivals, summer',
+  holly: 'Christmas: holly leaves and berries',
+  snowflakes: 'winter, snow, Christmas, ski weeks',
+  pines: 'Christmas trees, forests, cabins, winter woods',
+  ornaments: 'Christmas baubles, holiday parties',
+  leaves: 'autumn, fall foliage, harvest, Thanksgiving',
+  blossoms: 'spring, cherry blossom, Japan, Easter, romance',
+  citrus: 'Mediterranean, Amalfi, Sicily, Seville, summer lunches',
+  none: 'let the typography carry it',
+};
+
+/** How many days an edition may give a feature page. */
+const MAX_FEATURE_DAYS = 2;
 
 /* =========================================================================
    Sanitizer — clamp whatever the model returned into a safe, printable spec
@@ -234,15 +285,68 @@ type CopyMode = 'prose' | 'names';
  * a page with one fewer line beats a page with "embark on an unforgettable
  * journey" set in 24pt on paper someone paid for.
  */
-function cleanCopy(v: unknown, maxLen: number, mode: CopyMode, fallback = ''): string {
+function cleanCopy(
+  v: unknown,
+  maxLen: number,
+  mode: CopyMode,
+  fallback = '',
+  overflow: 'clamp' | 'drop' = 'clamp'
+): string {
   if (typeof v !== 'string') return fallback;
   const collapsed = v.replace(/\s+/g, ' ').trim();
   if (!collapsed) return fallback;
   const repaired = repairCopy(collapsed);
   if (!repaired) return fallback;
   if (mode === 'prose' && findSlop(repaired).length > 0) return fallback;
-  return repaired.length > maxLen ? `${repaired.slice(0, maxLen - 1).trimEnd()}…` : repaired;
+  if (repaired.length <= maxLen) return repaired;
+  // A headline set in 40pt display type cannot end in an ellipsis and still
+  // read as designed, so short display lines are dropped rather than cut.
+  return overflow === 'drop' ? fallback : `${repaired.slice(0, maxLen - 1).trimEnd()}…`;
 }
+
+const WEEKDAY_RE = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b(?!s\b)/gi;
+
+/** The weekdays a line names, lowercased. "Sundays" (opening hours) is not a day reference. */
+function weekdaysNamed(text: string): string[] {
+  return [...text.matchAll(WEEKDAY_RE)].map((m) => m[1].toLowerCase());
+}
+
+/**
+ * True when a day's line names a weekday the day does not fall on: "Saturday
+ * brings Christmas Land" on a Sunday. A wrong day on a printed itinerary is a
+ * wrong fact, so the line is dropped rather than printed.
+ */
+export function namesWrongWeekday(text: string, date: string): boolean {
+  const actual = weekdayOf(date).toLowerCase();
+  if (!actual) return false;
+  return weekdaysNamed(text).some((d) => d !== actual);
+}
+
+/**
+ * True when trip-level copy names a weekday the trip never touches. Only
+ * checkable for a trip shorter than a week; a longer one contains every day.
+ */
+function namesWeekdayOutsideTrip(text: string, dayDates: string[]): boolean {
+  if (dayDates.length === 0 || dayDates.length >= 7) return false;
+  const inTrip = new Set(dayDates.map((d) => weekdayOf(d).toLowerCase()));
+  return weekdaysNamed(text).some((d) => !inTrip.has(d));
+}
+
+/** Prose for one day: voice-gated, length-handled, and on the right weekday. */
+function cleanDayLine(v: unknown, date: string, maxLen: number, overflow: 'clamp' | 'drop'): string {
+  const text = cleanCopy(v, maxLen, 'prose', '', overflow);
+  return text && !namesWrongWeekday(text, date) ? text : '';
+}
+
+/** Trip-level prose: voice-gated and naming only weekdays the trip contains. */
+function cleanTripLine(v: unknown, maxLen: number, dayDates: string[], fallback = ''): string {
+  const text = cleanCopy(v, maxLen, 'prose', fallback);
+  return text && text !== fallback && namesWeekdayOutsideTrip(text, dayDates) ? fallback : text;
+}
+
+/** Day headline and place limits. Asked for shorter; these are the hard stops. */
+const DAY_HEADLINE_MAX = 60;
+const DAY_PLACE_MAX = 40;
 
 /**
  * True when a theme name already ends in its own "Edition". The renderers set
@@ -289,27 +393,60 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
 
   const rawCover = (r.cover && typeof r.cover === 'object' ? r.cover : {}) as Record<string, unknown>;
 
-  // Accepts either a record ({"2026-06-01": "..."}), or the array shape the
-  // OpenAI strict json_schema forces ([{date, caption}]) since strict mode
-  // cannot express dynamic object keys.
+  // Per-day copy arrives in three shapes: the model's `days` array
+  // ([{date, headline, caption, place, feature}], since OpenAI strict mode
+  // cannot express dynamic object keys), the older model's dayCaptions array
+  // ([{date, caption}]), and the stored records this function returns.
   const validDates = new Set(dayDates);
+  const isDay = (date: unknown): date is string => typeof date === 'string' && validDates.has(date);
   const dayCaptions: Record<string, string> = {};
+  const dayHeadlines: Record<string, string> = {};
+  const dayPlaces: Record<string, string> = {};
+  const featureSet = new Set<string>();
+
   const addCaption = (date: unknown, caption: unknown) => {
-    if (typeof date !== 'string' || !validDates.has(date)) return;
-    const text = cleanCopy(caption, 140, 'prose');
+    if (!isDay(date) || date in dayCaptions) return;
+    const text = cleanDayLine(caption, date, 140, 'clamp');
     if (text) dayCaptions[date] = text;
   };
+  const addHeadline = (date: unknown, headline: unknown) => {
+    if (!isDay(date) || date in dayHeadlines) return;
+    const text = cleanDayLine(headline, date, DAY_HEADLINE_MAX, 'drop');
+    if (text) dayHeadlines[date] = text;
+  };
+  const addPlace = (date: unknown, place: unknown) => {
+    if (!isDay(date) || date in dayPlaces) return;
+    const text = cleanCopy(place, DAY_PLACE_MAX, 'names', '', 'drop');
+    if (text) dayPlaces[date] = text;
+  };
+  const entries = (v: unknown): Array<[unknown, unknown]> =>
+    v && typeof v === 'object' && !Array.isArray(v) ? Object.entries(v as Record<string, unknown>) : [];
+
+  if (Array.isArray(r.days)) {
+    for (const entry of r.days) {
+      if (!entry || typeof entry !== 'object') continue;
+      const e = entry as Record<string, unknown>;
+      addHeadline(e.date, e.headline);
+      addCaption(e.date, e.caption);
+      addPlace(e.date, e.place);
+      if (e.feature === true && isDay(e.date)) featureSet.add(e.date);
+    }
+  }
   if (Array.isArray(r.dayCaptions)) {
     for (const entry of r.dayCaptions) {
       if (entry && typeof entry === 'object') {
         addCaption((entry as Record<string, unknown>).date, (entry as Record<string, unknown>).caption);
       }
     }
-  } else if (r.dayCaptions && typeof r.dayCaptions === 'object') {
-    for (const [date, caption] of Object.entries(r.dayCaptions as Record<string, unknown>)) {
-      addCaption(date, caption);
-    }
   }
+  for (const [date, caption] of entries(r.dayCaptions)) addCaption(date, caption);
+  for (const [date, headline] of entries(r.dayHeadlines)) addHeadline(date, headline);
+  for (const [date, place] of entries(r.dayPlaces)) addPlace(date, place);
+  if (Array.isArray(r.featureDays)) {
+    for (const date of r.featureDays) if (isDay(date)) featureSet.add(date);
+  }
+  // In date order, so the cap keeps the earliest rather than whichever the model listed first.
+  const featureDays = dayDates.filter((d) => featureSet.has(d)).slice(0, MAX_FEATURE_DAYS);
 
   return {
     themeName: cleanCopy(r.themeName, 60, 'prose', 'Traveler’s'),
@@ -319,13 +456,18 @@ export function sanitizePrintDesign(raw: unknown, dayDates: string[] = []): Prin
     motif,
     ...(layout ? { layout } : {}),
     cover: {
-      title: cleanCopy(rawCover.title, 80, 'prose', 'The Itinerary'),
+      title: cleanTripLine(rawCover.title, 80, dayDates, 'The Itinerary'),
       subtitle: cleanCopy(rawCover.subtitle, 120, 'names'),
-      tagline: cleanCopy(rawCover.tagline, 160, 'prose'),
+      tagline: cleanTripLine(rawCover.tagline, 160, dayDates),
     },
-    intro: cleanCopy(r.intro, 600, 'prose'),
+    intro: cleanTripLine(r.intro, 600, dayDates),
     dayCaptions,
-    closing: cleanCopy(r.closing, 200, 'prose', 'Safe travels.'),
+    // Omitted when empty, so an edition stored before these existed
+    // sanitizes to exactly what it was.
+    ...(Object.keys(dayHeadlines).length > 0 ? { dayHeadlines } : {}),
+    ...(Object.keys(dayPlaces).length > 0 ? { dayPlaces } : {}),
+    ...(featureDays.length > 0 ? { featureDays } : {}),
+    closing: cleanTripLine(r.closing, 200, dayDates, 'Safe travels.'),
   };
 }
 
@@ -358,6 +500,16 @@ export function auditPrintCopy(raw: unknown): CopyAudit[] {
     ['closing', r.closing],
   ];
 
+  if (Array.isArray(r.days)) {
+    for (const entry of r.days) {
+      if (entry && typeof entry === 'object') {
+        const e = entry as Record<string, unknown>;
+        fields.push([`days.${String(e.date ?? '?')}.headline`, e.headline]);
+        fields.push([`days.${String(e.date ?? '?')}.caption`, e.caption]);
+      }
+    }
+  }
+
   if (Array.isArray(r.dayCaptions)) {
     for (const entry of r.dayCaptions) {
       if (entry && typeof entry === 'object') {
@@ -374,7 +526,12 @@ export function auditPrintCopy(raw: unknown): CopyAudit[] {
   const audits: CopyAudit[] = [];
   for (const [field, value] of fields) {
     if (typeof value !== 'string' || !value.trim()) continue;
-    const findings = findSlop(repairCopy(value.replace(/\s+/g, ' ').trim()));
+    const text = repairCopy(value.replace(/\s+/g, ' ').trim());
+    const findings = findSlop(text);
+    const date = /^(?:days|dayCaptions)\.(\d{4}-\d{2}-\d{2})/.exec(field)?.[1];
+    if (date && namesWrongWeekday(text, date)) {
+      findings.push({ rule: 'wrong weekday', match: `${weekdaysNamed(text).join(', ')} on a ${weekdayOf(date)}` });
+    }
     if (findings.length > 0) audits.push({ field, findings });
   }
   return audits;

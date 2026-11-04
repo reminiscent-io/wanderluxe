@@ -19,6 +19,7 @@ export const TOKYO_ROWS: PdfTripRows = {
     arrival_date: '2026-10-03',
     departure_date: '2026-10-05',
     cover_image_url: null,
+    cover_image_position: null,
     budget: 4200,
     timezone: 'Asia/Tokyo',
   },

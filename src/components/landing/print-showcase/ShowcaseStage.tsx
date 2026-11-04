@@ -12,10 +12,13 @@ import { BedDouble, Compass, Plane, UtensilsCrossed } from 'lucide-react';
 import PrintDocument from '@/components/trip/print-studio/PrintDocument';
 import EditableCopy from '@/components/trip/print-studio/EditableCopy';
 import PageThumbnail from '@/components/trip/print-studio/PageThumbnail';
+import SheetStack from '@/components/trip/print-studio/SheetStack';
 import { useGoogleFonts } from '@/components/trip/print-studio/useGoogleFonts';
 import { getFontPairing, type PrintDesignSpec } from '@/lib/printDesign/spec';
 import { applyCopyOverrides, fieldForKey, type PrintCopyOverrides } from '@/lib/printDesign/edits';
 import type { PdfTripData } from '@/services/pdf/types';
+import { buildPrintTrip } from '@/lib/printDesign/trip';
+import { SHEET } from '@/lib/printDesign/plan';
 import { cn } from '@/lib/utils';
 import {
   SHEET_ASPECT,
@@ -27,8 +30,12 @@ import {
 } from './stageLayout';
 import editionsJson from './tokyoEditions.json';
 import tripJson from './tokyoTrip.json';
+import { TOKYO_ROWS } from './tokyoRows';
 
+/** The timeline step's view of the trip: the app's rows, as the Simple PDF reads them. */
 const TRIP = tripJson as unknown as PdfTripData;
+/** The edition's view: the same rows through the Studio's projection. */
+const PRINT_TRIP = buildPrintTrip(TOKYO_ROWS);
 const EDITIONS = editionsJson as unknown as PrintDesignSpec[];
 
 export const SHOWCASE_STEPS = [
@@ -218,8 +225,10 @@ const ShowcaseStage: React.FC = () => {
   // Every step but the editing one shows the sheet as a picture: scaled to the
   // frame, out of the accessibility tree, with the label standing in for it.
   const sheetPicture = (
-    <PageThumbnail label={SHEET_LABEL} aspect={SHEET_ASPECT} className="w-full">
-      <PrintDocument design={design} data={TRIP} />
+    <PageThumbnail label={SHEET_LABEL} aspect={SHEET_ASPECT} pageWidth={SHEET.width} className="w-full">
+      {/* Every page, though the frame shows the cover: the item list below the
+          fold is what keeps an edition swap honest (see the stage tests). */}
+      <PrintDocument design={design} trip={PRINT_TRIP} />
     </PageThumbnail>
   );
 
@@ -240,7 +249,9 @@ const ShowcaseStage: React.FC = () => {
       {/* isEditing keeps a blanked optional slot on the page. Without it,
           backspacing out the tagline or a caption to rewrite it would unmount
           the field and its revert button together. */}
-      <PrintDocument design={design} data={TRIP} renderCopy={renderCopy} isEditing />
+      <SheetStack>
+        <PrintDocument design={design} trip={PRINT_TRIP} renderCopy={renderCopy} isEditing />
+      </SheetStack>
     </div>
   );
 

@@ -19,7 +19,7 @@ import { buildPdfTripData } from '../src/services/pdf/data';
 import { buildDocDefinition } from '../src/services/pdf/builder';
 import { defaultPageSize } from '../src/services/pdf/theme';
 import { sanitizePrintDesign } from '../src/lib/printDesign/spec';
-import { generatePrintDesign, type PrintTripRows } from '../server/lib/printDesign';
+import { generatePrintDesign } from '../server/lib/printDesign';
 import { TOKYO_ROWS, TOKYO_THEMES } from '../src/components/landing/print-showcase/tokyoRows';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -35,19 +35,6 @@ const CONTENT_WIDTH = 800;
 // HiDPI screens and still lands well under 300 KB.
 const PDF_PAGE = 2;
 const PNG_SCALE = 2;
-
-/** The generation module names its rows differently from the PDF module. */
-function toPrintTripRows(rows: typeof TOKYO_ROWS): PrintTripRows {
-  return {
-    trip: rows.trip as unknown as Record<string, unknown>,
-    days: rows.days as unknown as Record<string, unknown>[],
-    activities: rows.acts as unknown as Record<string, unknown>[],
-    stays: rows.stays as unknown as Record<string, unknown>[],
-    transportation: rows.trans as unknown as Record<string, unknown>[],
-    reservations: rows.dine as unknown as Record<string, unknown>[],
-    otherExpenses: [],
-  };
-}
 
 async function writeTripData() {
   const data = await buildPdfTripData(TOKYO_ROWS, OPTS, CONTENT_WIDTH);
@@ -107,7 +94,8 @@ async function writeEditions() {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY is required to generate the showcase editions');
 
-  const rows = toPrintTripRows(TOKYO_ROWS);
+  // Generation reads the same rows the page prints from; no reshaping.
+  const rows = TOKYO_ROWS as unknown as Parameters<typeof generatePrintDesign>[1];
   const dayDates = TOKYO_ROWS.days.map((d) => d.date as string);
   const editions = [];
   for (const theme of TOKYO_THEMES) {

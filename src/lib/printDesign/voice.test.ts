@@ -93,3 +93,43 @@ describe('VOICE_RULES', () => {
     }
   });
 });
+
+describe('repairCopy — a dash never becomes a comma splice', () => {
+  it('closes a sentence when the dash joined two of them', () => {
+    expect(repairCopy('Hold onto these details — this December was full of small, good things.')).toBe(
+      'Hold onto these details. This December was full of small, good things.'
+    );
+    expect(repairCopy('Land at noon — we drive straight to the coast.')).toBe('Land at noon. We drive straight to the coast.');
+  });
+
+  it('sets off an aside with commas', () => {
+    expect(repairCopy('We land at noon — just in time for lunch — and drive north.')).toBe(
+      'We land at noon, just in time for lunch, and drive north.'
+    );
+  });
+
+  it('keeps a phrase as a comma', () => {
+    expect(repairCopy("Dinner at Kiki's — up the hill from the port")).toBe("Dinner at Kiki's, up the hill from the port");
+  });
+
+  it('does not leave a comma before the new sentence', () => {
+    expect(repairCopy('Slow mornings, — this is the plan.')).toBe('Slow mornings. This is the plan.');
+  });
+
+  it('leaves a period the writer typed alone', () => {
+    expect(repairCopy('Doors at 7.30 p.m. sharp')).toBe('Doors at 7.30 p.m. sharp');
+  });
+});
+
+describe('findSlop — the holiday-card register', () => {
+  it.each(['A winter wonderland on the North Shore.', 'Two days of holiday magic.', 'Making memories by the tree.'])(
+    'flags %j',
+    (text) => {
+      expect(clean(text)).toContain('banned word');
+    }
+  );
+
+  it('leaves a real event name alone', () => {
+    expect(clean('The drive through the Magic of Lights at Jones Beach.')).toEqual([]);
+  });
+});
