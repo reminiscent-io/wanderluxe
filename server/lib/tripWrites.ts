@@ -112,6 +112,8 @@ async function addOwnerShare(
 
 export interface CreateTripInput {
   destination: string;
+  /** The place the trip is to (`trips.primary_destination`); `destination` is the trip's name. */
+  primary_destination?: string | null;
   arrival_date: string;
   departure_date: string;
   budget?: number | null;
@@ -141,6 +143,7 @@ export async function createTrip(
     .insert({
       user_id: ctx.userId,
       destination: input.destination,
+      primary_destination: input.primary_destination ?? null,
       arrival_date: input.arrival_date,
       departure_date: input.departure_date,
       budget: input.budget ?? null,
@@ -214,6 +217,7 @@ export function buildDroppedDayReport(
 export interface UpdateTripInput {
   trip_id: string;
   destination?: string;
+  primary_destination?: string | null;
   budget?: number | null;
   timezone?: string | null;
   arrival_date?: string;
@@ -235,7 +239,7 @@ export async function updateTrip(
 ): Promise<UpdateTripResult> {
   const { data: trip, error } = await supabase
     .from('trips')
-    .select('trip_id,arrival_date,departure_date')
+    .select('trip_id,arrival_date,departure_date,primary_destination')
     .eq('trip_id', input.trip_id)
     .maybeSingle();
   if (error) throw new WriteError(`Failed to load trip: ${error.message}`);
@@ -251,6 +255,12 @@ export async function updateTrip(
   // Non-date field updates always apply.
   const fieldUpdates: Record<string, unknown> = {};
   if (input.destination !== undefined) fieldUpdates.destination = input.destination;
+  if (input.primary_destination !== undefined && input.primary_destination !== trip.primary_destination) {
+    fieldUpdates.primary_destination = input.primary_destination;
+    // The stored place ID was picked for the old text; keeping it would leave
+    // timezone resolution pointed at the previous place.
+    fieldUpdates.primary_destination_place_id = null;
+  }
   if (input.budget !== undefined) fieldUpdates.budget = input.budget;
   if (input.timezone !== undefined) fieldUpdates.timezone = input.timezone;
 

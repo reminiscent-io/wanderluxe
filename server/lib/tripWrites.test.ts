@@ -321,3 +321,59 @@ describe('timezone flows through write payloads and return selects', () => {
     expect(lastCall(calls, 'trips', 'update')?.payload).toMatchObject({ timezone: 'Asia/Tokyo' });
   });
 });
+
+describe('primary destination', () => {
+  const existingTrip = {
+    trip_id: 'trip-1',
+    arrival_date: '2026-09-14',
+    departure_date: '2026-09-16',
+    primary_destination: 'Tokyo, Japan',
+  };
+
+  it('createTrip stores the place apart from the trip name', async () => {
+    const { supabase, calls } = createFakeSupabase({
+      trips: [{ data: { trip_id: 'trip-1' } }],
+      profiles: [{ data: null }],
+      trip_shares: [{}],
+      trip_days: [{}],
+    });
+    await createTrip(
+      supabase,
+      { userId: 'u1', email: 'kevin@wanderluxe.io' },
+      {
+        destination: 'Honeymoon',
+        primary_destination: 'Kyoto, Japan',
+        arrival_date: '2026-09-14',
+        departure_date: '2026-09-16',
+      },
+    );
+    expect(lastCall(calls, 'trips', 'insert')?.payload).toMatchObject({
+      destination: 'Honeymoon',
+      primary_destination: 'Kyoto, Japan',
+    });
+  });
+
+  it('updateTrip sets a new place and drops the place ID picked for the old one', async () => {
+    const { supabase, calls } = createFakeSupabase({ trips: [{ data: existingTrip }, {}] });
+    await updateTrip(supabase, { trip_id: 'trip-1', primary_destination: 'Kyoto, Japan' });
+    expect(lastCall(calls, 'trips', 'update')?.payload).toEqual({
+      primary_destination: 'Kyoto, Japan',
+      primary_destination_place_id: null,
+    });
+  });
+
+  it('updateTrip clears the place when given null', async () => {
+    const { supabase, calls } = createFakeSupabase({ trips: [{ data: existingTrip }, {}] });
+    await updateTrip(supabase, { trip_id: 'trip-1', primary_destination: null });
+    expect(lastCall(calls, 'trips', 'update')?.payload).toEqual({
+      primary_destination: null,
+      primary_destination_place_id: null,
+    });
+  });
+
+  it('updateTrip keeps the place ID when the place is unchanged', async () => {
+    const { supabase, calls } = createFakeSupabase({ trips: [{ data: existingTrip }, {}] });
+    await updateTrip(supabase, { trip_id: 'trip-1', primary_destination: 'Tokyo, Japan', budget: 500 });
+    expect(lastCall(calls, 'trips', 'update')?.payload).toEqual({ budget: 500 });
+  });
+});

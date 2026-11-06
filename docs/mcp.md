@@ -110,7 +110,7 @@ Every tool declares a `title` (mirrored into `annotations.title`) plus `readOnly
 
 #### `list_trips`
 
-No parameters. Returns `trips[]` with `trip_id`, `destination`, `arrival_date`, `departure_date`, `budget`, `timezone` and `created_at`.
+No parameters. Returns `trips[]` with `trip_id`, `destination` (the trip name), `primary_destination` (the place), `arrival_date`, `departure_date`, `budget`, `timezone` and `created_at`.
 
 #### `get_trip`
 
@@ -134,7 +134,8 @@ Returns `budget`, `total_cost`, `total_paid`, `categories` (accommodations, tran
 
 | Parameter | Type | Required | Notes |
 |---|---|---|---|
-| `destination` | string | yes | Trip name, e.g. `Paris, France` |
+| `destination` | string | yes | Trip name shown in the app, e.g. `Paris` or `Honeymoon in Kyoto` |
+| `primary_destination` | string | no | The place, as `City, Country`, e.g. `Kyoto, Japan`. Drives weather, the trip card and AI recommendations |
 | `arrival_date` | date | yes | First day |
 | `departure_date` | date | yes | Last day, on or after `arrival_date`; at most 366 days total |
 | `budget` | number > 0 | no | Total trip budget |
@@ -147,11 +148,12 @@ Returns `trip_id` and `day_dates[]`, so the model can add items straight away. T
 | Parameter | Type | Required | Notes |
 |---|---|---|---|
 | `trip_id` | UUID | yes | |
-| `destination` | string | no | |
+| `destination` | string | no | Trip name |
+| `primary_destination` | string or `null` | no | The place; `null` clears it. A new place also drops the stored Google place ID, so set `timezone` to match |
 | `arrival_date` | date | no | |
 | `departure_date` | date | no | |
 | `budget` | number > 0 or `null` | no | `null` clears it |
-| `timezone` | IANA zone or `null` | no | `null` clears it; the app re-resolves it from the destination |
+| `timezone` | IANA zone or `null` | no | `null` clears it; the app re-resolves it only when the trip has a place ID from the web app's place picker |
 | `confirm_remove_days` | boolean | no | Required to drop days that still have items |
 
 Extending the dates adds days. Shrinking them onto empty days removes those days. Shrinking them onto days that still hold items changes nothing and returns `status: "confirmation_required"` with `at_risk_days[]` (each day's activities, dining and accommodation nights). The model shows you that list; only after you agree does it call again with `confirm_remove_days: true`. A successful call returns `status: "updated"` with `days_added[]` and `days_removed[]`.
