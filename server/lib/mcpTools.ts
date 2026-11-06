@@ -80,7 +80,7 @@ const ENTITY_TZ_DESCRIPTION =
 
 /** get_trip column lists. Exported so tests can pin the timezone columns. */
 export const GET_TRIP_SELECT = {
-  trip: 'trip_id,destination,arrival_date,departure_date,budget,timezone',
+  trip: 'trip_id,destination,primary_destination,arrival_date,departure_date,budget,timezone',
   accommodations:
     'stay_id,hotel,hotel_address,hotel_checkin_date,hotel_checkout_date,checkin_time,checkout_time,hotel_phone,hotel_website,hotel_details,cost,currency,amount_paid,is_paid,timezone',
   transportation:
@@ -128,13 +128,13 @@ function registerReadTools(server: McpServer, supabase: SupabaseClient): void {
     {
       title: 'List trips',
       description:
-        'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination, dates, budget, and the trip default timezone.',
+        'List the trips the user owns or that are shared with them, newest first. Returns trip_id, destination (the trip name), primary_destination (the place), dates, budget, and the trip default timezone.',
       annotations: READ_ONLY,
     },
     async () => {
       const { data, error } = await supabase
         .from('trips')
-        .select('trip_id,destination,arrival_date,departure_date,budget,timezone,created_at')
+        .select('trip_id,destination,primary_destination,arrival_date,departure_date,budget,timezone,created_at')
         .order('arrival_date', { ascending: false });
       if (error) return toolError(`Failed to list trips: ${error.message}`);
       return toolResult({ trips: data ?? [] });
@@ -274,9 +274,17 @@ function registerWriteTools(
     {
       title: 'Create trip',
       description:
-        'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read. Required: destination, arrival_date, and departure_date — if the traveler has not given specific arrival and departure dates, ask for them rather than inventing dates.',
+        'Create a new trip. Generates one day per date from arrival to departure (inclusive) and returns the new trip_id plus the generated day_dates, so you can add items right away without a separate read. Required: destination, arrival_date, and departure_date — if the traveler has not given specific arrival and departure dates, ask for them rather than inventing dates. Also set primary_destination whenever the place is known: the app uses it for weather, the trip card, and AI recommendations.',
       inputSchema: {
-        destination: z.string().min(1).describe('Trip name / destination, e.g. "Paris, France"'),
+        destination: z
+          .string()
+          .min(1)
+          .describe('Trip name shown in the app, e.g. "Paris" or "Honeymoon in Kyoto"'),
+        primary_destination: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('The main place the trip is to, as "City, Country", e.g. "Paris, France"'),
         arrival_date: dateField().describe('First day of the trip (YYYY-MM-DD)'),
         departure_date: dateField().describe('Last day of the trip (YYYY-MM-DD)'),
         budget: z.number().positive().optional().describe('Total trip budget (optional)'),
@@ -295,6 +303,7 @@ function registerWriteTools(
         }
         const result = await createTrip(supabase, ctx, {
           destination: args.destination,
+          primary_destination: args.primary_destination ?? null,
           arrival_date: args.arrival_date,
           departure_date: args.departure_date,
           budget: args.budget ?? null,
@@ -312,16 +321,24 @@ function registerWriteTools(
     {
       title: 'Update trip',
       description:
-        "Update a trip's destination, budget, or dates. Changing dates adds new days automatically. If shrinking the range would drop days that still have items, the tool returns status 'confirmation_required' with the at-risk days and changes nothing; re-call with confirm_remove_days: true to delete those days and their items.",
+        "Update a trip's name, primary destination, budget, default timezone, or dates. Changing dates adds new days automatically. If shrinking the range would drop days that still have items, the tool returns status 'confirmation_required' with the at-risk days and changes nothing; re-call with confirm_remove_days: true to delete those days and their items.",
       inputSchema: {
         trip_id: z.string().uuid().describe('Trip ID from list_trips'),
-        destination: z.string().min(1).optional(),
+        destination: z.string().min(1).optional().describe('Trip name shown in the app'),
+        primary_destination: z
+          .string()
+          .min(1)
+          .nullable()
+          .optional()
+          .describe(
+            'The main place the trip is to, as "City, Country", e.g. "Paris, France". Pass null to clear it. When the place changes, also set timezone to the new place\'s zone.',
+          ),
         budget: z.number().positive().nullable().optional().describe('Set to null to clear the budget'),
         timezone: timezoneField()
           .nullable()
           .optional()
           .describe(
-            'IANA default timezone for the trip, e.g. "Asia/Tokyo". Pass null to clear it (the app then re-resolves it from the destination). Label only; changing it never converts stored times.',
+            'IANA default timezone for the trip, e.g. "Asia/Tokyo". Pass null to clear it. Label only; changing it never converts stored times.',
           ),
         arrival_date: dateField().optional(),
         departure_date: dateField().optional(),

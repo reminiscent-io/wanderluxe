@@ -121,6 +121,28 @@ describe('create_trip', () => {
     const tripInsert = calls.find((c) => c.table === 'trips' && c.method === 'insert');
     expect(tripInsert?.args[0]).toMatchObject({ timezone: 'Asia/Tokyo' });
   });
+
+  it('stores the primary destination it was given', async () => {
+    const { client, calls } = fakeSupabase();
+    const result = await registerAll(client).get('create_trip')!.handler({
+      destination: 'Honeymoon',
+      primary_destination: 'Kyoto, Japan',
+      arrival_date: '2026-10-01',
+      departure_date: '2026-10-03',
+    });
+    expect(result.isError).toBeUndefined();
+    const tripInsert = calls.find((c) => c.table === 'trips' && c.method === 'insert');
+    expect(tripInsert?.args[0]).toMatchObject({ destination: 'Honeymoon', primary_destination: 'Kyoto, Japan' });
+  });
+});
+
+describe('list_trips', () => {
+  it('returns the primary destination alongside the trip name', async () => {
+    const { client, calls } = fakeSupabase();
+    await registerAll(client).get('list_trips')!.handler({});
+    const select = calls.find((c) => c.table === 'trips' && c.method === 'select');
+    expect(String(select?.args[0]).split(',')).toContain('primary_destination');
+  });
 });
 
 describe('get_trip_budget', () => {
@@ -153,6 +175,10 @@ describe('GET_TRIP_SELECT', () => {
     expect(GET_TRIP_SELECT.accommodations.split(',')).toContain('timezone');
     expect(GET_TRIP_SELECT.transportation.split(',')).toContain('departure_timezone');
     expect(GET_TRIP_SELECT.transportation.split(',')).toContain('arrival_timezone');
+  });
+
+  it('reads the primary destination back on get_trip', () => {
+    expect(GET_TRIP_SELECT.trip.split(',')).toContain('primary_destination');
   });
 
   it('reads the reservation end time back on get_trip', () => {
