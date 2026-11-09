@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { preview } from 'vite';
 import { createClient } from '@supabase/supabase-js';
+import { JSDOM } from 'jsdom';
+import { orderRoutesForPrerender, settleHeadTags } from './prerenderHead';
 
 // Keep in step with STATIC_ROUTES in server/lib/sitemap.ts and
 // prerenderedFileFor() in server/app.ts.
@@ -102,8 +104,13 @@ async function prerenderRoute(browser: Browser, origin: string, route: string) {
   // the app re-measures on boot.
   await page.evaluate(() => document.documentElement.removeAttribute('style'));
 
-  const html = await page.content();
+  const dom = new JSDOM(await page.content());
   await page.close();
+  const duplicates = settleHeadTags(dom.window.document);
+  if (duplicates.length > 0) {
+    console.warn(`[prerender] ${route} has duplicate head tags: ${duplicates.join(', ')}`);
+  }
+  const html = dom.serialize();
 
   const outDir =
     route === '/' ? DIST_DIR : path.join(DIST_DIR, route.replace(/^\//, ''));
@@ -121,7 +128,7 @@ async function main() {
 
   const publicTrips = await fetchPublicTrips();
   const tripRoutes = publicTrips.map((t) => `/explore/${t.slug}`);
-  const routesToPrerender = [...STATIC_ROUTES, ...tripRoutes];
+  const routesToPrerender = orderRoutesForPrerender([...STATIC_ROUTES, ...tripRoutes]);
 
   // Emit UUID → slug redirects map for the Express server's 301 handler.
   const redirects: Record<string, string> = {};
