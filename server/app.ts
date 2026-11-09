@@ -9,14 +9,14 @@ import { securityHeaders } from './securityHeaders';
 
 const app = express();
 
-// Trust first proxy (Replit, Cloudflare, etc.) for accurate rate limiting
+// Trust first proxy (Vercel's edge, or whatever fronts the server) for accurate rate limiting
 app.set('trust proxy', 1);
 
 // Canonical host enforcement: collapse www → apex and http → https for the
 // production domain with a single 301, so Google sees one canonical origin
 // (https://wanderluxe.io) instead of indexing duplicate homepage variants.
-// Scoped to wanderluxe.io only, so Replit preview domains, Cloud Run health
-// checks, and localhost are untouched. GET/HEAD only — never redirect API
+// Scoped to wanderluxe.io only, so *.vercel.app previews, health checks, and
+// localhost are untouched. GET/HEAD only — never redirect API
 // writes or CORS preflight.
 const CANONICAL_HOST = 'wanderluxe.io';
 app.use((req, res, next) => {

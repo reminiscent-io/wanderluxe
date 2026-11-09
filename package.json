@@ -14,7 +14,6 @@
     "build:print-showcase": "npx tsx scripts/build-print-showcase.ts",
     "prerender": "npx tsx scripts/prerender.ts",
     "build:dev": "vite build --mode development",
-    "claude": "claude",
     "lint": "eslint .",
     "preview": "vite preview --port 8080 --host 0.0.0.0",
     "start": "NODE_ENV=production node dist/server/index.js",
@@ -30,7 +29,6 @@
     "evals:seed": "npx tsx evals/fixtures/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.178",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -142,7 +140,6 @@
     "vitest": "^4.1.0"
   },
   "allowScripts": {
-    "@anthropic-ai/claude-code@2.1.178": true,
     "@swc/core@1.15.41": true,
     "core-js@3.49.0": true,
     "esbuild@0.25.11": true,

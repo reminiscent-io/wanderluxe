@@ -466,7 +466,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 
 ## Deployment
 
-**Vercel** (moving here from Replit). `vercel.json` sets the build command to `npm run build:vercel`: the normal `npm run build`, then `scripts/build-vercel-output.ts` writes `.vercel/output` (Build Output API v3), which Vercel serves as-is:
+**Vercel**. `vercel.json` sets the build command to `npm run build:vercel`: the normal `npm run build`, then `scripts/build-vercel-output.ts` writes `.vercel/output` (Build Output API v3), which Vercel serves as-is:
 - `static/`: `dist/` on the CDN (Vite bundle + prerendered HTML)
 - `functions/server.func/`: `server/app.ts` (the Express app, no `listen`) bundled by esbuild into one `index.mjs`, plus the `dist/` HTML/JSON it reads (`process.cwd()` is the function root). Streaming on (SSE chat), `maxDuration` 300, runtime = the build's Node major
 - `config.json` routes: `/api/*`, `/mcp`, `/.well-known/oauth-protected-resource*`, `/sitemap.xml`, `/llms.txt`, `/invite/*` → function, ahead of the filesystem (so the live sitemap beats the build-time copy); each prerendered page → its `index.html`; filesystem; `/trip/*` + `/explore/*` misses → function (legacy 301s, else SPA); everything else → `/index.html`
@@ -476,6 +476,6 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `express-rate-limit` counts in memory, so on Vercel each function instance keeps its own window
 - Env vars: same names as `.env` (§ Environment Variables). `VITE_*` must be present at **build** time; Vite inlines them
 
-**Replit** (legacy, Cloud Run): `npm run build` then `npm run start` → `node dist/server/index.js` (`server/index.ts` wraps `server/app.ts` in an HTTP server; `server/build.js` bundles it). Cloud Run injects `PORT` (local default 5001).
+**Replit** (legacy, Cloud Run; serves wanderluxe.io until DNS moves to Vercel, then gets deleted): `npm run build` then `npm run start` → `node dist/server/index.js` (`server/index.ts` wraps `server/app.ts` in an HTTP server; `server/build.js` bundles it). Cloud Run injects `PORT` (local default 5001).
 
 Either way: database migrations go through the Supabase dashboard/CLI, Edge Functions deploy via Supabase.
