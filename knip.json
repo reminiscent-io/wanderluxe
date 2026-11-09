@@ -29,7 +29,6 @@
     "src/types/global.d.ts"
   ],
   "ignoreDependencies": [
-    "@anthropic-ai/claude-code",
     "@types/google.maps",
     "puppeteer",
     "tar-fs",

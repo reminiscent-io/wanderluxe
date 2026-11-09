@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 ```bash
-npm install              # On Replit. Locally: npm install --no-package-lock --no-save (see note)
+npm install              # or npm ci (lockfile resolves against registry.npmjs.org)
 npm run dev             # Vite on http://localhost:8080 + Express (tsx server/index.ts) on 5001; Vite proxies /api → 5001
 npm run dev:frontend    # Vite only (no Express backend)
 npm run dev:server      # Express server only
@@ -18,7 +18,7 @@ npm run type-check      # TypeScript type checking
 npm run lint            # ESLint code quality check
 ```
 
-> **Note**: The project uses **npm** (Node 22+ — `concurrently` 10 in `npm run dev` requires it; Replit runs Node 24). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. **Every `resolved` URL in `package-lock.json` points at `http://package-firewall.replit.internal`**, which only resolves on Replit (deploy runs `npm ci` there), so a lockfile install elsewhere fails with ENOTFOUND. Off Replit, install with `--no-package-lock --no-save`, and don't rewrite the URLs unless asked. Side effect: each checkout's `node_modules` holds whatever the `^` ranges resolved to on install day, so when a test passes in one checkout and fails in another, diff installed package versions first. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
+> **Note**: The project uses **npm** (Node 22+ — `concurrently` 10 in `npm run dev` requires it; Replit runs Node 24). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. `package-lock.json`'s `resolved` URLs point at `https://registry.npmjs.org/`. They used to point at Replit's `http://package-firewall.replit.internal`, which only resolves on Replit and broke the Vercel install with ENOTFOUND; an `npm install` run on Replit can write those URLs back, so check the lockfile diff before committing and `sed` them back to the registry if they reappear. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
 
 ### Building & Testing
 ```bash
@@ -96,7 +96,9 @@ src/
 └── utils/                 # Utility functions
 
 server/
-├── index.ts              # Express server setup (CSP, canonical-host redirects, static serving + cache headers)
+├── app.ts                # Express app (canonical-host redirects, CORS, static serving + cache headers); no listen, so Vercel can import it
+├── index.ts              # HTTP server around app.ts (local dev, Replit/Cloud Run)
+├── securityHeaders.ts    # helmet CSP + security headers (also stamped onto Vercel CDN routes at build)
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   sitemap, printDesign (Print Studio OpenAI call + trip payload), printSnapshot
 └── routes/               # API routes, registered in routes/index.ts (Stripe, AI chat, MCP server, iCal feed, admin insights,
@@ -331,7 +333,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 #### 19. **Booking Tab (Expedia Affiliate)**
 - `src/components/trip/BookingView.tsx` + `src/lib/expedia.ts` — embedded Expedia Group affiliate search widget (stays + flights, Partnerize network), fallback deep link, and a human travel-advisor CTA (Fora Travel)
 - AI-chat hotel place cards (`is_stay`) get "Book on Expedia" deep links (`buildExpediaHotelSearchUrl`)
-- Affiliate click tracking via gtag (`trackExpediaClick`); CSP/COEP in `server/index.ts` is tuned so the widget iframe loads — don't re-enable COEP
+- Affiliate click tracking via gtag (`trackExpediaClick`); CSP/COEP in `server/securityHeaders.ts` is tuned so the widget iframe loads — don't re-enable COEP
 
 #### 20. **Trip Map View**
 - `src/components/trip/map/` — `TripMapView` (lazy-loaded), the third arm of the itinerary view switch. Google Maps via `@vis.gl/react-google-maps`
@@ -383,7 +385,7 @@ Full contract: **`docs/print-studio.md` — read it before changing `src/lib/pri
 
 ### Adding API Endpoint
 1. Create a router in `server/routes/`
-2. Register it in `registerRoutes()` (`server/routes/index.ts`), which `server/index.ts` mounts before `express.static` and the SPA catch-all
+2. Register it in `registerRoutes()` (`server/routes/index.ts`), which `server/app.ts` mounts before `express.static` and the SPA catch-all
 3. Express uses the service-role key and bypasses RLS, so do your own auth + trip-access check (see `canAccessTrip` in `ai-chat.ts`)
 4. Use Edge Functions for external API calls (Google Places, Gemini, OpenWeatherMap, Mailgun)
 
@@ -465,9 +467,16 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 
 ## Deployment
 
-Deployed via Replit Autoscale targeting Cloud Run (`deploymentTarget = "cloudrun"` in `.replit`):
+**Vercel**. `vercel.json` sets the build command to `npm run build:vercel`: the normal `npm run build`, then `scripts/build-vercel-output.ts` writes `.vercel/output` (Build Output API v3), which Vercel serves as-is:
+- `static/`: `dist/` on the CDN (Vite bundle + prerendered HTML)
+- `functions/server.func/`: `server/app.ts` (the Express app, no `listen`) bundled by esbuild into one `index.mjs`, plus the `dist/` HTML/JSON it reads (`process.cwd()` is the function root). Streaming on (SSE chat), `maxDuration` 300, runtime = the build's Node major
+- `config.json` routes: `/api/*`, `/mcp`, `/.well-known/oauth-protected-resource*`, `/sitemap.xml`, `/llms.txt`, `/invite/*` → function, ahead of the filesystem (so the live sitemap beats the build-time copy); each prerendered page → its `index.html`; filesystem; `/trip/*` + `/explore/*` misses → function (legacy 301s, else SPA); everything else → `/index.html`
+- The CDN never runs Express, so the script runs `server/securityHeaders.ts` (helmet) once at build time and stamps its headers onto every route, and mirrors `cacheControlFor()` from `server/app.ts`. Change the CSP in `securityHeaders.ts` only; a new Express-owned path outside `/api` must also be added to the route regex in the script
+- CORS: production allows `ALLOWED_ORIGINS`, `wanderluxe.io`, and this deployment's own `VERCEL_URL` / `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` (never all of `*.vercel.app`)
+- Prerender: Vercel's build image can't launch puppeteer's Chrome (no `libnspr4`), so `scripts/prerender.ts` launches `@sparticuz/chromium` when `VERCEL` is set. Prerender failures never fail the build, so check the build log for `[prerender] Wrote …/explore/<slug>/index.html` lines and `N prerendered routes` from the output script
+- `express-rate-limit` counts in memory, so on Vercel each function instance keeps its own window
+- Env vars: same names as `.env` (§ Environment Variables). `VITE_*` must be present at **build** time; Vite inlines them
 
-1. Build: `npm run build` → sitemap + Vite build + prerender + server bundle (`server/build.js` runs esbuild: `server/index.ts` → `dist/server/index.js`)
-2. Run: `npm run start` → `NODE_ENV=production node dist/server/index.js`; Cloud Run injects `PORT` (local default 5001)
-3. Set environment variables in the Replit deployment, including the server-only `SUPABASE_SERVICE_ROLE_KEY`
-4. Database migrations applied via Supabase dashboard/CLI; Edge Functions deployed via Supabase
+**Replit** (legacy, Cloud Run; serves wanderluxe.io until DNS moves to Vercel, then gets deleted): `npm run build` then `npm run start` → `node dist/server/index.js` (`server/index.ts` wraps `server/app.ts` in an HTTP server; `server/build.js` bundles it). Cloud Run injects `PORT` (local default 5001).
+
+Either way: database migrations go through the Supabase dashboard/CLI, Edge Functions deploy via Supabase.

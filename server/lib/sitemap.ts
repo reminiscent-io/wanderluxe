@@ -19,7 +19,7 @@ export interface SitemapEntry {
 
 /**
  * Every indexable static route. Keep in step with scripts/prerender.ts and
- * prerenderedFileFor() in server/index.ts — a route listed here should also be
+ * prerenderedFileFor() in server/app.ts — a route listed here should also be
  * prerendered so crawlers get real HTML, not the empty SPA shell.
  */
 export const STATIC_ROUTES: SitemapEntry[] = [

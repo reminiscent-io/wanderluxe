@@ -64,3 +64,6 @@ brag-output*/composition/renders/
 brag-output*/composition/CLAUDE.md
 brag-output*/composition/AGENTS.md
 brag-output*/composition/assets/music/*.mp3
+
+# Vercel Build Output (scripts/build-vercel-output.ts) and CLI project link
+.vercel
