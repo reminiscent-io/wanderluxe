@@ -6,6 +6,7 @@ import UnsplashImage from "./UnsplashImage";
 import LogoFromSupabase from "./LogoFromSupabase";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { arrivedPrerendered, markPrerenderedMounted } from "@/lib/prerenderedBoot";
 
 // A slide holds for six seconds and crossfades over two: an eight-second cycle
 // reads as a slow pan through a photo book. The old 2.5 s hold felt like a
@@ -83,6 +84,14 @@ const Hero = () => {
 
   const [index, setIndex] = useState(0);
 
+  // Landing on `/` shows the prerendered hero before React mounts, and
+  // createRoot then replaces it with a fresh tree. Replaying the entrance fades
+  // on that tree blanked the photo and the copy and faded them back in, so the
+  // page loaded twice with a white flash between. Start at the end state
+  // instead. Navigating back to `/` later still gets the fades.
+  const [skipEntrance] = useState(() => arrivedPrerendered("/"));
+  useEffect(() => markPrerenderedMounted(), []);
+
   // Subtle parallax on scroll. The wrapper only ever moves down by less than
   // the page has scrolled, so the strip it uncovers at the top of the frame
   // is always already off-screen, at either hero height.
@@ -133,7 +142,8 @@ const Hero = () => {
       */}
       <div className="relative h-[50vh] min-h-[300px] overflow-hidden supports-[height:1svh]:h-[50svh] md:absolute md:inset-0 md:h-auto md:min-h-0">
         <div ref={parallaxRef} className="absolute inset-0">
-          <AnimatePresence>
+          {/* initial={false} only affects the first slide; later slides still crossfade. */}
+          <AnimatePresence initial={!skipEntrance}>
             <motion.div
               key={current.src}
               className="absolute inset-0"
@@ -196,7 +206,7 @@ const Hero = () => {
         {/* Phone: the wordmark is the photograph's caption. pointer-events-none
             keeps the attribution link under it clickable. */}
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={skipEntrance ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="pointer-events-none relative z-10 flex h-full items-center justify-center md:hidden"
@@ -214,7 +224,7 @@ const Hero = () => {
           md+ overlay covers the whole photo, so it lets pointer events through
           (the photo credit sits beneath it) and only its content takes them. */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={skipEntrance ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
         className="relative z-10 bg-background px-6 pb-10 pt-8 text-center md:pointer-events-none md:absolute md:inset-0 md:flex md:items-center md:justify-center md:bg-transparent md:p-0"
@@ -241,7 +251,7 @@ const Hero = () => {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={skipEntrance ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
             className="flex w-full flex-col items-center gap-4 sm:w-auto sm:flex-row sm:gap-6"
@@ -267,7 +277,7 @@ const Hero = () => {
       {/* Scroll-down hint, md+ only: on a phone the next section peeks in. */}
       <motion.div
         className="absolute bottom-8 left-1/2 z-10 hidden md:block"
-        initial={{ opacity: 0, x: "-50%" }}
+        initial={{ opacity: skipEntrance ? 1 : 0, x: "-50%" }}
         animate={{ opacity: 1, x: "-50%", y: [0, 8, 0] }}
         transition={{
           opacity: { delay: 3, duration: 1 },

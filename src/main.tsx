@@ -85,12 +85,11 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       });
   });
 
-  // Reload page when a new service worker takes control
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
-  });
+  // No reload on `controllerchange`. sw.js calls skipWaiting + clients.claim,
+  // so a new worker takes control on the first visit (no controller before)
+  // and on the first open after every deploy, and a reload there loaded the
+  // page a second time. It bought nothing: the worker fetches network-first and
+  // the server sends HTML with must-revalidate, so the page that is open is
+  // already the current build. A tab left open across a deploy gets the
+  // "new version" toast from useVersionCheck instead.
 }
