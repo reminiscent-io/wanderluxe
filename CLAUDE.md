@@ -472,6 +472,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `config.json` routes: `/api/*`, `/mcp`, `/.well-known/oauth-protected-resource*`, `/sitemap.xml`, `/llms.txt`, `/invite/*` → function, ahead of the filesystem (so the live sitemap beats the build-time copy); each prerendered page → its `index.html`; filesystem; `/trip/*` + `/explore/*` misses → function (legacy 301s, else SPA); everything else → `/index.html`
 - The CDN never runs Express, so the script runs `server/securityHeaders.ts` (helmet) once at build time and stamps its headers onto every route, and mirrors `cacheControlFor()` from `server/app.ts`. Change the CSP in `securityHeaders.ts` only; a new Express-owned path outside `/api` must also be added to the route regex in the script
 - CORS: production allows `ALLOWED_ORIGINS`, `wanderluxe.io`, and this deployment's own `VERCEL_URL` / `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` (never all of `*.vercel.app`)
+- Prerender: Vercel's build image can't launch puppeteer's Chrome (no `libnspr4`), so `scripts/prerender.ts` launches `@sparticuz/chromium` when `VERCEL` is set. Prerender failures never fail the build, so check the build log for `[prerender] Wrote …/explore/<slug>/index.html` lines and `N prerendered routes` from the output script
 - `express-rate-limit` counts in memory, so on Vercel each function instance keeps its own window
 - Env vars: same names as `.env` (§ Environment Variables). `VITE_*` must be present at **build** time; Vite inlines them
 
