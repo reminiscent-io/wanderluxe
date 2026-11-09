@@ -175,8 +175,8 @@ Row Level Security (RLS) policies enforce access control at the PostgreSQL level
 git clone https://github.com/reminiscent-io/wanderluxe.git
 cd wanderluxe
 
-# Install dependencies (off Replit — see the note below)
-npm install --no-package-lock --no-save
+# Install dependencies
+npm ci
 
 # Set up environment variables
 cp .env.example .env
@@ -188,7 +188,7 @@ npm run dev
 
 Visit **http://localhost:8080** and start planning your next adventure! 🌴
 
-> **Why the install flags?** Every `resolved` URL in `package-lock.json` points at Replit's internal package firewall, which only resolves on Replit (where deploys run `npm ci`). Elsewhere a lockfile install fails with `ENOTFOUND`, so install without the lockfile. `.npmrc` sets `legacy-peer-deps=true`.
+> `.npmrc` sets `legacy-peer-deps=true` so installs resolve.
 >
 > Database migrations live in `supabase/migrations/` and are applied by hand via the Supabase dashboard, CLI, or MCP. Nothing applies them automatically.
 >
@@ -405,22 +405,13 @@ npm run evals:chat       # One suite at a time: evals:chat | evals:parsing | eva
 
 ## 🚀 Deployment
 
-WanderLuxe runs as a full-stack Express app (serving the built Vite frontend, API routes, the iCal feed, and the MCP server) and is deployed via **Replit Autoscale** targeting **Google Cloud Run**.
+WanderLuxe deploys on **Vercel**. Pushing a branch builds a preview; the production branch builds production. `vercel.json` sets the build command:
 
-### Deployment Steps
 ```bash
-# 1. Build the production bundle
-#    (sitemap → vite build → prerender → server bundle)
-npm run build
-
-# 2. Set environment variables in your hosting platform
-#    (same variables as .env, including the server-only SUPABASE_SERVICE_ROLE_KEY)
-
-# 3. Start the production server
-npm run start          # NODE_ENV=production node dist/server/index.js
+npm run build:vercel   # npm run build, then scripts/build-vercel-output.ts
 ```
 
-Cloud Run injects `PORT` at runtime (local default 5001). Any platform that can run a Node server works — the build output is a standard Node bundle.
+That writes `.vercel/output`: the Vite bundle and prerendered pages go to the CDN, and the Express app (API routes, the iCal feed, the MCP server, invite previews, the live sitemap) becomes one Vercel function. Set the same variables as `.env` in the Vercel project, including the server-only `SUPABASE_SERVICE_ROLE_KEY`. `VITE_*` variables are inlined at build time, so changing one needs a redeploy.
 
 **Note:** Supabase Edge Functions and database migrations are deployed separately via the Supabase dashboard or CLI.
 

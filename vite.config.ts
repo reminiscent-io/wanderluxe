@@ -73,15 +73,6 @@ export default defineConfig(({ mode }) => ({
       'Expires': '0',
       'Surrogate-Control': 'no-store'
     },
-    allowedHosts: [
-      '38fedee6-5ae3-4eee-8c9e-f99557fb0bf6-00-1y7emd69tsqv0.worf.replit.dev',
-      'dbd55640-70ab-4284-bf3e-45861cdeb954-00-3inbm7rt0087l.janeway.replit.dev',
-      'wanderluxe.io',
-      'www.wanderluxe.io',
-      'wanderluxe.replit.app',
-      '.replit.dev',
-      '.repl.co'
-    ],
     watch: {
       ignored: [
         "**/.cache/**",
