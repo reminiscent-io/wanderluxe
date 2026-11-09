@@ -6,7 +6,7 @@ import { preview } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 
 // Keep in step with STATIC_ROUTES in server/lib/sitemap.ts and
-// prerenderedFileFor() in server/index.ts.
+// prerenderedFileFor() in server/app.ts.
 const STATIC_ROUTES = ['/', '/explore', '/guide', '/about', '/terms', '/privacy'];
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
 const PORT = Number(process.env.PRERENDER_PORT || 4173);
@@ -117,7 +117,7 @@ async function main() {
   console.log(`[prerender] Wrote redirects.json with ${Object.keys(redirects).length} entries.`);
 
   // Old slug → current slug, so a renamed itinerary keeps the URL Google
-  // already indexed (server/index.ts turns these into 301s). A slug that is
+  // already indexed (server/app.ts turns these into 301s). A slug that is
   // live for another trip is never a redirect source.
   const liveSlugs = new Set(publicTrips.map((t) => t.slug));
   const slugRedirects: Record<string, string> = {};
