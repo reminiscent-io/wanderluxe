@@ -50,6 +50,25 @@ async function fetchPublicTrips(): Promise<PublicTripRoute[]> {
     }));
 }
 
+// Vercel's build image (Amazon Linux) lacks the shared libraries puppeteer's
+// Chrome links against (libnspr4 and friends), so it fails to launch there.
+// @sparticuz/chromium ships a Chromium built with its own libraries; use it
+// only on Vercel and keep puppeteer's Chrome everywhere else.
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL) {
+    const { default: chromium } = await import('@sparticuz/chromium');
+    return puppeteer.launch({
+      headless: true,
+      executablePath: await chromium.executablePath(),
+      args: chromium.args,
+    });
+  }
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
 // Strict route guard: static routes are hardcoded, and dynamic /explore/{slug}
 // routes only reach here after the slug has matched SLUG_PATTERN. Anything else
 // is refused so no untrusted string can shape a filesystem write.
@@ -141,10 +160,7 @@ async function main() {
   const origin = `http://127.0.0.1:${PORT}`;
   console.log(`[prerender] Preview server listening on ${origin}`);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await launchBrowser();
 
   try {
     for (const route of routesToPrerender) {
