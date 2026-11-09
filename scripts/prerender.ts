@@ -4,9 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { preview } from 'vite';
 import { createClient } from '@supabase/supabase-js';
+import { JSDOM } from 'jsdom';
+import { orderRoutesForPrerender, settleHeadTags } from './prerenderHead';
 
 // Keep in step with STATIC_ROUTES in server/lib/sitemap.ts and
-// prerenderedFileFor() in server/index.ts.
+// prerenderedFileFor() in server/app.ts.
 const STATIC_ROUTES = ['/', '/explore', '/guide', '/about', '/terms', '/privacy'];
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
 const PORT = Number(process.env.PRERENDER_PORT || 4173);
@@ -50,6 +52,25 @@ async function fetchPublicTrips(): Promise<PublicTripRoute[]> {
     }));
 }
 
+// Vercel's build image (Amazon Linux) lacks the shared libraries puppeteer's
+// Chrome links against (libnspr4 and friends), so it fails to launch there.
+// @sparticuz/chromium ships a Chromium built with its own libraries; use it
+// only on Vercel and keep puppeteer's Chrome everywhere else.
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL) {
+    const { default: chromium } = await import('@sparticuz/chromium');
+    return puppeteer.launch({
+      headless: true,
+      executablePath: await chromium.executablePath(),
+      args: chromium.args,
+    });
+  }
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
 // Strict route guard: static routes are hardcoded, and dynamic /explore/{slug}
 // routes only reach here after the slug has matched SLUG_PATTERN. Anything else
 // is refused so no untrusted string can shape a filesystem write.
@@ -83,8 +104,13 @@ async function prerenderRoute(browser: Browser, origin: string, route: string) {
   // the app re-measures on boot.
   await page.evaluate(() => document.documentElement.removeAttribute('style'));
 
-  const html = await page.content();
+  const dom = new JSDOM(await page.content());
   await page.close();
+  const duplicates = settleHeadTags(dom.window.document);
+  if (duplicates.length > 0) {
+    console.warn(`[prerender] ${route} has duplicate head tags: ${duplicates.join(', ')}`);
+  }
+  const html = dom.serialize();
 
   const outDir =
     route === '/' ? DIST_DIR : path.join(DIST_DIR, route.replace(/^\//, ''));
@@ -102,7 +128,7 @@ async function main() {
 
   const publicTrips = await fetchPublicTrips();
   const tripRoutes = publicTrips.map((t) => `/explore/${t.slug}`);
-  const routesToPrerender = [...STATIC_ROUTES, ...tripRoutes];
+  const routesToPrerender = orderRoutesForPrerender([...STATIC_ROUTES, ...tripRoutes]);
 
   // Emit UUID → slug redirects map for the Express server's 301 handler.
   const redirects: Record<string, string> = {};
@@ -117,7 +143,7 @@ async function main() {
   console.log(`[prerender] Wrote redirects.json with ${Object.keys(redirects).length} entries.`);
 
   // Old slug → current slug, so a renamed itinerary keeps the URL Google
-  // already indexed (server/index.ts turns these into 301s). A slug that is
+  // already indexed (server/app.ts turns these into 301s). A slug that is
   // live for another trip is never a redirect source.
   const liveSlugs = new Set(publicTrips.map((t) => t.slug));
   const slugRedirects: Record<string, string> = {};
@@ -141,10 +167,7 @@ async function main() {
   const origin = `http://127.0.0.1:${PORT}`;
   console.log(`[prerender] Preview server listening on ${origin}`);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await launchBrowser();
 
   try {
     for (const route of routesToPrerender) {

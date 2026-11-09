@@ -1,0 +1,277 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import rateLimit from 'express-rate-limit';
+import { registerRoutes } from './routes';
+import { securityHeaders } from './securityHeaders';
+
+const app = express();
+
+// Trust first proxy (Vercel's edge, or whatever fronts the server) for accurate rate limiting
+app.set('trust proxy', 1);
+
+// Canonical host enforcement: collapse www → apex and http → https for the
+// production domain with a single 301, so Google sees one canonical origin
+// (https://wanderluxe.io) instead of indexing duplicate homepage variants.
+// Scoped to wanderluxe.io only, so *.vercel.app previews, health checks, and
+// localhost are untouched. GET/HEAD only — never redirect API
+// writes or CORS preflight.
+const CANONICAL_HOST = 'wanderluxe.io';
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  // Strip any port so wanderluxe.io:443 still matches the canonical apex.
+  const host = (req.headers.host || '').toLowerCase().split(':')[0];
+  if (host !== CANONICAL_HOST && host !== `www.${CANONICAL_HOST}`) return next();
+  const proto = ((req.headers['x-forwarded-proto'] as string | undefined) || req.protocol || '')
+    .split(',')[0]
+    .trim();
+  const needsHttps = proto === 'http';
+  const needsApex = host.startsWith('www.');
+  if (needsHttps || needsApex) {
+    // Re-anchor on the hardcoded canonical origin, carrying over only the path +
+    // query parsed from the (untrusted) request URL. Reading .pathname/.search
+    // discards any host the input might smuggle in — protocol-relative ("//host")
+    // and backslash forms resolve away, and an absolute URL's host is dropped — so
+    // the redirect target's host is never user-controlled. Closes CodeQL
+    // js/server-side-unvalidated-url-redirection.
+    const { pathname, search } = new URL(req.originalUrl, `https://${CANONICAL_HOST}`);
+    return res.redirect(301, `https://${CANONICAL_HOST}${pathname}${search}`);
+  }
+  next();
+});
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:5001'];
+
+// On Vercel, let the deployment call itself from its own *.vercel.app URLs
+// (browsers send Origin on same-origin POSTs). Only this deployment's URLs,
+// never a blanket *.vercel.app pattern: anyone can deploy there.
+for (const host of [
+  process.env.VERCEL_URL,
+  process.env.VERCEL_BRANCH_URL,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL,
+]) {
+  if (host) allowedOrigins.push(`https://${host}`);
+}
+
+// The wanderluxe.io pattern must be anchored so the domain is either the apex
+// (preceded by the scheme separator `//`) or a true subdomain (preceded by `.`).
+// A bare `wanderluxe\.io$` would also match attacker domains like
+// `evilwanderluxe.io`, which combined with `credentials: true` would leak
+// authenticated responses. (The replit patterns already require a leading `.`.)
+const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /(\/\/|\.)wanderluxe\.io(:\d+)?$/];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, mobile apps, same-origin)
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOriginPatterns.some(pattern => pattern.test(origin))) return callback(null, true);
+    console.warn(`CORS blocked origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(securityHeaders);
+
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
+app.use(express.json());
+
+// Rate limiting to prevent DoS attacks
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests, please try again later.',
+});
+
+// Apply rate limiting to API routes only (not static files)
+app.use('/api', generalLimiter);
+
+registerRoutes(app);
+
+// Simple health check route
+app.get('/api/health', (req, res) => {
+  res.status(200).send({ status: 'ok' });
+});
+
+// Serve static files and handle SPA routing
+const distPath = path.resolve(process.cwd(), 'dist');
+const indexPath = path.join(distPath, 'index.html');
+
+// Routes that may have prerendered HTML emitted by scripts/prerender.ts.
+// A switch statement (below) maps request paths to hardcoded filenames so
+// no user-controlled string ever reaches the filesystem.
+const prerenderedExplore = path.join(distPath, 'explore', 'index.html');
+const prerenderedGuide = path.join(distPath, 'guide', 'index.html');
+const prerenderedAbout = path.join(distPath, 'about', 'index.html');
+const prerenderedTerms = path.join(distPath, 'terms', 'index.html');
+const prerenderedPrivacy = path.join(distPath, 'privacy', 'index.html');
+
+// Build the allow-list of /explore/{slug} prerendered slugs by scanning dist/explore/*/index.html.
+// Membership check + strict slug regex means no user-controlled path can ever escape this set.
+const exploreSlugs = new Set<string>();
+try {
+  const exploreDir = path.join(distPath, 'explore');
+  if (fs.existsSync(exploreDir) && fs.statSync(exploreDir).isDirectory()) {
+    for (const entry of fs.readdirSync(exploreDir, { withFileTypes: true })) {
+      if (
+        entry.isDirectory() &&
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.name) &&
+        fs.existsSync(path.join(exploreDir, entry.name, 'index.html'))
+      ) {
+        exploreSlugs.add(entry.name);
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to scan prerendered /explore slugs:', err);
+}
+
+// UUID → slug redirect map, emitted by scripts/prerender.ts at build time.
+// Used to issue 301 redirects from legacy /trip/{uuid} URLs to /explore/{slug}.
+let uuidToSlug: Record<string, string> = {};
+try {
+  const redirectsPath = path.join(distPath, 'redirects.json');
+  if (fs.existsSync(redirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(redirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      uuidToSlug = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load redirects.json:', err);
+}
+
+// Old slug → current slug, also emitted by scripts/prerender.ts. Lets a
+// renamed showcase itinerary keep the URL search engines already indexed.
+let slugRedirects: Record<string, string> = {};
+try {
+  const slugRedirectsPath = path.join(distPath, 'slug-redirects.json');
+  if (fs.existsSync(slugRedirectsPath)) {
+    const parsed = JSON.parse(fs.readFileSync(slugRedirectsPath, 'utf8'));
+    if (parsed && typeof parsed === 'object') {
+      slugRedirects = parsed as Record<string, string>;
+    }
+  }
+} catch (err) {
+  console.warn('[server] Failed to load slug-redirects.json:', err);
+}
+
+const UUID_TRIP_PATH = /^\/trip\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/.*)?$/i;
+const OLD_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)(\/.*)?$/;
+const EXPLORE_SLUG_PATH = /^\/explore\/([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+
+function prerenderedFileFor(normalizedPath: string): string | null {
+  switch (normalizedPath) {
+    case '/explore': return prerenderedExplore;
+    case '/guide': return prerenderedGuide;
+    case '/about': return prerenderedAbout;
+    case '/terms': return prerenderedTerms;
+    case '/privacy': return prerenderedPrivacy;
+  }
+  const exploreMatch = EXPLORE_SLUG_PATH.exec(normalizedPath);
+  if (exploreMatch && exploreSlugs.has(exploreMatch[1])) {
+    return path.join(distPath, 'explore', exploreMatch[1], 'index.html');
+  }
+  return null;
+}
+
+
+// Cache policy for the static bundle. Vite content-hashes everything under
+// /assets/, so those files can be cached forever; HTML must always be
+// revalidated so a deploy is picked up on the next navigation (ETags make the
+// revalidation a cheap 304). The service worker, its version stamp and the
+// manifest are fetched by the update check, so they get no caching at all.
+const ONE_YEAR = 60 * 60 * 24 * 365;
+const ONE_WEEK = 60 * 60 * 24 * 7;
+const ONE_HOUR = 60 * 60;
+function cacheControlFor(filePath: string): string {
+  const relative = path.relative(distPath, filePath).split(path.sep).join('/');
+  const base = path.basename(relative);
+  if (relative.startsWith('assets/')) return `public, max-age=${ONE_YEAR}, immutable`;
+  if (base === 'sw.js' || base === 'version.json' || base === 'manifest.json') return 'no-cache';
+  if (base === 'sitemap.xml' || base === 'llms.txt' || base === 'robots.txt') return `public, max-age=${ONE_HOUR}`;
+  if (base.endsWith('.html')) return 'public, max-age=0, must-revalidate';
+  if (/\.(png|jpe?g|webp|gif|svg|ico|ttf|woff2?)$/i.test(base)) return `public, max-age=${ONE_WEEK}`;
+  return `public, max-age=${ONE_HOUR}`;
+}
+function setStaticCacheHeaders(res: express.Response, filePath: string): void {
+  res.setHeader('Cache-Control', cacheControlFor(filePath));
+}
+const HTML_SEND_OPTIONS = { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } };
+
+// Check if dist folder exists and serve static files
+if (fs.existsSync(distPath)) {
+  // redirect:false so canonical no-trailing-slash routes (e.g. /explore/{slug},
+  // matching the sitemap + <link rel="canonical">) fall through to the
+  // SPA/prerender handler below and are served directly, instead of serve-static
+  // 301-redirecting them to a trailing-slash variant the canonical tag never
+  // points to. Static asset files (with extensions) are unaffected.
+  app.use(express.static(distPath, { redirect: false, setHeaders: setStaticCacheHeaders }));
+
+  // 301-redirect legacy /trip/{uuid} URLs for public trips to their /explore/{slug} canonical.
+  app.get(/^\/trip\/[0-9a-fA-F-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = UUID_TRIP_PATH.exec(req.path);
+    if (!match) return next();
+    const slug = uuidToSlug[match[1].toLowerCase()];
+    if (!slug) return next();
+    const suffix = match[2] ?? '';
+    return res.redirect(301, `/explore/${slug}${suffix}`);
+  });
+
+  // 301-redirect a renamed itinerary's old slug to its current one. A slug
+  // that is live (prerendered) always wins over a stale redirect entry.
+  app.get(/^\/explore\/[a-z0-9-]+(?:\/.*)?$/, (req, res, next) => {
+    const match = OLD_SLUG_PATH.exec(req.path);
+    if (!match) return next();
+    const [, oldSlug, suffix = ''] = match;
+    if (exploreSlugs.has(oldSlug)) return next();
+    const target = slugRedirects[oldSlug];
+    if (!target || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(target)) return next();
+    return res.redirect(301, `/explore/${target}${suffix}`);
+  });
+
+  // Handle SPA routing - prefer prerendered HTML for known public routes,
+  // fall back to index.html for everything else (client-side routing).
+  // Use regex pattern compatible with Express 5.x
+  app.get(/^(?!\/api).*$/, (req, res) => {
+    const normalizedPath = (req.path || '/').replace(/\/$/, '') || '/';
+    const prerenderedPath = prerenderedFileFor(normalizedPath);
+
+    if (prerenderedPath && fs.existsSync(prerenderedPath)) {
+      return res.sendFile(prerenderedPath, HTML_SEND_OPTIONS);
+    }
+
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath, HTML_SEND_OPTIONS);
+    } else {
+      res.status(503).send('Application is starting up. Please try again in a moment.');
+    }
+  });
+} else if (process.env.NODE_ENV === 'production') {
+  // In production without dist folder, return helpful message
+  app.get(/^(?!\/api).*$/, (req, res) => {
+    res.status(503).send('Application build not found. Please run "npm run build" first.');
+  });
+}
+
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message
+  });
+});
+
+export default app;

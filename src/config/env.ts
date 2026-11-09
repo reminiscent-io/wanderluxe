@@ -4,12 +4,12 @@ import { z } from 'zod';
  * Environment Variable Validation for WanderLuxe
  *
  * This module validates all required environment variables at application startup.
- * For Replit deployments, ensure all variables are set in the "Secrets" tab.
+ * VITE_* variables are inlined by Vite at build time: locally from .env, on
+ * Vercel from the project's environment variables (redeploy after changing one).
  *
- * Required Secrets in Replit:
+ * Required:
  * - VITE_SUPABASE_URL
  * - VITE_SUPABASE_ANON_KEY
- * - VITE_GOOGLE_MAPS_API_KEY
  */
 
 const envSchema = z.object({
@@ -128,43 +128,21 @@ After setting the variables, please restart the application.
 }
 
 /**
- * Returns platform-specific instructions for setting environment variables
+ * How to fix a missing variable. This runs in the browser, so it can't tell
+ * local dev from a deploy; it covers both.
  */
 function getInstructionsForPlatform(): string {
-  // Check if running on Replit
-  if (typeof process !== 'undefined' && process.env.REPL_ID) {
-    return `
-📍 REPLIT DEPLOYMENT DETECTED
-
-To fix this issue:
-1. Click on the "Tools" button in the left sidebar
-2. Select "Secrets"
-3. Add each missing variable with its value
-4. Click "Add Secret" for each one
-5. Restart the Repl
-
-Required Secrets:
-  • VITE_SUPABASE_URL - Your Supabase project URL
-  • VITE_SUPABASE_ANON_KEY - Your Supabase anonymous key
-  • VITE_GOOGLE_MAPS_API_KEY - Your Google Maps API key
-
-⚠️  DO NOT commit these values to .env file!
-`;
-  }
-
-  // Default instructions for local development
   return `
-📍 LOCAL DEVELOPMENT
-
 To fix this issue:
-1. Copy .env.example to .env
-2. Fill in the required values in .env
-3. Restart the development server
 
-Example:
-  cp .env.example .env
-  # Edit .env with your values
-  bun run dev
+Local development:
+  1. cp .env.example .env
+  2. Fill in the required values in .env
+  3. Restart the dev server (npm run dev)
+
+Vercel:
+  1. Add the variables under Project Settings > Environment Variables
+  2. Redeploy: VITE_* values are baked in at build time
 `;
 }
 
