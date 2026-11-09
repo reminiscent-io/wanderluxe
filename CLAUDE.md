@@ -460,6 +460,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - **Tests in a checkout without `.env`** (e.g. a fresh worktree) fail at collection when the import graph reaches `@/integrations/supabase/client`, because `validateEnv()` throws. Add `vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))` inline, as ~25 test files already do; don't loosen `validateEnv`
 - **TypeScript**: `strict` is **off** (`strict: false` in `tsconfig.app.json`, `strictNullChecks: false` in `tsconfig.json`); only `noImplicitAny` is on
 - **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something; compare against a pre-change run, or grep the output for the files you touched
+- **Head tags are never deduped**: on React 19, react-helmet-async 3 renders plain elements that React hoists into `<head>`, so two mounted `<SEO>`s emit two og:titles and crawlers read the first. One `<SEO>` per page. `scripts/prerender.ts` renders `/` last (it overwrites `dist/index.html`, the shell every other route boots from), drops the `data-shell` fallback `<title>`/description once a page renders its own, and warns on any duplicate left
 - **No CI**: nothing runs tests on push. SonarCloud (`sonar-project.properties`) only scans, and counts only `src/` tests as tests
 
 ## Deployment
