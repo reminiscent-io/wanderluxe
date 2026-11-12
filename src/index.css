@@ -277,6 +277,19 @@
      */
     --hero-left: 0px;
     --hero-width: 100%;
+
+    /*
+     * Room that bottom-anchored floaters (toasts) leave free above the screen
+     * edge. 0 everywhere except under the trip page's mobile tab bar, where it
+     * covers the bar (4rem) plus the assistant button that rides 2rem above it.
+     */
+    --app-bottom-clear: 0px;
+  }
+
+  @media (max-width: 767px) {
+    :root:has([data-bottom-nav]) {
+      --app-bottom-clear: 6rem;
+    }
   }
 
   /* md: keep in step with the h-16 header and the trip page's md:pl-[280px] */

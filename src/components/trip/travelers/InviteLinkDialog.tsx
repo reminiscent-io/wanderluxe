@@ -164,7 +164,7 @@ export default function InviteLinkDialog({
               <Input
                 readOnly
                 value={generatedUrl}
-                className="text-sm"
+                className="text-base md:text-sm"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <Button size="icon" variant="outline" onClick={handleCopy} title="Copy link">

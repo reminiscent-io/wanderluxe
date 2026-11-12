@@ -387,8 +387,10 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
         <div
           className="fixed left-0 w-[280px] bg-background border-r border-[hsl(var(--border))] z-30"
           style={{
-            top: "calc(var(--app-nav-h, 64px) + env(safe-area-inset-top, 0px))",
-            height: "calc(calc(var(--app-height, 1vh) * 100) - var(--app-nav-h, 64px) - env(safe-area-inset-top, 0px))",
+            // --app-nav-h already includes the top safe-area inset; adding it
+            // again dropped the sidebar 24px on an installed iPad.
+            top: "var(--app-nav-h, 64px)",
+            height: "calc(calc(var(--app-height, 1vh) * 100) - var(--app-nav-h, 64px))",
           }}
         >
           {sidebarContent}

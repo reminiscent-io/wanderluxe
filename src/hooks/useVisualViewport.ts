@@ -94,10 +94,24 @@ export function useVisualViewport(): VisualViewportState {
     // Update on scroll (keyboard panning)
     vv.addEventListener('scroll', updateViewport);
 
+    // iOS 26+ can dismiss the keyboard without a final resize/scroll event,
+    // which leaves the last offsetTop/height in state and the chat sheet parked
+    // above the bottom edge. Re-read once the keyboard animation has settled.
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    const resyncAfterFocusChange = () => {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(updateViewport, 350);
+    };
+    document.addEventListener('focusout', resyncAfterFocusChange);
+    document.addEventListener('focusin', resyncAfterFocusChange);
+
     // Initial update
     updateViewport();
 
     return () => {
+      clearTimeout(settleTimer);
+      document.removeEventListener('focusout', resyncAfterFocusChange);
+      document.removeEventListener('focusin', resyncAfterFocusChange);
       vv.removeEventListener('resize', updateViewport);
       vv.removeEventListener('scroll', updateViewport);
     };

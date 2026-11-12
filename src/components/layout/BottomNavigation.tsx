@@ -42,6 +42,7 @@ const BottomNavigation = ({ tripId, tripPath, onQuickAddClick, onPeopleClick, on
   return (
     <nav
       aria-label="Trip navigation"
+      data-bottom-nav
       className={cn(
         "md:hidden fixed bottom-0 left-0 right-0 z-50",
         "bg-background border-t border-sand-200 shadow-warm-lg",

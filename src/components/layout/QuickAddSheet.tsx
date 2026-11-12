@@ -73,7 +73,8 @@ const QuickAddSheet = ({ open, onOpenChange, onSelectAction }: QuickAddSheetProp
           </SheetDescription>
         </SheetHeader>
 
-        <div className="px-4 pb-8 space-y-1.5">
+        {/* The last row has to clear the home indicator, not just the sheet edge. */}
+        <div className="px-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)_+_0.75rem))] space-y-1.5">
           {quickAddActions.map((action) => {
             const Icon = action.icon;
             return (
