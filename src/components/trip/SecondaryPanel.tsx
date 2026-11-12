@@ -184,8 +184,8 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
         <div
           className="hidden md:block fixed left-[280px] w-[320px] z-40 overflow-y-auto border-r border-sand-200 bg-white"
           style={{
-            top: "calc(4rem + env(safe-area-inset-top, 0px))",
-            height: "calc(calc(var(--app-height, 1vh) * 100) - 4rem - env(safe-area-inset-top, 0px))"
+            top: "var(--app-nav-h, 64px)",
+            height: "calc(calc(var(--app-height, 1vh) * 100) - var(--app-nav-h, 64px))"
           }}
         >
           {panel}

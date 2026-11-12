@@ -279,6 +279,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 - **Animations**: Custom fade-up, fade-down, slide-up, slide-down
 - **Responsive**: Mobile-first with Tailwind breakpoints
 - **Utilities**: `bg-grain` (subtle noise texture, parent must be positioned), `img-warm` (subtle saturation filter for photos)
+- **Safe areas (installed iOS app)**: pad with `max(<base>, env(safe-area-inset-*))`, never a bare `env()` (a bare one replaces the base padding with 0 wherever there is no inset). `--app-nav-h` already includes the top inset, so don't add it again. `--app-bottom-clear` is the room bottom floaters leave free (6rem under the trip tab bar, else 0); toasts use it. Stacking: Dialog z-250, AlertDialog z-260, cookie banner z-60 over the z-50 nav and tab bar
 - **Gotcha**: Custom `@layer utilities` in `index.css` override Tailwind built-in utilities (e.g. `position: relative` overrides `fixed`) — avoid setting `position` in custom utility classes
 
 #### 11. **Stripe Integration**

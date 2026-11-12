@@ -88,7 +88,7 @@ export function FullScreenModal({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'fixed z-[100] bg-white flex flex-col animate-in slide-in-from-bottom-4 fade-in-0 duration-200',
+          'fixed z-[100] bg-background flex flex-col animate-in slide-in-from-bottom-4 fade-in-0 duration-200',
           className
         )}
         style={{

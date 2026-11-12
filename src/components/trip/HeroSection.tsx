@@ -352,7 +352,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           }
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90dvh]">
+        <DialogContent className="max-w-3xl">
           <DialogTitle>Edit Trip Details</DialogTitle>
           <div className="space-y-6 pt-2 overflow-y-auto flex-1 min-h-0 pr-1">
             {/* Trip Name */}

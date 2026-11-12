@@ -10,6 +10,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group print:hidden"
+      // Sonner's default 16px puts a phone toast on the home indicator and,
+      // on a trip page, over the tab bar. Lift it clear of both.
+      mobileOffset={{
+        bottom: "calc(1rem + var(--app-bottom-clear, 0px) + env(safe-area-inset-bottom, 0px))",
+        top: "calc(1rem + env(safe-area-inset-top, 0px))",
+      }}
+      offset={{
+        bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+        top: "calc(1.5rem + env(safe-area-inset-top, 0px))",
+      }}
       toastOptions={{
         classNames: {
           toast:
