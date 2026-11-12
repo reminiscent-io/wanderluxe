@@ -21,6 +21,7 @@ import RestaurantContactInfo from './dining/form/RestaurantContactInfo';
 import TimezoneSelect from './_shared/TimezoneSelect';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
+import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
 
 interface ActivityFormProps {
   activity: ActivityFormData;
@@ -556,7 +557,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* Buttons */}
-      <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-border">
+      <div className={ENTITY_DIALOG_FOOTER}>
         <div>
           {onDelete && (
             <Button

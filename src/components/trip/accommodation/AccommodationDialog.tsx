@@ -12,6 +12,7 @@ import AccommodationForm from "./AccommodationForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ENTITY_DIALOG_CONTENT, ENTITY_DIALOG_SCROLL } from '@/components/trip/_shared/entityDialogLayout';
 
 type Accommodation = Tables<"accommodations">;
 
@@ -137,6 +138,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         mobileSheet
+        className={ENTITY_DIALOG_CONTENT}
         // Keep the dialog open on outside clicks while editing
         onPointerDownOutside={(e) => e.preventDefault()}
       >
@@ -148,7 +150,7 @@ const AccommodationDialog: React.FC<AccommodationDialogProps> = ({
             {initialData ? "Edit details for your stay" : "Enter details for a new hotel or lodging"}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none">
+        <div className={ENTITY_DIALOG_SCROLL}>
           <AccommodationForm
             initialData={initialData ?? undefined}
             onSubmit={handleSubmit}
