@@ -333,10 +333,15 @@ const MyTrips = () => {
   const totalMyTrips = (myTrips || []).length;
   const totalSharedTrips = (sharedTrips || []).length;
   const totalCurrentTrips = currentMyTrips.length + currentSharedTrips.length;
+  // On phones the on-trip and pre-trip heroes run edge to edge (-mx-4), so they
+  // sit flush under the nav. Top padding above a full-bleed photo reads as a
+  // stray band of page background. The inset default card keeps its gap.
+  const heroIsFullBleed =
+    heroState === 'on-trip' || (heroState === 'pre-trip' && !!nextTrip);
 
   return (
     <div className="flex flex-col min-h-screen bg-sand-50">
-      <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
+      <div className={`container mx-auto px-4 ${heroIsFullBleed ? 'pt-0' : 'pt-12'} md:pt-20 pb-8 safe-pb`}>
         {/* Hero — single primary surface */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
