@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from "@/components/ui/input";
-import { searchPlaces, getPlaceDetails, type AutocompleteResult, type PlaceResult } from '@/utils/googleMapsLoader';
+import { type PlaceResult } from '@/utils/googleMapsLoader';
+import { usePlacesAutocomplete } from '@/hooks/usePlacesAutocomplete';
 import { ChevronDown } from 'lucide-react';
 
 interface GooglePlacesAutocompleteProps {
@@ -10,6 +11,13 @@ interface GooglePlacesAutocompleteProps {
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Google Places `types` filter; omit for Google's default mix. */
+  searchType?: string;
+  id?: string;
+  /** Wraps the field in an extra div with this class. */
+  wrapperClassName?: string;
+  /** Swallow Enter while no suggestions are showing (default), so it can't submit the form. */
+  blockEnterWhenClosed?: boolean;
 }
 
 const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
@@ -17,118 +25,42 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   onChange,
   className,
   placeholder = "Search for a hotel name or address...",
-  autoFocus
+  autoFocus,
+  searchType,
+  id,
+  wrapperClassName,
+  blockEnterWhenClosed = true
 }) => {
-  const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const isSelectingRef = useRef(false); // Track if user is selecting from dropdown
-
-  // Update dropdown position when showing suggestions
-  useEffect(() => {
-    if (showSuggestions && containerRef.current) {
-      const updatePosition = () => {
-        const rect = containerRef.current!.getBoundingClientRect();
-        setDropdownPosition({
-          top: rect.bottom,
-          left: rect.left,
-          width: rect.width
-        });
-      };
-      updatePosition();
-
-      // Update position on scroll/resize
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-      };
-    }
-  }, [showSuggestions]);
-
-  const searchHotels = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const results = await searchPlaces(query);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-      setSelectedIndex(-1);
-    } catch (error) {
-      console.error('Error searching hotels:', error);
-      setSuggestions([]);
-      setShowSuggestions(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const {
+    suggestions,
+    isLoading,
+    showSuggestions,
+    selectedIndex,
+    setSelectedIndex,
+    dropdownPosition,
+    inputRef,
+    containerRef,
+    dropdownRef,
+    search,
+    selectSuggestion,
+    handleKeyDown,
+    close,
+    reopen,
+  } = usePlacesAutocomplete({
+    searchType,
+    onSelect: (details) => onChange(details.name, details),
+    blockEnterWhenClosed,
+    autoFocus,
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
-    searchHotels(newValue);
+    search(newValue);
   };
 
-  const handleSuggestionSelect = async (suggestion: AutocompleteResult) => {
-    setIsLoading(true);
-    try {
-      const details = await getPlaceDetails(suggestion.place_id);
-      if (details) {
-        onChange(details.name, details);
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-      }
-    } catch (error) {
-      console.error('Error getting place details:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => 
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          handleSuggestionSelect(suggestions[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-        break;
-    }
-  };
-
-  const handleBlur = (e: React.FocusEvent) => {
+  const handleBlur = () => {
     // Don't close if user is actively selecting from dropdown
     if (isSelectingRef.current) {
       return;
@@ -136,17 +68,10 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     // Longer timeout for mobile devices where touch events take longer to process
     setTimeout(() => {
       if (!isSelectingRef.current && !dropdownRef.current?.contains(document.activeElement)) {
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
+        close();
       }
     }, 200);
   };
-
-  useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [autoFocus]);
 
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
@@ -180,7 +105,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
             index === selectedIndex ? 'bg-sand-100' : ''
           }`}
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => handleSuggestionSelect(suggestion)}
+          onClick={() => selectSuggestion(suggestion)}
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <div className="font-medium text-sm">
@@ -194,17 +119,18 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
     </div>
   );
 
-  return (
+  const field = (
     <div className="relative" ref={containerRef}>
       <Input
         ref={inputRef}
         type="text"
+        id={id}
         value={value}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        onFocus={() => value.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
-        className={`${className} pr-8`}
+        onFocus={() => reopen(value)}
+        className={className ? `${className} pr-8` : 'pr-8'}
         placeholder={placeholder}
         autoComplete="off"
       />
@@ -220,6 +146,8 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
       {dropdownContent && createPortal(dropdownContent, document.body)}
     </div>
   );
+
+  return wrapperClassName ? <div className={wrapperClassName}>{field}</div> : field;
 };
 
 export default GooglePlacesAutocomplete;

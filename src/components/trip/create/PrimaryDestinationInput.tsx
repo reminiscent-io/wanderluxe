@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { searchPlaces, getPlaceDetails, type AutocompleteResult } from '@/utils/googleMapsLoader';
+import { usePlacesAutocomplete } from '@/hooks/usePlacesAutocomplete';
 import { ChevronDown, MapPin, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ interface PrimaryDestinationInputProps {
 
 const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   value,
-  placeId,
   onChange,
   className,
   inputClassName,
@@ -31,159 +30,74 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
   usePortal = true
 }) => {
   const [inputValue, setInputValue] = useState(value);
-  const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [isSelecting, setIsSelecting] = useState(false); // Flag to prevent blur during selection
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Update dropdown position when showing suggestions with portal
-  useEffect(() => {
-    if (showSuggestions && usePortal && containerRef.current) {
-      const updatePosition = () => {
-        const rect = containerRef.current!.getBoundingClientRect();
-        setDropdownPosition({
-          top: rect.bottom,
-          left: rect.left,
-          width: rect.width
-        });
-      };
-      updatePosition();
-
-      // Update position on scroll/resize
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-      };
-    }
-  }, [showSuggestions, usePortal]);
+  const {
+    suggestions,
+    isLoading,
+    showSuggestions,
+    selectedIndex,
+    setSelectedIndex,
+    dropdownPosition,
+    inputRef,
+    containerRef,
+    dropdownRef,
+    search,
+    selectSuggestion,
+    handleKeyDown,
+    close,
+    clearSuggestions,
+    reopen,
+  } = usePlacesAutocomplete({
+    // 'geocode' admits any geographic result (hamlets, neighbourhoods,
+    // landmarks, addresses) and leaves out businesses. '(cities)' dropped
+    // hamlets like Elmau (part of Krün, Bavaria) and let Google autocorrect
+    // them to a same-sounding town (Ellmau, Austria)
+    searchType: 'geocode',
+    onSelect: (details, suggestion) => {
+      // Use the formatted address for cities/regions
+      const displayName = details.formatted_address || details.name;
+      setInputValue(displayName);
+      onChange(displayName, suggestion.place_id);
+    },
+    // Fall back to the prediction's description if details fail
+    onDetailsError: (suggestion) => {
+      setInputValue(suggestion.description);
+      onChange(suggestion.description, suggestion.place_id);
+    },
+    onSelectingChange: setIsSelecting,
+    blockEnterWhenClosed: true,
+    trackPosition: usePortal,
+    autoFocus,
+  });
 
   // Sync input value with prop value
   useEffect(() => {
     setInputValue(value);
   }, [value]);
 
-  const searchCities = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // 'geocode' admits any geographic result (hamlets, neighbourhoods,
-      // landmarks, addresses) and leaves out businesses. '(cities)' dropped
-      // hamlets like Elmau (part of Krün, Bavaria) and let Google autocorrect
-      // them to a same-sounding town (Ellmau, Austria)
-      const results = await searchPlaces(query, 'geocode');
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-      setSelectedIndex(-1);
-    } catch (error) {
-      console.error('Error searching cities:', error);
-      setSuggestions([]);
-      setShowSuggestions(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    searchCities(newValue);
-  };
-
-  const handleSuggestionSelect = async (suggestion: AutocompleteResult) => {
-    setIsSelecting(true); // Prevent blur from closing dropdown
-    setIsLoading(true);
-    try {
-      const details = await getPlaceDetails(suggestion.place_id);
-      if (details) {
-        // Use the formatted address for cities/regions
-        const displayName = details.formatted_address || details.name;
-        setInputValue(displayName);
-        onChange(displayName, suggestion.place_id);
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-      }
-    } catch (error) {
-      console.error('Error getting place details:', error);
-      // Fallback to description if details fail
-      setInputValue(suggestion.description);
-      onChange(suggestion.description, suggestion.place_id);
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-    } finally {
-      setIsLoading(false);
-      setIsSelecting(false);
-    }
+    search(newValue);
   };
 
   const handleClear = () => {
     setInputValue('');
     onChange('', '');
-    setSuggestions([]);
-    setShowSuggestions(false);
+    clearSuggestions();
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          handleSuggestionSelect(suggestions[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
-        break;
-    }
-  };
-
-  const handleBlur = (e: React.FocusEvent) => {
+  const handleBlur = () => {
     // Longer timeout for mobile devices where touch events take longer to process
     setTimeout(() => {
       // Don't close if we're in the middle of selecting a suggestion
       if (isSelecting) return;
       if (!dropdownRef.current?.contains(document.activeElement)) {
-        setShowSuggestions(false);
-        setSelectedIndex(-1);
+        close();
       }
     }, 350); // Slightly longer timeout for iOS
   };
-
-  useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [autoFocus]);
 
   const dropdownContent = showSuggestions && suggestions.length > 0 && (
     <div
@@ -213,7 +127,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleSuggestionSelect(suggestion);
+            selectSuggestion(suggestion);
           }}
           onTouchEnd={(e) => {
             // Use a small delay to ensure the touch is registered properly
@@ -223,7 +137,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
             setIsSelecting(true);
             // Slight delay for iOS touch event handling
             setTimeout(() => {
-              handleSuggestionSelect(suggestion);
+              selectSuggestion(suggestion);
             }, 10);
           }}
           onMouseEnter={() => setSelectedIndex(index)}
@@ -260,7 +174,7 @@ const PrimaryDestinationInput: React.FC<PrimaryDestinationInputProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => reopen(inputValue)}
           className={cn(
             "pr-16 !bg-background !text-foreground placeholder:!text-muted-foreground",
             className || "",
