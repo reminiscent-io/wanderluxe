@@ -13,7 +13,6 @@ import TimelineView from "../components/trip/TimelineView";
 import BudgetView from "../components/trip/BudgetView";
 import BookingView from "../components/trip/BookingView";
 import AIAssistantPanel from "../components/trip/ai-assistant/AIAssistantPanel";
-import AIAssistantDrawer from "../components/trip/ai-assistant/AIAssistantDrawer";
 import CopyTripButton from "@/components/trip/CopyTripButton";
 import RelatedItineraries from "@/components/trip/RelatedItineraries";
 import { track } from "@/lib/analytics";
@@ -409,11 +408,10 @@ const TripDetails = () => {
         onAIClick={() => setAiDrawerOpen(true)}
       />
 
-      {/* AI Assistant Drawer (mobile full-screen with safe area) */}
-      <AIAssistantDrawer
+      {/* AI Assistant (mobile full-screen with safe area) */}
+      <AIAssistantPanel
         tripId={tripId || ''}
-        open={aiDrawerOpen}
-        onOpenChange={setAiDrawerOpen}
+        fullscreen={{ open: aiDrawerOpen, onOpenChange: setAiDrawerOpen }}
       />
 
       {/* Quick Add Sheet */}

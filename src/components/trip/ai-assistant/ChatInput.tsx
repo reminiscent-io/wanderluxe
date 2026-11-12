@@ -74,9 +74,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     setAttachment(att);
   }, []);
 
+  // Only a manual remove frees the preview; a sent attachment's preview is
+  // still shown in the message bubble.
   const handleRemoveAttachment = useCallback(() => {
+    if (attachment?.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
     setAttachment(null);
-  }, []);
+  }, [attachment]);
 
   // Can send if has message OR has attachment
   const canSend = (message.trim().length > 0 || attachment) && !disabled && !isSending;
@@ -120,7 +123,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <ChatFileAttachmentComponent
           attachment={attachment}
           onAttach={handleAttach}
-          onRemove={handleRemoveAttachment}
           disabled={disabled || isSending}
         />
 

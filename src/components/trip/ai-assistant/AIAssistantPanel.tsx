@@ -1,8 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { TreePalm, ChevronDown } from 'lucide-react';
+import React, { useState, useCallback, useMemo, Component, ReactNode } from 'react';
+import { TreePalm, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FullScreenModal } from '@/components/ui/fullscreen-modal';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
 import { bulkImportItems } from '@/services/bulkImportService';
@@ -20,6 +23,47 @@ interface AIAssistantPanelProps {
   tripId: string;
   /** Renders a collapse button in the header when provided (desktop dock). */
   onCollapse?: () => void;
+  /**
+   * Mobile: render the chat in a full-screen modal instead of a card. State
+   * lives outside the modal, so closing it keeps the conversation.
+   */
+  fullscreen?: { open: boolean; onOpenChange: (open: boolean) => void };
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class AIAssistantErrorBoundary extends Component<{ children: ReactNode; onReset: () => void }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('AI Assistant Error:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false });
+    this.props.onReset();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-red-400" />
+          <h3 className="font-display text-lg leading-tight tracking-tight text-foreground">Something went wrong</h3>
+          <Button onClick={this.handleReset} variant="outline" size="sm" className="mt-1">
+            Try again
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function markItemsCreated(
@@ -54,10 +98,12 @@ function applyItemStatusUpdate(
   });
 }
 
-const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse }) => {
+const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse, fullscreen }) => {
   const queryClient = useQueryClient();
+  const { isKeyboardOpen } = useVisualViewport();
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallUsage, setPaywallUsage] = useState<AIUsageInfo | undefined>();
+  const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
 
   // Extraction state
   const [extractionMessages, setExtractionMessages] = useState<AIChatMessage[]>([]);
@@ -72,7 +118,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
 
   // Handle items extracted from conversation (when AI detects "add X to my trip")
   const handleConversationItemsExtracted = useCallback((items: ExtractedItem[]) => {
-    // Create an assistant message with the extracted items
     const extractionMessage: AIChatMessage = {
       id: `assistant-conv-extract-${Date.now()}`,
       thread_id: '',
@@ -104,7 +149,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
     isAnonymous,
     historyLoaded,
     sendMessage,
-    clearThread,
     loadMoreMessages,
     loadHistory
   } = useAIAssistant({
@@ -113,12 +157,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
     onItemsExtracted: handleConversationItemsExtracted
   });
 
-  const {
-    isExtracting,
-    extractDocument,
-    updateItemStatus,
-    clearExtraction
-  } = useDocumentExtraction();
+  const { isExtracting, extractDocument } = useDocumentExtraction();
+  const isBusy = isStreaming || isExtracting;
 
   // Combine chat messages with extraction messages
   const allMessages = useMemo(() => {
@@ -131,7 +171,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
   const handleSend = useCallback(async (message: string, attachment?: ChatFileAttachment) => {
     try {
       if (attachment) {
-        // Create user message with attachment
         const userMessage: AIChatMessage = {
           id: `user-extract-${Date.now()}`,
           thread_id: '',
@@ -145,11 +184,9 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
 
         setExtractionMessages(prev => [...prev, userMessage]);
 
-        // Extract document
         const items = await extractDocument(attachment);
 
         if (items) {
-          // Create assistant message with extracted items
           const assistantMessage: AIChatMessage = {
             id: `assistant-extract-${Date.now()}`,
             thread_id: '',
@@ -169,7 +206,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
           setExtractionMessages(prev => [...prev, assistantMessage]);
         }
       } else if (message.trim()) {
-        // Regular text message
         await sendMessage(message);
       }
     } catch (err) {
@@ -185,6 +221,14 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
     }
   }, [sendMessage]);
 
+  const invalidateTripQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
+    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+  }, [queryClient, tripId]);
+
   // Handle import all items - directly performs the import
   const handleImportAll = useCallback(async (items: ExtractedItem[]) => {
     setIsImporting(true);
@@ -193,15 +237,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
 
       if (result.successCount > 0) {
         toast.success(`Added ${result.successCount} item${result.successCount !== 1 ? 's' : ''} to your trip`);
-
         setExtractionMessages(prev => markItemsCreated(prev, items));
-
-        // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-        queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
-        queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-        queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-        queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
+        invalidateTripQueries();
       }
 
       if (result.failedCount > 0) {
@@ -217,15 +254,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
     } finally {
       setIsImporting(false);
     }
-  }, [tripId, queryClient]);
-
-  const invalidateTripQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-    queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
-    queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-    queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-    queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
-  }, [queryClient, tripId]);
+  }, [tripId, invalidateTripQueries]);
 
   // One-tap add from a place card. Date/time validation already happened on
   // the server (suggested_add is stripped when invalid), so this path should
@@ -263,115 +292,145 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
   // Handle individual item processed in stepper
   const handleItemProcessed = useCallback((itemId: string, status: 'created' | 'skipped') => {
     setExtractionMessages(prev => applyItemStatusUpdate(prev, itemId, status));
+    if (status === 'created') invalidateTripQueries();
+  }, [invalidateTripQueries]);
 
-    if (status === 'created') {
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['accommodations', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['transportation', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['reservations', tripId] });
-    }
-  }, [tripId, queryClient]);
-
-  // Handle stepper complete
   const handleStepperComplete = useCallback(() => {
     setItemsToProcess([]);
   }, []);
 
-  // Handle clear chat - also clear extraction messages
+  // Closing the full-screen chat mid-stream would orphan the reply.
+  const onFullscreenChange = fullscreen?.onOpenChange;
+  const handleFullscreenChange = useCallback((open: boolean) => {
+    if (isBusy && !open) return;
+    onFullscreenChange?.(open);
+  }, [isBusy, onFullscreenChange]);
+
+  const handleErrorBoundaryReset = useCallback(() => {
+    setErrorBoundaryKey(prev => prev + 1);
+  }, []);
 
   // limit === -1 means unlimited (the default for every signed-in account).
-  const isDisabled = isStreaming || isExtracting || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.limit !== -1 && usage.used >= usage.limit);
+  const isDisabled = isBusy || (usage && (usage.tier === 'free' || usage.tier === 'anon') && usage.limit !== -1 && usage.used >= usage.limit);
 
-  return (
+  const collapse = fullscreen ? () => handleFullscreenChange(false) : onCollapse;
+
+  const content = (
     <>
-      <div className="flex flex-col h-full bg-background rounded-card shadow-warm-sm border border-border overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-sand-50/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-earth-500 flex items-center justify-center">
-              <TreePalm className="w-4 h-4 text-background" />
-            </div>
-            <div>
-              <h3 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h3>
-              <p className="text-[13px] leading-snug text-muted-foreground mt-0.5">Private to you, not shared with co-travelers</p>
-            </div>
+      {/* Header (full screen: clear the notch / PWA status bar) */}
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 border-b border-border flex-shrink-0',
+          fullscreen ? 'px-4 pb-2.5 bg-background' : 'px-4 py-3 bg-sand-50/60'
+        )}
+        style={fullscreen ? { paddingTop: 'max(env(safe-area-inset-top, 0px), 10px)' } : undefined}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={cn('rounded-full bg-earth-500 flex items-center justify-center shrink-0', fullscreen ? 'w-7 h-7' : 'w-8 h-8')}>
+            <TreePalm className="w-4 h-4 text-background" />
           </div>
-
-          {onCollapse && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onCollapse}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              title="Collapse"
-              aria-label="Collapse assistant"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="min-w-0">
+            <h2 className="font-display text-[17px] leading-tight tracking-tight text-foreground">Trip Assistant</h2>
+            <p className="text-[13px] leading-snug text-muted-foreground mt-0.5 truncate">Private to you, not shared with co-travelers</p>
+          </div>
         </div>
 
-        {/* Content — always rendered; visibility is the dock's job */}
-        <>
-          {/* Messages area */}
-            <ChatMessageList
-              messages={allMessages}
-              isLoading={isLoading || isExtracting}
-              isStreaming={isStreaming}
-              streamingContent={streamingContent}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMoreMessages}
-              historyLoaded={historyLoaded}
-              onLoadHistory={loadHistory}
-              tripId={tripId}
-              onImportAll={handleImportAll}
-              onReviewEdit={handleReviewEdit}
-              onAddPlaceCard={handleAddPlaceCard}
-              isImporting={isImporting}
-              emptyStateSlot={
-                <PromptChips
-                  onSelect={handlePromptSelect}
-                  disabled={isDisabled}
-                />
-              }
-            />
+        {collapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={collapse}
+            className={cn('shrink-0 text-muted-foreground hover:text-foreground', fullscreen ? 'h-9 w-9' : 'h-8 w-8')}
+            disabled={fullscreen ? isStreaming : undefined}
+            title={fullscreen ? 'Minimize' : 'Collapse'}
+            aria-label={fullscreen ? 'Minimize assistant' : 'Collapse assistant'}
+          >
+            <ChevronDown className={fullscreen ? 'w-5 h-5' : 'w-4 h-4'} />
+          </Button>
+        )}
+      </div>
 
-            {/* Error display */}
-            {error && (
-              <div className="px-4 py-2 bg-red-50 border-t border-red-100">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
+      <AIAssistantErrorBoundary key={errorBoundaryKey} onReset={handleErrorBoundaryReset}>
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <ChatMessageList
+            messages={allMessages}
+            isLoading={isLoading || isExtracting}
+            isStreaming={isStreaming}
+            streamingContent={streamingContent}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMoreMessages}
+            historyLoaded={historyLoaded}
+            onLoadHistory={loadHistory}
+            onImportAll={handleImportAll}
+            onReviewEdit={handleReviewEdit}
+            onAddPlaceCard={handleAddPlaceCard}
+            isImporting={isImporting}
+            emptyStateSlot={
+              <PromptChips
+                onSelect={handlePromptSelect}
+                disabled={isDisabled}
+              />
+            }
+          />
 
-            {/* Usage meter */}
-            <UsageMeter
-              usage={usage}
-              onUpgradeClick={() => setShowPaywall(true)}
-            />
+          {error && (
+            <div className="px-4 py-2 bg-red-50 border-t border-red-100 flex-shrink-0">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-            {/* First-run: the attach control is the least obvious thing in the app */}
+          {/* Hidden while the on-screen keyboard is up, to save space */}
+          {!isKeyboardOpen && (
+            <div className="flex-shrink-0">
+              <UsageMeter
+                usage={usage}
+                onUpgradeClick={() => setShowPaywall(true)}
+              />
+            </div>
+          )}
+
+          {/* First-run: the attach control is the least obvious thing in the app */}
+          {!fullscreen && (
             <DiscoverHint hint="doc-import" className="mx-4 mb-2">
               Attach a booking confirmation with <span className="font-medium">+</span> and I'll
               read it into your trip.
             </DiscoverHint>
+          )}
 
-            {/* Input */}
+          {/* Bottom safe area only while the keyboard is closed (it covers the home indicator) */}
+          <div
+            className="flex-shrink-0 bg-background"
+            style={{ paddingBottom: isKeyboardOpen ? 0 : 'env(safe-area-inset-bottom, 0px)' }}
+          >
             <ChatInput
               onSend={handleSend}
               disabled={isDisabled}
-              isSending={isStreaming || isExtracting}
+              isSending={isBusy}
               placeholder={
                 isDisabled && usage?.used === usage?.limit
                   ? (isAnonymous ? "Sign up free to keep chatting" : "Daily limit reached. Check back tomorrow.")
                   : "Ask about your trip..."
               }
             />
-        </>
-      </div>
+          </div>
+        </div>
+      </AIAssistantErrorBoundary>
+    </>
+  );
 
-      {/* Paywall modal */}
+  return (
+    <>
+      {fullscreen ? (
+        <FullScreenModal open={fullscreen.open} onOpenChange={handleFullscreenChange} closeOnOverlayClick={!isStreaming}>
+          {content}
+        </FullScreenModal>
+      ) : (
+        <div className="flex flex-col h-full bg-background rounded-card shadow-warm-sm border border-border overflow-hidden">
+          {content}
+        </div>
+      )}
+
       <PaywallModal
         open={showPaywall}
         onOpenChange={setShowPaywall}
@@ -379,7 +438,6 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ tripId, onCollapse 
         isAnonymous={isAnonymous}
       />
 
-      {/* Item stepper dialog for review & edit */}
       <ItemStepperDialog
         open={showStepperDialog}
         onOpenChange={setShowStepperDialog}
