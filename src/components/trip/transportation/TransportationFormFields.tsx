@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import LuxuryDateTimeRangePicker from "@/components/ui/LuxuryDateTimeRangePicker";
 import LocationInputPair from "./LocationInputPair";
 import TimezoneSelect from "../_shared/TimezoneSelect";
+import AdvancedSection from "../_shared/AdvancedSection";
 import {
   CURRENCIES,
   CURRENCY_SYMBOLS,
@@ -82,6 +83,9 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
 
   // watch cost for formatted display
   const cost = useWatch({ control, name: "cost" }) as number | null;
+  // Shown in the collapsed Advanced section's trigger.
+  const details = useWatch({ control, name: "details" }) as string | null | undefined;
+  const travelers = useWatch({ control, name: "travelers" }) as string[] | undefined;
 
   const canLookup = Boolean(flightNumber?.trim()) && Boolean(travelRange?.start);
 
@@ -397,33 +401,34 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
         </div>
       </div>
 
-      {/* Additional Details */}
-      <Controller
-        control={control}
-        name="details"
-        render={({ field }) => (
-          <div className="space-y-1">
-            <Label>Details</Label>
-            <Textarea {...field} rows={1} placeholder="Additional details" />
-          </div>
-        )}
-      />
+      {/* Advanced (collapsible): details + travelers */}
+      <AdvancedSection notesLabel="Details" notes={details} travelerCount={travelers?.length ?? 0}>
+        <Controller
+          control={control}
+          name="details"
+          render={({ field }) => (
+            <div className="space-y-1">
+              <Label>Details</Label>
+              <Textarea {...field} rows={1} placeholder="Additional details" />
+            </div>
+          )}
+        />
 
-      {/* Travelers */}
-      <Controller
-        control={control}
-        name="travelers"
-        render={({ field }) => (
-          <div className="space-y-1">
-            <Label>Travelers</Label>
-            <TravelersTagMultiSelect
-              tripId={tripId}
-              value={field.value || []}
-              onChange={field.onChange}
-            />
-          </div>
-        )}
-      />
+        <Controller
+          control={control}
+          name="travelers"
+          render={({ field }) => (
+            <div className="space-y-1">
+              <Label>Travelers</Label>
+              <TravelersTagMultiSelect
+                tripId={tripId}
+                value={field.value || []}
+                onChange={field.onChange}
+              />
+            </div>
+          )}
+        />
+      </AdvancedSection>
 
       <FlightLookupConfirmDialog
         open={confirmOpen}

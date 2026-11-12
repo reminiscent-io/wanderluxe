@@ -19,6 +19,7 @@ import GooglePlacesAutocomplete from './accommodation/GooglePlacesAutocomplete';
 import type { PlaceResult } from '@/utils/googleMapsLoader';
 import RestaurantContactInfo from './dining/form/RestaurantContactInfo';
 import TimezoneSelect from './_shared/TimezoneSelect';
+import AdvancedSection from './_shared/AdvancedSection';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
 import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
@@ -349,20 +350,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </div>
       </div>
 
-      {/* Description Field */}
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-foreground">
-          Description
-        </label>
-        <textarea
-          id="description"
-          value={activity.description || ''}
-          onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border border-[hsl(var(--border))] p-2 shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
-          rows={1}
-        />
-      </div>
-
       {/* Date Selection */}
       {tripDateOptions.length > 0 && (
         <div>
@@ -538,19 +525,38 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
         </div>
       </div>
 
-      {/* Travelers */}
-      <div>
-        <label className="block text-sm font-medium text-foreground">
-          Travelers
-        </label>
-        <div className="mt-1">
-          <TravelersTagMultiSelect
-            tripId={tripId}
-            value={activity.travelers || []}
-            onChange={(travelers) => onActivityChange({ ...activity, travelers })}
+      {/* Advanced (collapsible): description + travelers */}
+      <AdvancedSection
+        notesLabel="Description"
+        notes={activity.description}
+        travelerCount={activity.travelers?.length ?? 0}
+      >
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-foreground">
+            Description
+          </label>
+          <textarea
+            id="description"
+            value={activity.description || ''}
+            onChange={(e) => onActivityChange({ ...activity, description: e.target.value })}
+            className="mt-1 block w-full rounded-md border border-[hsl(var(--border))] p-2 shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
+            rows={1}
           />
         </div>
-      </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground">
+            Travelers
+          </label>
+          <div className="mt-1">
+            <TravelersTagMultiSelect
+              tripId={tripId}
+              value={activity.travelers || []}
+              onChange={(travelers) => onActivityChange({ ...activity, travelers })}
+            />
+          </div>
+        </div>
+      </AdvancedSection>
 
       {/* Buttons */}
       <div className={ENTITY_DIALOG_FOOTER}>

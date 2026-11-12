@@ -43,6 +43,7 @@ import {
 } from "@/services/travelers";
 import { Label } from "@/components/ui/label";
 import TimezoneSelect from "@/components/trip/_shared/TimezoneSelect";
+import AdvancedSection from "@/components/trip/_shared/AdvancedSection";
 import { useResolveTimezone } from "@/hooks/useResolveTimezone";
 import { useTripTimezone } from "@/hooks/useTripTimezone";
 import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
@@ -219,6 +220,9 @@ export default function AccommodationForm({
 
   /* --------------------- Sync picker → legacy fields ------------------ */
   const stayRange = useWatch({ control: form.control, name: "stay_range" }) as LuxuryDateTimeRange;
+  // Shown in the collapsed Advanced section's trigger.
+  const watchedDetails = useWatch({ control: form.control, name: "hotel_details" });
+  const watchedTravelers = useWatch({ control: form.control, name: "travelers" });
 
   useEffect(() => {
     if (stayRange?.start) {
@@ -619,34 +623,35 @@ export default function AccommodationForm({
           </div>
         </div>
 
-        {/* Additional Details */}
-        <FormField
-          control={form.control}
-          name="hotel_details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Additional Details</FormLabel>
-              <FormControl>
-                <Textarea {...field} rows={2} placeholder="Notes, confirmation number, etc." />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        {/* Advanced (collapsible): details + travelers */}
+        <AdvancedSection notesLabel="Details" notes={watchedDetails} travelerCount={watchedTravelers?.length ?? 0}>
+          <FormField
+            control={form.control}
+            name="hotel_details"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Details</FormLabel>
+                <FormControl>
+                  <Textarea {...field} rows={2} placeholder="Notes, confirmation number, etc." />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        {/* Travelers */}
-        <FormField
-          control={form.control}
-          name="travelers"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Travelers</FormLabel>
-              <FormControl>
-                <TravelersTagMultiSelect tripId={tripId} value={field.value || []} onChange={field.onChange} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="travelers"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Travelers</FormLabel>
+                <FormControl>
+                  <TravelersTagMultiSelect tripId={tripId} value={field.value || []} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </AdvancedSection>
 
         {/* Actions */}
         <div className={ENTITY_DIALOG_FOOTER}>
