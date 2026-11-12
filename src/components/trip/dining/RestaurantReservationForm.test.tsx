@@ -29,8 +29,8 @@ vi.mock('@/hooks/useTripTimezone', () => ({ useTripTimezone: () => ({ tripTimezo
 vi.mock('@/hooks/useResolveTimezone', () => ({ useResolveTimezone: () => ({ timeZoneId: null }) }));
 
 vi.mock('./RestaurantSearchInput', () => ({
-  default: ({ value, onChange }: { value?: string; onChange: (v: string) => void }) => (
-    <input aria-label="Restaurant Name" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
+  default: ({ value, onChange, autoFocus }: { value?: string; onChange: (v: string) => void; autoFocus?: boolean }) => (
+    <input aria-label="Restaurant Name" autoFocus={autoFocus} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
   ),
 }));
 vi.mock('../travelers/TravelersTagMultiSelect', () => ({ default: () => null }));
@@ -88,11 +88,34 @@ describe('RestaurantReservationForm', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderForm(onSubmit);
 
+    await userEvent.click(screen.getByRole('button', { name: /^Advanced/ }));
     await userEvent.type(screen.getByLabelText('Notes'), 'Window table');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ notes: 'Window table' });
+  });
+
+  it('keeps notes and travelers behind a collapsed Advanced section that names what it holds', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    renderForm(onSubmit, { ...savedReservation, notes: 'Window table' });
+
+    expect(screen.queryByLabelText('Notes')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Advanced: Notes' })).toBeTruthy();
+
+    // A collapsed section still saves what it holds.
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ notes: 'Window table' });
+  });
+
+  it('focuses the restaurant name on a new reservation but not on an edit', () => {
+    const { unmount } = renderForm(vi.fn());
+    expect(document.activeElement).not.toBe(screen.getByLabelText('Restaurant Name'));
+    unmount();
+
+    renderForm(vi.fn(), {});
+    expect(document.activeElement).toBe(screen.getByLabelText('Restaurant Name'));
   });
 
   it('defaults the end time to 90 minutes after the start', async () => {

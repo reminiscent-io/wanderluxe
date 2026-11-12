@@ -22,7 +22,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Globe, ChevronDown } from 'lucide-react';
+import { Globe, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import TimezoneSelect from '../_shared/TimezoneSelect';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
@@ -153,6 +153,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   /* ------------------------------ Timezone auto-fill ---------------------------- */
   const [tzOpen, setTzOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const { tripTimezone } = useTripTimezone(tripId || defaultValues?.trip_id);
   const watchedPlaceId = form.watch('place_id');
   const { timeZoneId: placeTz } = useResolveTimezone(watchedPlaceId ?? null);
@@ -202,6 +203,15 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const watchedEnd = form.watch('end_time');
   const spanMinutes = durationMinutes(watchedStart, watchedEnd);
   const durationLabel = spanMinutes === null ? null : formatDurationShort(spanMinutes);
+
+  // What the collapsed Advanced section holds, e.g. "Notes, 2 travelers".
+  const watchedNotes = form.watch('notes');
+  const watchedTravelers = form.watch('travelers');
+  const travelerCount = watchedTravelers?.length ?? 0;
+  const advancedSummary = [
+    watchedNotes?.trim() ? 'Notes' : null,
+    travelerCount ? `${travelerCount} traveler${travelerCount === 1 ? '' : 's'}` : null,
+  ].filter(Boolean).join(', ');
 
   /* ------------------- Track place_id changes ---------------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
@@ -341,8 +351,11 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
               <FormLabel>
                 Restaurant Name <span className="text-red-500">*</span>
               </FormLabel>
+              {/* Focus the name only on a new reservation. On an edit the
+                  name is already right, and focusing it pops the keyboard
+                  over the fields the user actually came to change. */}
               <RestaurantSearchInput
-                autoFocus
+                autoFocus={!defaultValues?.id}
                 value={field.value}
                 onChange={(name, details) => {
                   field.onChange(name);
@@ -477,26 +490,22 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           </div>
         )}
 
-        {/* Reservation Date & Time.
+        {/* Reservation Date & Time. Date gets its own row; start and end sit
+            side by side at every width.
 
-            One control per row on mobile. Mobile WebKit enforces a minimum
-            width on a native time input, and half a phone is under it: the
-            pair overflowed the sheet and the end time was clipped by the
-            dialog's `overflow-x-hidden`. A row of its own clears that floor on
-            any device at any text size. Side by side from sm up, where the
-            600px dialog leaves each control ~270px — the old four-track row
-            gave them ~107px, which was under the floor on desktop Safari too.
-
-            `max-w` rather than a fixed width, because a time input stretched
-            edge to edge reads as a broken text field but a *fixed* width is
-            the thing WebKit overrides. Capped, an engine that insists on more
-            simply renders wider, and a full row has the slack to absorb it. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            Mobile WebKit draws a native time input with menulist-button
+            appearance, which carries its own minimum width: half a phone was
+            under it, so the pair overflowed the sheet and the end time was
+            clipped by the dialog's `overflow-x-hidden`. `appearance: none`
+            drops that sizing so the control takes the column's width; tapping
+            it still opens the native time wheel. `min-w-0` on the grid items
+            lets the 1fr tracks shrink below the input's intrinsic width. */}
+        <div className="grid grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="reservation_date"
             render={({ field }) => (
-              <FormItem className="sm:col-span-2">
+              <FormItem className="col-span-2">
                 <FormLabel>
                   Reservation Date <span className="text-red-500">*</span>
                 </FormLabel>
@@ -540,7 +549,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       applyDefaultEnd(e.target.value);
                     }}
                     step="300"
-                    className="max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                    className="min-w-0 appearance-none [-webkit-appearance:none] sm:max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
                 <FormMessage />
@@ -570,7 +579,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                       field.onChange(e.target.value);
                     }}
                     step="300"
-                    className="max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
+                    className="min-w-0 appearance-none [-webkit-appearance:none] sm:max-w-[12rem] bg-white border-sand-300 focus:ring-sand-500 focus:border-sand-500"
                   />
                 </FormControl>
                 <FormMessage />
@@ -653,39 +662,59 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Notes */}
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea {...field} value={field.value ?? ''} className="bg-white" rows={1} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Advanced (collapsible): notes + travelers. Closed by default; the
+            trigger names what's filled in so a collapsed section never hides
+            data the user already entered. Values survive the collapse because
+            react-hook-form keeps unmounted fields (shouldUnregister: false). */}
+        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate">
+                  Advanced{advancedSummary ? `: ${advancedSummary}` : ''}
+                </span>
+              </span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-3">
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} value={field.value ?? ''} className="bg-white" rows={1} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {/* Travelers */}
-        <FormField
-          control={form.control}
-          name="travelers"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Travelers</FormLabel>
-              <FormControl>
-                <TravelersTagMultiSelect
-                  tripId={tripId}
-                  value={field.value || []}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="travelers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Travelers</FormLabel>
+                  <FormControl>
+                    <TravelersTagMultiSelect
+                      tripId={tripId}
+                      value={field.value || []}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Buttons */}
         <div className={ENTITY_DIALOG_FOOTER}>
