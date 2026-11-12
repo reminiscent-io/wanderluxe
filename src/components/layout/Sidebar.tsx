@@ -128,7 +128,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
     handleAccommodationAdd, handleAccommodationEdit,
     handleTransportationAdd, handleTransportationEdit,
     handleReservationAdd, handleReservationEdit, handleReservationDelete,
-    handleActivityAdd, handleActivityEdit, handleActivityDelete,
+    handleActivityAdd, handleActivityEdit,
     handleEditDates, handleSaveDates,
     handleTravelerAdd, handleTravelerEdit
   } = sidebar;
@@ -482,7 +482,6 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
         isSubmitting={false}
         tripArrivalDate={trip?.arrival_date}
         tripDepartureDate={trip?.departure_date}
-        destination={trip?.destination}
         onDelete={selectedReservation ? async () => {
           await handleReservationDelete(selectedReservation.id);
           setReservationOpen(false);

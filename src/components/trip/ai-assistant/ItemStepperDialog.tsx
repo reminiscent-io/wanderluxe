@@ -14,7 +14,7 @@ import TransportationDialog from '@/components/trip/transportation/Transportatio
 import AccommodationDialog from '@/components/trip/accommodation/AccommodationDialog';
 import ActivityDialog from '@/components/trip/day/activities/ActivityDialog';
 import RestaurantReservationDialog from '@/components/trip/dining/RestaurantReservationDialog';
-import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
+import type { ExtractedItem } from '@/types/ai-assistant';
 import type { Tables } from '@/integrations/supabase/types';
 
 interface ItemStepperDialogProps {
@@ -128,12 +128,10 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [tripDates, setTripDates] = useState<{
     arrival_date: string | null;
     departure_date: string | null;
-    destination: string | null;
-  }>({ arrival_date: null, departure_date: null, destination: null });
+  }>({ arrival_date: null, departure_date: null });
 
   // Reset internal state whenever the dialog opens so stale index / editDialogOpen
   // from a previous session don't cause the dialog to render nothing.
@@ -148,14 +146,13 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
     const fetchTrip = async () => {
       const { data } = await supabase
         .from('trips')
-        .select('arrival_date, departure_date, destination')
+        .select('arrival_date, departure_date')
         .eq('trip_id', tripId)
         .single();
       if (data) {
         setTripDates({
           arrival_date: data.arrival_date ?? null,
-          departure_date: data.departure_date ?? null,
-          destination: data.destination ?? null
+          departure_date: data.departure_date ?? null
         });
       }
     };
@@ -164,7 +161,6 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
 
   const currentItem = items[currentIndex];
   const isLastItem = currentIndex === items.length - 1;
-  const processedCount = items.filter(i => i.status !== 'pending').length;
 
   // Get initial data for the current item's form
   const getInitialData = useCallback(() => {
@@ -332,7 +328,6 @@ const ItemStepperDialog: React.FC<ItemStepperDialogProps> = ({
           onSuccess={handleDialogSuccess}
           tripArrivalDate={tripDates.arrival_date ?? undefined}
           tripDepartureDate={tripDates.departure_date ?? undefined}
-          destination={tripDates.destination ?? undefined}
         />
       )}
     </>

@@ -19,7 +19,6 @@ export const fetchLogosFromSupabase = async (retries = 2): Promise<Logo[]> => {
     if (error) {
       console.error('Error fetching logos:', error);
       if (retries > 0 && (error.status === 544 || error.name === 'StorageUnknownError')) {
-        console.log(`Retrying fetch logos (${retries} attempts left)...`);
         return new Promise(resolve => {
           setTimeout(() => {
             resolve(fetchLogosFromSupabase(retries - 1));
@@ -56,7 +55,6 @@ export const fetchLogosFromSupabase = async (retries = 2): Promise<Logo[]> => {
   } catch (error) {
     console.error('Error in fetchLogosFromSupabase:', error);
     if (retries > 0) {
-      console.log(`Retrying fetch logos after error (${retries} attempts left)...`);
       return new Promise(resolve => {
         setTimeout(() => {
           resolve(fetchLogosFromSupabase(retries - 1));

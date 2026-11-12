@@ -64,7 +64,6 @@ const MapInner: React.FC<MapCanvasProps> = (props) => {
     dates,
     focusedDate,
     segments,
-    satellite,
     compact,
     selectedStopId,
     hoveredStopId,

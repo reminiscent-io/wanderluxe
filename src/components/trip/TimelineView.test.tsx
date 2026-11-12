@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import TimelineView from './TimelineView';
 
-vi.mock('@/hooks/use-timeline-events', () => ({
-  useTimelineEvents: () => ({ events: [], refreshEvents: vi.fn() }),
+vi.mock('@/hooks/useTripStays', () => ({
+  useTripStays: () => ({ stays: [] }),
 }));
 vi.mock('@/hooks/use-trip-days', () => ({
   useTripDays: () => ({ days: [], refreshDays: vi.fn() }),

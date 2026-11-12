@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PIVOT_CURRENCY, type RateTable } from './currencyMath';
 
-export { getConversionRate, convertCurrency, PIVOT_CURRENCY } from './currencyMath';
-export type { RateTable } from './currencyMath';
+export { getConversionRate } from './currencyMath';
 
 // Type for exchange rate data from database
 type ExchangeRate = {

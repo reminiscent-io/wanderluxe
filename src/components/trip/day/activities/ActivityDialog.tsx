@@ -32,7 +32,6 @@ interface ActivityDialogProps {
   onActivityChange?: (activity: ActivityFormData) => void;
   onSubmit?: (activity?: ActivityFormData) => void;
   onDelete?: (id: string) => void;
-  eventId?: string;
 
   // Self-contained interface: chat, calendar and map let the dialog write to Supabase itself
   initialData?: Partial<Tables<'day_activities'>>;
@@ -43,7 +42,6 @@ interface ActivityDialogProps {
   preselectedDate?: string;
   tripId: string;
   activityId?: string | null; // edit mode
-  destination?: string; // Trip destination to bias Google Places results
 }
 
 const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
@@ -54,14 +52,12 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     onActivityChange,
     onSubmit,
     onDelete,
-    eventId,
     initialData,
     onSuccess,
     tripDates,
     preselectedDate,
     tripId,
     activityId,
-    destination,
   } = props;
 
   const queryClient = useQueryClient();
@@ -84,7 +80,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
   const finalActivity: ActivityFormData =
     (activity as ActivityFormData) || internalActivity;
   const finalOnChange = onActivityChange || setInternalActivity;
-  const finalEventId = eventId || tripId;
 
   // ---------- Resolve tripDates if not provided (chat path) ----------
   const [resolvedTripDates, setResolvedTripDates] =
@@ -141,13 +136,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, preselectedDate]);
-
-  // Debug aid for real edit mode
-  useEffect(() => {
-    if (isEditMode && activityId) {
-      console.log("Editing activity with data:", finalActivity);
-    }
-  }, [isEditMode, activityId, finalActivity]);
 
   // Keep internal state in sync when chat passes new initialData (OCR result).
   // Keyed on the *value*, not the object identity: the calendar and map views
@@ -277,12 +265,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
             onCancel={() => onOpenChange(false)}
             onDelete={isEditMode ? handleDelete : undefined}
             submitLabel="Save"
-            eventId={finalEventId}
             tripDates={resolvedTripDates}
             preselectedDate={resolvedPreselectedDate}
             tripId={tripId}
             activityId={activityId}
-            destination={destination}
           />
         </div>
       </DialogContent>

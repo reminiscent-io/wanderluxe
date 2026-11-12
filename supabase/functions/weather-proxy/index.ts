@@ -60,7 +60,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { destination, mode = 'forecast' } = await req.json();
+    const { destination } = await req.json();
 
     if (!destination) {
       return new Response(

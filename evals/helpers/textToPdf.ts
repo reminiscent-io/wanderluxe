@@ -10,7 +10,7 @@ function toLatin1(text: string): string {
     .replace(/[—–]/g, '-')
     .replace(/[‘’]/g, "'")
     .replace(/[“”]/g, '"')
-    .replace(/[^\x00-\xFF]/g, '?');
+    .replace(/[\u0100-\uFFFF]/g, '?'); // anything outside latin-1
 }
 
 function escapePdfText(line: string): string {

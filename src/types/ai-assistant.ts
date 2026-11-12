@@ -34,26 +34,6 @@ export interface MultiItemExtractionResponse {
   };
 }
 
-// Single-item extraction response (backwards compatible)
-export interface SingleItemExtractionResponse {
-  itemType: TravelItemType;
-  fields: Record<string, unknown>;
-  missingRequired: string[];
-  meta: {
-    model: string;
-    pagesUsed: number;
-  };
-}
-
-export interface AIChatThread {
-  id: string;
-  trip_id: string;
-  user_id: string;
-  title: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 // Rich place recommendation card. All URLs + structured fields are populated
 // server-side from verified Google Places results — the model only authors
 // blurb, tags, an optional booking_url, and an optional suggested_add payload
@@ -115,35 +95,11 @@ export interface MessageMetadata {
   error?: string;
 }
 
-export interface UserAIUsage {
-  id: string;
-  user_id: string;
-  date: string;
-  message_count: number;
-}
-
 export interface AIUsageInfo {
   used: number;
   limit: number;
   tier: SubscriptionTier;
   resetAt: string;
-}
-
-// API Request/Response types
-export interface SendMessageRequest {
-  message: string;
-  thread_id?: string;
-}
-
-export interface SendMessageResponse {
-  thread_id: string;
-  message_id: string;
-}
-
-export interface UsageCheckResponse {
-  allowed: boolean;
-  current_count: number;
-  daily_limit: number;
 }
 
 /**
@@ -191,8 +147,6 @@ export interface SSEErrorEvent {
   error: StreamingErrorResponse;
 }
 
-export type SSEEvent = SSEMessageEvent | SSEDoneEvent | SSEErrorEvent;
-
 // Hook return type
 export interface UseAIAssistantReturn {
   // State
@@ -222,44 +176,4 @@ export interface PromptChip {
   label: string;
   prompt: string;
   icon?: string;
-}
-
-// Trip context for AI system prompt
-export interface TripContextForAI {
-  destination: string;
-  arrival_date: string;
-  departure_date: string;
-  days_count: number;
-  days: TripDayContext[];
-  accommodations: AccommodationContext[];
-  transportation: TransportationContext[];
-}
-
-export interface TripDayContext {
-  date: string;
-  title: string | null;
-  activities: ActivityContext[];
-}
-
-export interface ActivityContext {
-  title: string;
-  description: string | null;
-  start_time: string | null;
-  end_time: string | null;
-}
-
-export interface AccommodationContext {
-  hotel: string;
-  checkin_date: string;
-  checkout_date: string;
-  address: string | null;
-}
-
-export interface TransportationContext {
-  type: string;
-  provider: string | null;
-  departure_location: string | null;
-  arrival_location: string | null;
-  start_date: string;
-  start_time: string | null;
 }

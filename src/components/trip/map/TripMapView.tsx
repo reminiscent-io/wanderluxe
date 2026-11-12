@@ -330,7 +330,6 @@ const TripMapView: React.FC<TripMapViewProps> = ({
           activityId={(editing.record as Tables<'day_activities'>).id}
           initialData={activityInitial as unknown as Partial<Tables<'day_activities'>>}
           tripDates={tripDates}
-          destination={destination}
           onSuccess={closeAndRefresh}
         />
       )}
@@ -344,7 +343,6 @@ const TripMapView: React.FC<TripMapViewProps> = ({
           initialData={editing.record as Partial<Tables<'reservations'>>}
           tripArrivalDate={tripDates.arrival_date}
           tripDepartureDate={tripDates.departure_date}
-          destination={destination}
           onSuccess={closeAndRefresh}
         />
       )}

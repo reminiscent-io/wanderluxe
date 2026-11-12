@@ -78,12 +78,6 @@ export function isToday(dateString: string): boolean {
   return dateString === todayStr;
 }
 
-// Get the current weather if the date is today
-export function getCurrentWeatherForToday(weather: WeatherData | undefined, date: string): WeatherData['current'] | undefined {
-  if (!weather?.current || !isToday(date)) return undefined;
-  return weather.current;
-}
-
 // Weather condition to icon mapping
 export function getWeatherIcon(condition: string): string {
   const icons: Record<string, string> = {

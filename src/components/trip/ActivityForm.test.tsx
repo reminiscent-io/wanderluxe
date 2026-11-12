@@ -59,7 +59,6 @@ const Harness: React.FC<{
       onSubmit={vi.fn()}
       onCancel={vi.fn()}
       submitLabel="Save"
-      eventId="day-1"
       tripDates={TRIP_DATES}
       tripId="trip-1"
       activityId={activityId}

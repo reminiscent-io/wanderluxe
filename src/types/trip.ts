@@ -151,43 +151,6 @@ export interface RestaurantReservation {
   timezone?: string | null;
 }
 
-export interface ExpenseItem {
-  id: string;
-  trip_id: string;
-  category: string;
-  description: string;
-  cost: number | null;
-  currency: Currency | null;
-  is_paid: boolean;
-  created_at: string;
-  date: string | null;
-  transportation_id: string | null;
-  activity_id: string | null;
-  accommodation_id: string | null;
-  title: string | null;
-}
-
-export interface AccommodationFormData {
-  stay_id?: string;
-  hotel: string;
-  hotel_details: string;
-  hotel_url: string;
-  hotel_checkin_date: string;
-  hotel_checkout_date: string;
-  checkin_time: string;
-  checkout_time: string;
-  cost?: string | null;
-  currency?: Currency;
-  expense_type?: string;
-  is_paid: boolean;
-  expense_date?: string;
-  hotel_address?: string;
-  hotel_phone?: string;
-  hotel_place_id?: string;
-  hotel_website?: string;
-  order_index?: number;
-}
-
 export interface Trip {
   trip_id: string;
   user_id: string;

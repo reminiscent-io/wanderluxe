@@ -173,7 +173,7 @@ export function MonthlyActivityChart({
         <div className="flex" style={{ width: LABEL_WIDTH + weeks.length * totalCellSize }}>
           {/* Left padding to align with grid */}
           <div style={{ minWidth: LABEL_WIDTH, width: LABEL_WIDTH }} className="flex-shrink-0" />
-          {yearLabels.map(({ year, colIndex, endColIndex }, idx) => {
+          {yearLabels.map(({ year, colIndex, endColIndex }) => {
             const width = (endColIndex - colIndex + 1) * totalCellSize;
             return (
               <div

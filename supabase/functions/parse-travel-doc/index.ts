@@ -63,11 +63,6 @@ const toInlineData = async (file)=>{
  * We encode deterministic date rules directly in the prompt and also request a small __meta block
  * so we can tell if a year was explicitly present on the document for each date field.
  */ const promptFor = (type)=>{
-  const todayIso = [
-    TODAY_UTC.getUTCFullYear(),
-    String(TODAY_UTC.getUTCMonth() + 1).padStart(2, "0"),
-    String(TODAY_UTC.getUTCDate()).padStart(2, "0")
-  ].join("-");
   const sys = [
     "You extract structured JSON from travel booking images. Output JSON only, no prose.",
     "",
@@ -393,86 +388,6 @@ const parseIso = (s)=>{
     d
   } : null;
 };
-const DOW_MAP = {
-  sun: 0,
-  sunday: 0,
-  mon: 1,
-  monday: 1,
-  tue: 2,
-  tues: 2,
-  tuesday: 2,
-  wed: 3,
-  weds: 3,
-  wednesday: 3,
-  thu: 4,
-  thur: 4,
-  thurs: 4,
-  thursday: 4,
-  fri: 5,
-  friday: 5,
-  sat: 6,
-  saturday: 6
-};
-const MONTH_MAP = {
-  jan: 1,
-  january: 1,
-  feb: 2,
-  february: 2,
-  mar: 3,
-  march: 3,
-  apr: 4,
-  april: 4,
-  may: 5,
-  jun: 6,
-  june: 6,
-  jul: 7,
-  july: 7,
-  aug: 8,
-  august: 8,
-  sep: 9,
-  sept: 9,
-  september: 9,
-  oct: 10,
-  october: 10,
-  nov: 11,
-  november: 11,
-  dec: 12,
-  december: 12
-};
-const parseDowMaybe = (s)=>{
-  if (typeof s !== "string" || !s) return null;
-  const k = s.trim().toLowerCase();
-  return DOW_MAP[k] ?? null;
-};
-const parseMonthMaybe = (s)=>{
-  if (s == null) return null;
-  if (typeof s === "number") return s >= 1 && s <= 12 ? s : null;
-  const t = s.trim().toLowerCase();
-  if (/^\d{1,2}$/.test(t)) {
-    const n = Number(t);
-    return n >= 1 && n <= 12 ? n : null;
-  }
-  return MONTH_MAP[t] ?? null;
-};
-const parseDayMaybe = (v)=>{
-  if (typeof v === "number") return v >= 1 && v <= 31 ? v : null;
-  if (typeof v !== "string") return null;
-  const m = v.trim().toLowerCase().match(/^(\d{1,2})/);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return n >= 1 && n <= 31 ? n : null;
-};
-const pickFutureByDow = (month, day, wantDow, now)=>{
-  const candidates = INFER_YEARS.map((y)=>({
-      y,
-      dt: toUTC(y, month, day)
-    })).filter(({ dt })=>dt.getUTCMonth() + 1 === month && dt.getUTCDate() === day && dt.getUTCDay() === wantDow);
-  // Prefer on/after TODAY, else earliest match
-  const onOrAfter = candidates.filter(({ dt })=>dt >= stripTime(now));
-  if (onOrAfter.length) return onOrAfter.sort((a, b)=>+a.dt - +b.dt)[0].dt;
-  if (candidates.length) return candidates.sort((a, b)=>+a.dt - +b.dt)[0].dt;
-  return null;
-};
 const stripTime = (d)=>new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 const pickNearestFuture = (month, day, now)=>{
   const today = stripTime(now);
@@ -683,7 +598,7 @@ const handleMultiItem = async (inlineData, file)=>{
   });
 };
 
-const handleSingleItem = async (itemType, inlineData, file)=>{
+const handleSingleItem = async (itemType, inlineData)=>{
   const validTypes = ["accommodation", "transportation", "activity", "reservation"];
   if (!validTypes.includes(itemType)) {
     return err(`Invalid itemType. Must be one of: ${validTypes.join(", ")} or 'auto' for multi-item mode`);
@@ -747,7 +662,7 @@ serve(async (req)=>{
     const inlineData = await toInlineData(file);
 
     if (isMultiItemMode) return await handleMultiItem(inlineData, file);
-    return await handleSingleItem(itemType, inlineData, file);
+    return await handleSingleItem(itemType, inlineData);
   } catch (e) {
     console.error("parse-travel-doc error", e);
     return err("Server error", 500);

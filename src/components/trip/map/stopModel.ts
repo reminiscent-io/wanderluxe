@@ -100,20 +100,6 @@ export function makeAnchorId(stayId: string, end: 'start' | 'end', date: string)
   return `accommodation${SEP}${stayId}${SEP}${end}@${date}`;
 }
 
-export function parseStopId(stopId: string): {
-  entityType: CalendarEntityType;
-  recordId: string;
-  role: StopRole;
-} {
-  const first = stopId.indexOf(SEP);
-  const last = stopId.lastIndexOf(SEP);
-  return {
-    entityType: stopId.slice(0, first) as CalendarEntityType,
-    recordId: stopId.slice(first + 1, last),
-    role: stopId.slice(last + 1) as StopRole,
-  };
-}
-
 /** True for the three kinds that put a hotel on the map. */
 export function isStayKind(kind: StopKind): boolean {
   return (

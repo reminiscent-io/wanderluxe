@@ -30,7 +30,6 @@ export function useSessionKeepAlive(interval = 10 * 60 * 1000) {
         try {
           // Perform a lightweight query to keep the session active
           await supabase.from('profiles').select('id', { count: 'exact', head: true });
-          console.log('Session keep-alive ping sent');
         } catch (error) {
           console.warn('Session keep-alive ping failed', error);
         }

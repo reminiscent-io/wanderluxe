@@ -84,16 +84,6 @@ export const formatTimeCompact = (time?: string): string => {
   return `${hour % 12 || 12}:${minutes}${hour >= 12 ? 'p' : 'a'}`;
 };
 
-// time -> { time: "h:mm", meridiem: "AM/PM" } for stacked display
-export const formatTime12Stacked = (time?: string) => {
-  if (!time) return { time: '', meridiem: '' };
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return { time: `${displayHour}:${minutes}`, meridiem: ampm };
-};
-
 // normalize "YYYY-MM-DD" from many date string shapes
 export const getNormalizedDay = (date: string) => {
   if (!date) return '';
@@ -194,20 +184,8 @@ export const getPeriodLabel = (period: TimePeriod): string => {
   return labels[period];
 };
 
-export const getPeriodOrder = (period: TimePeriod): number => {
-  const order: Record<TimePeriod, number> = {
-    'early-morning': 0,
-    'morning': 1,
-    'afternoon': 2,
-    'evening': 3,
-    'night': 4,
-    'no-time': 5,
-  };
-  return order[period];
-};
-
 // icon per transport
-export const getTransportationIconComponent = (type: string): React.ComponentType<{ className?: string }> => {
+const getTransportationIconComponent = (type: string): React.ComponentType<{ className?: string }> => {
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     flight: Plane,
     train: Train,
@@ -262,7 +240,7 @@ export const CATEGORY_ROW_CLASS: Record<EventCategory, string> = {
 };
 
 // icon per event type
-export const getEventIconComponent = (eventType: TimelineType, transportType?: string): React.ComponentType<{ className?: string }> => {
+const getEventIconComponent = (eventType: TimelineType, transportType?: string): React.ComponentType<{ className?: string }> => {
   switch (eventType) {
     case 'transportation':
       return transportType ? getTransportationIconComponent(transportType) : Plane;

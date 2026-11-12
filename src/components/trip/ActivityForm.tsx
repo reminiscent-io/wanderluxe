@@ -29,12 +29,10 @@ interface ActivityFormProps {
   onCancel: () => void;
   onDelete?: () => Promise<void>;
   submitLabel: string;
-  eventId: string;
   tripDates?: { arrival_date: string; departure_date: string };
   preselectedDate?: string;
   tripId: string;
   activityId?: string | null; // Add activity ID for edit mode
-  destination?: string; // Trip destination to bias Google Places results
 }
 
 const DEFAULT_START_TIME = '08:00'; // Default to 8:00 AM for activities
@@ -88,12 +86,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({
   onCancel,
   onDelete,
   submitLabel,
-  eventId,
   tripDates,
   preselectedDate,
   tripId,
   activityId,
-  destination,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -402,11 +402,11 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json"
       }
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("send-share-trip-email error:", err);
     return new Response(JSON.stringify({
       success: false,
-      message: err?.message ?? "Failed to send email"
+      message: err instanceof Error ? err.message : "Failed to send email"
     }), {
       status: 500,
       headers: {

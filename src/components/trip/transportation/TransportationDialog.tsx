@@ -22,7 +22,6 @@ interface TransportationDialogProps {
   /** Now expects the saved record (optional to support different use cases) */
   onSuccess: (updated?: TransportationType) => void;
   preselectedDate?: string; // Day the user clicked "Add to this day" on
-  buttonClassName?: string;
 }
 
 const TransportationDialog: React.FC<TransportationDialogProps> = ({
@@ -32,7 +31,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
   initialData,
   onSuccess,
   preselectedDate,
-  buttonClassName,
 }) => {
   const queryClient = useQueryClient();
   const [tripDates, setTripDates] = useState<{
@@ -160,7 +158,6 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             tripArrivalDate={tripDates.arrival_date}
             tripDepartureDate={tripDates.departure_date}
             preselectedDate={preselectedDate}
-            buttonClassName={buttonClassName}
             tripId={tripId}
           />
         </div>

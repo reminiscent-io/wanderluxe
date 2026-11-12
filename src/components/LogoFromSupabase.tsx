@@ -37,7 +37,6 @@ const LogoFromSupabase: React.FC<LogoFromSupabaseProps> = ({
     const loadLogo = async () => {
       try {
         const logos = await fetchLogosFromSupabase();
-        console.log("Available logos:", logos.map(l => l.name)); // Debugging
 
         // Try exact match with dashes, then partial match
         const exactMatch = logos.find(l =>

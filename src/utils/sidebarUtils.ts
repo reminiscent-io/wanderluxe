@@ -30,16 +30,3 @@ export function formatTime(time: string): string {
     return time;
   }
 }
-
-export function formatShortDate(dateStr: string): string {
-  if (!dateStr) return '';
-  try {
-    const [year, month, day] = dateStr.split('-');
-    if (!year || !month || !day) return dateStr;
-    const mm = parseInt(month).toString().padStart(2, '0');
-    const dd = parseInt(day).toString().padStart(2, '0');
-    return `${mm}/${dd}`;
-  } catch {
-    return dateStr;
-  }
-}

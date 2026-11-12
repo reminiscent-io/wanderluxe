@@ -77,7 +77,6 @@ interface RestaurantReservationFormProps {
   tripArrivalDate?: string;
   tripDepartureDate?: string;
   preselectedDate?: string; // Day the user clicked "Add to this day" on
-  destination?: string; // Trip destination to bias search results
 }
 
 const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
@@ -90,7 +89,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   tripArrivalDate,
   tripDepartureDate,
   preselectedDate,
-  destination,
 }) => {
 
   // Generate trip dates for dropdown with timezone-safe handling

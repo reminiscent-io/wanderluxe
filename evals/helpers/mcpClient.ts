@@ -18,6 +18,7 @@ export async function connectMcp(baseUrl: string, token: string): Promise<Client
 }
 
 // Tool results are { content: [{ type: 'text', text: <JSON> }], isError? }.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- eval asserts index freely into tool payloads
 export function toolJson(result: unknown): any {
   const content = (result as { content?: Array<{ type: string; text?: string }> }).content;
   const item = content?.[0];

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { useTripStays } from '@/hooks/useTripStays';
 import { useTripDays } from '@/hooks/use-trip-days';
 import { supabase } from '@/integrations/supabase/client';
 import TimelineContent from './timeline/TimelineContent';
@@ -52,18 +52,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     });
   }, [tripId]);
 
-  const trackTimelineAction = (action: string, details?: object) => {
-    window.gtag('event', action, {
-      event_category: 'Timeline',
-      event_label: tripId,
-      ...details
-    });
-  };
-
   const { days, refreshDays } = useTripDays(tripId);
-  const { events, refreshEvents } = useTimelineEvents(tripId);
-  const { transportationData, refreshTransportation } = useTransportationEvents(tripId);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { stays } = useTripStays(tripId);
+  const { transportationData } = useTransportationEvents(tripId);
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [printSection, setPrintSection] = useState<'pdf' | 'studio'>('pdf');
@@ -165,32 +156,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([refreshEvents(), refreshDays(), refreshTransportation()]);
-      const { data, error } = await supabase
-        .from('trips')
-        .select('arrival_date, departure_date')
-        .eq('trip_id', tripId)
-        .single();
-
-      if (!error && data) {
-        if (data.arrival_date && data.departure_date) {
-          setLocalTripDates({
-            arrival_date: data.arrival_date,
-            departure_date: data.departure_date,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing timeline:', error);
-      toast.error('Failed to refresh timeline');
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [refreshEvents, refreshDays, refreshTransportation, tripId]);
-
   const fetchTripData = async () => {
     if (!tripId) return;
     try {
@@ -227,26 +192,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
     }
   };
 
-  // Process hotel stays for display in day cards
-  const processedHotelStays =
-    events?.filter((event) => event.hotel && event.stay_id).map((event) => ({
-      stay_id: event.stay_id,
-      trip_id: tripId,
-      hotel: event.hotel || '',
-      hotel_details: event.hotel_details,
-      hotel_url: event.hotel_url,
-      hotel_checkin_date: event.hotel_checkin_date || '',
-      hotel_checkout_date: event.hotel_checkout_date || '',
-      checkin_time: event.checkin_time || '',
-      checkout_time: event.checkout_time || '',
-      cost: event.cost ? Number(event.cost) : null,
-      currency: event.currency || 'USD',
-      hotel_address: event.hotel_address,
-      hotel_phone: event.hotel_phone,
-      hotel_place_id: event.hotel_place_id,
-      hotel_website: event.hotel_website,
-      created_at: event.created_at || new Date().toISOString(),
-    })) || [];
+  const stayCount = stays?.filter((stay) => stay.hotel && stay.stay_id).length ?? 0;
 
   // ---- Discovery hints -------------------------------------------------
   // Three capabilities that exist but never announce themselves. Each fires
@@ -256,7 +202,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
   const itemCount =
     (days?.reduce((sum, day) => sum + (day.activities?.length ?? 0), 0) ?? 0) +
-    processedHotelStays.length +
+    stayCount +
     (transportationData?.length ?? 0);
 
   const hasTransportation = (transportationData?.length ?? 0) > 0;
@@ -288,10 +234,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
 
   return (
     <div className="relative lg:flex lg:gap-6">
-      {isRefreshing && (
-        <div className="absolute inset-0 bg-background/40 z-20" aria-hidden="true" />
-      )}
-
       {/* Itinerary column: full width below lg; from lg+ 58% beside the docked
           assistant, full width when it's collapsed or floating over the calendar */}
       <div
@@ -536,7 +478,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
           <TimelineContent
             days={days}
             dayIndexMap={new Map(days?.map((day, index) => [day.day_id, index + 1]) || [])}
-            hotelStays={processedHotelStays}
             onDayDelete={handleDayDelete}
             tripArrivalDate={localTripDates.arrival_date || undefined}
             tripDepartureDate={localTripDates.departure_date || undefined}

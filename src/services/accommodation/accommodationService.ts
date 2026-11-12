@@ -22,21 +22,6 @@ export interface AccommodationFormData {
   clear_image_url?: boolean;
 }
 
-// Compute the next order_index for accommodations within a trip
-const getNextAccommodationOrderIndex = async (tripId: string): Promise<number> => {
-  const { data, error } = await supabase
-    .from("accommodations")
-    .select("order_index")
-    .eq("trip_id", tripId)
-    .order("order_index", { ascending: false })
-    .limit(1);
-  if (error) {
-    console.error("Error fetching max accommodation order_index:", error);
-    throw error;
-  }
-  return (data?.[0]?.order_index ?? -1) + 1;
-};
-
 // Helper function to generate and insert accommodation days
 const insertAccommodationDays = async (
   stayId: string,
@@ -46,7 +31,6 @@ const insertAccommodationDays = async (
 ) => {
   // Generate array of dates between check-in and check-out
   const dateArray = generateDateArray(checkinDate, checkoutDate);
-  console.log("Generated date array for accommodation days:", dateArray);
 
   // Fetch all trip days for the given trip
   const { data: dayData, error: dayError } = await supabase
@@ -82,7 +66,6 @@ const insertAccommodationDays = async (
     .filter(item => item !== null);
 
   if (accommodationDaysData.length > 0) {
-    console.log("Inserting accommodation days:", accommodationDaysData);
     // Insert the accommodation_days records
     const { error: daysError } = await supabase
       .from("accommodations_days")
@@ -91,7 +74,6 @@ const insertAccommodationDays = async (
       console.error("Error adding accommodation days:", daysError);
       throw daysError;
     }
-    console.log("Accommodation days added successfully");
   } else {
     console.warn("No accommodation days to add - no matching trip days found");
   }
@@ -103,7 +85,6 @@ export const updateAccommodation = async (
   formData: AccommodationFormData
 ) => {
   try {
-    console.log("Updating accommodation with data:", { stayId, ...formData });
     // Update the accommodation record
     const updatePayload: Record<string, unknown> = {
         title: formData.hotel || "Unnamed Accommodation",
@@ -136,7 +117,6 @@ export const updateAccommodation = async (
       console.error("Error updating accommodation:", accommodationError);
       throw accommodationError;
     }
-    console.log("Accommodation updated successfully:", accommodationData);
 
     // Delete existing accommodation_days entries before re-inserting
     const { error: deleteError } = await supabase
