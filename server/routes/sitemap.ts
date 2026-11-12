@@ -111,12 +111,6 @@ async function getPublicTrips(): Promise<PublicTripRow[]> {
   return inflight;
 }
 
-/** Test hook: drop the in-memory cache. */
-export function resetSitemapCache(): void {
-  cache = null;
-  lastFailureAt = 0;
-}
-
 function sendFallback(res: Response, relativePath: string, contentType: string): void {
   const candidates = [
     path.resolve(process.cwd(), 'dist', relativePath),

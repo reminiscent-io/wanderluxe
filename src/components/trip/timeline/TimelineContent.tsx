@@ -18,7 +18,6 @@ import { useTripTimezone } from '@/hooks/useTripTimezone';
 interface TimelineContentProps {
   days?: TripDay[];
   dayIndexMap: Map<string, number>;
-  hotelStays: HotelStay[];
   onDayDelete: (id: string) => void;
   tripArrivalDate?: string;
   tripDepartureDate?: string;
@@ -73,20 +72,9 @@ function buildActivityPayload(form: ActivityFormData): Record<string, unknown> {
   };
 }
 
-function hotelStaysForDay(day: TripDay, hotelStays: HotelStay[]): HotelStay[] {
-  return hotelStays.filter(stay => {
-    if (!stay.hotel_checkin_date || !stay.hotel_checkout_date) return false;
-    const dayDate = new Date(day.date.split('T')[0]);
-    const checkinDate = new Date(stay.hotel_checkin_date.split('T')[0]);
-    const checkoutDate = new Date(stay.hotel_checkout_date.split('T')[0]);
-    return dayDate >= checkinDate && dayDate <= checkoutDate;
-  });
-}
-
 const TimelineContent: React.FC<TimelineContentProps> = ({
   days = [],
   dayIndexMap,
-  hotelStays,
   tripArrivalDate,
   tripDepartureDate,
   canEdit = true,
@@ -372,7 +360,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 tripId={day.trip_id}
                 date={day.date}
                 title={day.title}
-                activities={day.activities || []}
                 index={dayIndex}
                 weather={dayWeather}
                 currentWeather={isTodayDay ? weather?.current : undefined}
@@ -380,7 +367,6 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
                 allForecasts={weather?.daily}
                 tripTimezone={tripTimezone}
                 quietEmpty={quietEmptyDays}
-              hotelStays={hotelStaysForDay(day, hotelStays)}
               onActivityAdd={() => {
                 setSelectedDayId(day.day_id);
                 setPreselectedDate(day.date.split('T')[0]);
@@ -472,11 +458,9 @@ const TimelineContent: React.FC<TimelineContentProps> = ({
         preselectedDate={editingActivity ? undefined : preselectedDate}
         onSubmit={handleActivitySubmit}
         onDelete={handleActivityDelete}
-        eventId={editingActivity?.day_id || selectedDayId || ''}
         tripDates={tripArrivalDate && tripDepartureDate ? { arrival_date: tripArrivalDate, departure_date: tripDepartureDate } : undefined}
         tripId={tripId}
         activityId={editingActivity?.id || null}
-        destination={tripDestination}
       />
 
       <RestaurantReservationDialog

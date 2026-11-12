@@ -107,7 +107,16 @@ async function toLookup(item: RequestItem): Promise<Lookup | null> {
 
 const PLACE_FIELDS = 'geometry,name,formatted_address,place_id,photos';
 
-function readPlace(result: Record<string, any> | undefined | null): Resolved | null {
+/** The fields of a Places (Legacy) result we read; everything is checked at runtime. */
+interface RawPlace {
+  geometry?: { location?: { lat?: unknown; lng?: unknown } };
+  place_id?: unknown;
+  name?: unknown;
+  formatted_address?: unknown;
+  photos?: Array<{ photo_reference?: string }>;
+}
+
+function readPlace(result: RawPlace | undefined | null): Resolved | null {
   const loc = result?.geometry?.location;
   if (typeof loc?.lat !== 'number' || typeof loc?.lng !== 'number') return null;
   return {

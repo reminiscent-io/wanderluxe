@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
+import type { ExtractedItem } from '@/types/ai-assistant';
 import type { Database } from '@/integrations/supabase/types/database';
 import { defaultReservationEnd } from '@/utils/timeUtils';
 

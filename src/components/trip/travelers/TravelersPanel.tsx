@@ -9,7 +9,6 @@ import InviteLinkSection from "./InviteLinkSection";
 
 interface TravelersPanelProps {
   tripId: string;
-  tripDestination?: string;
   onAdd: () => void;
   onEdit: (traveler: Traveler) => void;
   isMobile: boolean;
@@ -19,7 +18,6 @@ interface TravelersPanelProps {
 
 export default function TravelersPanel({
   tripId,
-  tripDestination = "Trip",
   onAdd,
   onEdit,
   isMobile,

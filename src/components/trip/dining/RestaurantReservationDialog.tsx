@@ -25,7 +25,6 @@ interface RestaurantReservationDialogProps {
   tripArrivalDate?: string;
   tripDepartureDate?: string;
   preselectedDate?: string;    // Day the user clicked "Add to this day" on
-  destination?: string;        // Trip destination to bias search results
   // Controlled interface: TimelineContent and Sidebar own submit/delete
   title?: string;
   isSubmitting?: boolean;
@@ -42,7 +41,6 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
   tripArrivalDate,
   tripDepartureDate,
   preselectedDate,
-  destination,
   title,
   isSubmitting: controlledIsSubmitting,
   onSubmit: controlledOnSubmit,
@@ -139,7 +137,6 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
             tripArrivalDate={tripArrivalDate}
             tripDepartureDate={tripDepartureDate}
             preselectedDate={preselectedDate}
-            destination={destination}
           />
         </div>
       </DialogContent>

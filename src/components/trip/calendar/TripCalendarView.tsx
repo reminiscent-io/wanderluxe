@@ -225,13 +225,13 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
       {/* Edit dialogs */}
       {editing?.type === 'activity' && activityInitial && (
         <ActivityDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId} activityId={(editing.record as Tables<'day_activities'>).id}
-          initialData={activityInitial as unknown as Partial<Tables<'day_activities'>>} tripDates={dialogTripDates} destination={destination}
+          initialData={activityInitial as unknown as Partial<Tables<'day_activities'>>} tripDates={dialogTripDates}
           onSuccess={closeAndRefresh} />
       )}
       {editing?.type === 'dining' && (
         <RestaurantReservationDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId}
           initialData={editing.record as Partial<Tables<'reservations'>>} tripArrivalDate={dialogTripDates.arrival_date} tripDepartureDate={dialogTripDates.departure_date}
-          destination={destination} onSuccess={closeAndRefresh} />
+          onSuccess={closeAndRefresh} />
       )}
       {editing?.type === 'accommodation' && (
         <AccommodationDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId}
@@ -246,12 +246,12 @@ const TripCalendarView: React.FC<TripCalendarViewProps> = ({ tripId, tripDates, 
       {adding?.type === 'activity' && (
         <ActivityDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId} preselectedDate={adding.date}
           initialData={(adding.time ? { start_time: adding.time } : {}) as unknown as Partial<Tables<'day_activities'>>}
-          tripDates={dialogTripDates} destination={destination} onSuccess={closeAndRefresh} />
+          tripDates={dialogTripDates} onSuccess={closeAndRefresh} />
       )}
       {adding?.type === 'dining' && (
         <RestaurantReservationDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId}
           initialData={adding.time ? ({ reservation_time: `${adding.time}:00` } as Partial<Tables<'reservations'>>) : undefined}
-          tripArrivalDate={dialogTripDates.arrival_date} tripDepartureDate={dialogTripDates.departure_date} destination={destination} onSuccess={closeAndRefresh} />
+          tripArrivalDate={dialogTripDates.arrival_date} tripDepartureDate={dialogTripDates.departure_date} onSuccess={closeAndRefresh} />
       )}
       {adding?.type === 'accommodation' && (
         <AccommodationDialog open onOpenChange={(o) => { if (!o) closeAndRefresh(); }} tripId={tripId} destination={destination} onSuccess={closeAndRefresh} />

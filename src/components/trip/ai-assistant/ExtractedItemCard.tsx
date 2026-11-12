@@ -5,7 +5,6 @@ import type { ExtractedItem, TravelItemType } from '@/types/ai-assistant';
 
 interface ExtractedItemCardProps {
   item: ExtractedItem;
-  onStatusChange?: (id: string, status: 'created' | 'skipped') => void;
   /** Called when the card is clicked (to open the full edit dialog). Omit when processed. */
   onEdit?: () => void;
   compact?: boolean;
@@ -127,7 +126,6 @@ function getItemSummary(item: ExtractedItem): ItemSummary {
 
 const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
   item,
-  onStatusChange,
   onEdit,
   compact = false
 }) => {

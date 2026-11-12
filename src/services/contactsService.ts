@@ -42,12 +42,6 @@ export const initialsFor = (c: ConnectedContact) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-export const contactsByEmail = (contacts: ConnectedContact[]) =>
-  contacts.reduce<Record<string, ConnectedContact>>((acc, c) => {
-    if (c.email) acc[c.email.toLowerCase()] = c;
-    return acc;
-  }, {});
-
 type OutgoingShare = {
   trip_id: string;
   created_at: string;

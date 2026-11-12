@@ -26,21 +26,6 @@ export function buildTripPath(trip: TripLinkFields): string {
   return `/trip/${trip.trip_id}`;
 }
 
-export function slugify(text: string): string {
-  return text
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-export function isValidSlug(value: string): boolean {
-  return SLUG_PATTERN.test(value);
-}
-
 const UNSPLASH_HOST = 'images.unsplash.com';
 
 export function buildOgImageUrl(coverImageUrl: string | null | undefined): string | undefined {

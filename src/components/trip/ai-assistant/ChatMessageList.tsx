@@ -93,7 +93,6 @@ interface ChatMessageListProps {
   onLoadMore?: () => void;
   historyLoaded?: boolean;
   onLoadHistory?: () => void;
-  tripId?: string;
   onImportAll?: (items: ExtractedItem[]) => Promise<void>;
   onReviewEdit?: (items: ExtractedItem[]) => void;
   onAddPlaceCard?: (card: PlaceCard) => Promise<void>;
@@ -111,7 +110,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   onLoadMore,
   historyLoaded = true,
   onLoadHistory,
-  tripId,
   onImportAll,
   onReviewEdit,
   onAddPlaceCard,

@@ -43,6 +43,7 @@ import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useActivitiesRealtime } from '@/hooks/useActivitiesRealtime';
 import { useAccommodationsRealtime } from '@/hooks/useAccommodationsRealtime';
+import { useTripStays } from '@/hooks/useTripStays';
 import { getNormalizedDay } from './components/timeline-utils';
 import { cn } from '@/lib/utils';
 import { DailyForecast, WeatherData } from '@/hooks/useWeather';
@@ -52,9 +53,7 @@ export interface CompactDayCardProps {
   tripId: string;
   date: string;
   title?: string;
-  activities: DayActivity[];
   index: number;
-  hotelStays: HotelStay[];
   onActivityAdd?: (opts: { dayId: string; date: string }) => void;
   onHotelAdd?: () => void;
   onTransportationAdd?: () => void;
@@ -162,20 +161,7 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     enabled: !!id,
   });
 
-  // fetch accommodations for this trip
-  const { data: hotelStays = [] } = useQuery({
-    queryKey: ['accommodations', tripId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('accommodations')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('order_index');
-      if (error) throw error;
-      return data as HotelStay[];
-    },
-    enabled: !!tripId,
-  });
+  const { stays: hotelStays = [] } = useTripStays(tripId);
 
   // build view-model
   const {
@@ -188,7 +174,6 @@ const CompactDayCard: React.FC<CompactDayCardProps> = ({
     periodGroups,
     isCheckInDay,
     isCheckOutDay,
-    isTravelDay,
     totalEvents,
     timelineItems,
   } = useDayTimeline({

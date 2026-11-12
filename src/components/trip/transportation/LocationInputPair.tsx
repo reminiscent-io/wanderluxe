@@ -1,8 +1,5 @@
 import React, { useRef, useCallback } from 'react';
-import { Tables } from '@/integrations/supabase/types';
 import LocationSearchInput from './LocationSearchInput';
-
-type Transportation = Tables<'transportation'>;
 
 interface LocationInputPairProps {
   fromValue: string;

@@ -26,7 +26,6 @@ interface Props {
   tripArrivalDate?: string | null;
   tripDepartureDate?: string | null;
   preselectedDate?: string; // Day the user clicked "Add to this day" on
-  buttonClassName?: string;
   tripId: string;
 }
 
@@ -38,7 +37,6 @@ export default function TransportationForm({
   tripArrivalDate,
   tripDepartureDate,
   preselectedDate,
-  buttonClassName,
   tripId,
 }: Props) {
   /* ------------------------------------------------------------------------ */

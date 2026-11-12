@@ -80,8 +80,8 @@ async function main(): Promise<void> {
   }
   fs.rmSync(OUT, { recursive: true, force: true });
 
-  // 1. Static files. dist/server is the Replit/Cloud Run bundle; not served.
-  const distFiles = walk(DIST).filter((f) => !f.startsWith('server/'));
+  // 1. Static files.
+  const distFiles = walk(DIST);
   for (const file of distFiles) copy(path.join(DIST, file), path.join(STATIC_OUT, file));
 
   // 2. The Express app as one function. Everything is bundled, so the

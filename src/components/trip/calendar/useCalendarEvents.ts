@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { EventInput } from '@fullcalendar/core';
 import { useTripDays } from '@/hooks/use-trip-days';
-import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { useTripStays } from '@/hooks/useTripStays';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
 import { useTripReservations } from './useTripReservations';
@@ -14,7 +14,7 @@ import {
 
 export function useCalendarEvents(tripId: string): { events: EventInput[]; isLoading: boolean } {
   const { days } = useTripDays(tripId);
-  const { events: stays } = useTimelineEvents(tripId);
+  const { stays } = useTripStays(tripId);
   const { transportationData } = useTransportationEvents(tripId);
   const { data: reservations, isLoading: reservationsLoading } = useTripReservations(tripId);
   const { tripTimezone } = useTripTimezone(tripId);

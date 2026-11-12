@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trip } from '@/types/trip';
-import { useNavigate } from 'react-router-dom';
 
 export const useTripIdBySlug = (slug: string | undefined) => {
   const { data, isLoading, error } = useQuery<string | null>({
@@ -30,7 +29,6 @@ export const useTripIdBySlug = (slug: string | undefined) => {
 };
 
 export const useTripQuery = (tripId: string | undefined) => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const previousTrip = queryClient.getQueryData<Trip>(['trip', tripId]);
 

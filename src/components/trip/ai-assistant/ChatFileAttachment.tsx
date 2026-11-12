@@ -11,7 +11,6 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 interface ChatFileAttachmentProps {
   attachment: ChatFileAttachmentType | null;
   onAttach: (attachment: ChatFileAttachmentType) => void;
-  onRemove: () => void;
   disabled?: boolean;
 }
 
@@ -21,7 +20,6 @@ const MAX_FILE_MB = 15;
 const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
   attachment,
   onAttach,
-  onRemove,
   disabled = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,13 +153,6 @@ const ChatFileAttachmentComponent: React.FC<ChatFileAttachmentProps> = ({
     document.addEventListener('paste', handler);
     return () => document.removeEventListener('paste', handler);
   }, [disabled, processFile]);
-
-  const handleRemove = useCallback(() => {
-    if (attachment?.previewUrl) {
-      URL.revokeObjectURL(attachment.previewUrl);
-    }
-    onRemove();
-  }, [attachment, onRemove]);
 
   return (
     <div

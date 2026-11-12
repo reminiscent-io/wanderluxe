@@ -118,7 +118,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
   // Trip date editing fields
   const [newArrival, setNewArrival] = useState('');
   const [newDeparture, setNewDeparture] = useState('');
-  const [isSubmittingDates, setIsSubmittingDates] = useState(false);
 
   // Selected items for editing
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationRow | null>(null);
@@ -542,19 +541,14 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Utility to add new trip_days if trip dates have been extended
   const addNewTripDays = async (oldArr: string, oldDep: string, newArr: string, newDep: string) => {
-    console.log('addNewTripDays called with:', { oldArr, oldDep, newArr, newDep });
     const oldDates = generateDateArray(oldArr, oldDep);
     const newDates = generateDateArray(newArr, newDep);
     const toAdd = newDates.filter(d => !oldDates.includes(d));
-    console.log('Date comparison - old:', oldDates, 'new:', newDates, 'toAdd:', toAdd);
     if (!toAdd.length) {
-      console.log('No new dates to add');
       return;
     }
     try {
-      console.log('Creating trip days for dates:', toAdd);
       await createTripDays(tripId || '', toAdd);
-      console.log('Successfully created trip days');
     } catch (err) {
       console.error('Failed to add new trip days:', err);
       toast.error('Failed to add new trip days');
@@ -564,9 +558,6 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
 
   // Save trip date changes (update trip record and handle day additions/removals)
   const saveDateChanges = async (arr: string, dep: string) => {
-    console.log('saveDateChanges called with:', { arr, dep, tripId });
-    console.log('Current trip data:', trip);
-
     // Capture old dates before any async work to avoid closure staleness
     const oldArrival = trip?.arrival_date;
     const oldDeparture = trip?.departure_date;
@@ -578,28 +569,23 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
     if (error) throw error;
 
     if (oldArrival && oldDeparture) {
-      console.log('Taking addNewTripDays path - existing trip has dates');
       await addNewTripDays(oldArrival, oldDeparture, arr, dep);
     } else {
-      console.log('Taking createTripDays path - no existing dates');
       const allDates = generateDateArray(arr, dep);
       await createTripDays(tripId || '', allDates);
     }
 
     setTripDatesOpen(false);
-    setIsSubmittingDates(false);
   };
 
   const handleSaveDates = async (overrideArrival?: string, overrideDeparture?: string) => {
     const finalArrival = overrideArrival || newArrival;
     const finalDeparture = overrideDeparture || newDeparture;
-    console.log('handleSaveDates called with finalArrival:', finalArrival, 'finalDeparture:', finalDeparture);
     if (!finalArrival || !finalDeparture) {
       toast.error('Both arrival and departure dates are required');
       return;
     }
-    setIsSubmittingDates(true);
-    
+
     // Update state for consistency
     if (overrideArrival) setNewArrival(overrideArrival);
     if (overrideDeparture) setNewDeparture(overrideDeparture);
@@ -614,14 +600,12 @@ export function useSidebarState(tripId: string | undefined): SidebarState {
         }
       }
 
-      console.log('About to call saveDateChanges with:', finalArrival, finalDeparture);
       await saveDateChanges(finalArrival, finalDeparture);
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip-days', tripId] });
     } catch (err) {
       console.error('Error updating trip dates:', err);
       toast.error('Failed to update trip dates');
-      setIsSubmittingDates(false);
     }
   };
 

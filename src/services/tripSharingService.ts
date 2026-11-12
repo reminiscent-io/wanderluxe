@@ -52,13 +52,8 @@ export const shareTrip = async (tripId: string, email: string, tripDestination: 
       .eq('shared_with_email', email.toLowerCase().trim())
       .maybeSingle();
 
-    let shareCreated = false;
-    if (existingShare) {
-      // Already shared, but we'll still send the email notification
-      console.log('Trip already shared with this email, but will resend notification');
-    } else {
-      shareCreated = true;
-    }
+    // An existing share still gets the email notification resent.
+    const shareCreated = !existingShare;
 
     // Create the share record only if it doesn't exist
     if (shareCreated) {
@@ -306,8 +301,6 @@ export const getSharedTrips = async () => {
       return { data: [], error: new Error('No email address found') };
     }
 
-    console.log('Fetching shared trips for email:', userEmail);
-
     // Get all trips shared with the user's email
     // Use ilike for case-insensitive matching to be extra safe
     const { data, error } = await supabase
@@ -330,8 +323,6 @@ export const getSharedTrips = async () => {
       });
       return { data: [], error };
     }
-
-    console.log('Found shared trips:', data?.length || 0);
 
     type SharedTripRow = TripShareRow & { trips: TripRow | null };
     // Filter out shares where the user is the owner (shared_by_user_id === current user)

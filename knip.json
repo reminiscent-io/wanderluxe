@@ -2,19 +2,10 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
     "index.html",
-    "src/main.tsx",
-    "server/index.ts",
-    "server/build.js",
     "scripts/*.{ts,mjs}",
     "evals/**/*.{ts,tsx}",
     "src/**/*.test.{ts,tsx}",
-    "server/**/*.test.ts",
-    "src/test/setup.ts",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "tailwind.config.ts",
-    "eslint.config.js",
-    "postcss.config.js"
+    "server/**/*.test.ts"
   ],
   "project": [
     "src/**/*.{ts,tsx,js}",
@@ -23,15 +14,10 @@
     "evals/**/*.{ts,tsx}"
   ],
   "ignore": [
-    "supabase/**",
-    "brag-output*/**",
-    "src/integrations/supabase/types/**",
-    "src/types/global.d.ts"
+    "src/integrations/supabase/types/**"
   ],
   "ignoreDependencies": [
     "@types/google.maps",
-    "puppeteer",
-    "tar-fs",
-    "esbuild"
+    "tar-fs"
   ]
 }

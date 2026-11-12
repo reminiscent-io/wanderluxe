@@ -172,38 +172,3 @@ export function useTripPermissions(tripId: string | undefined): TripPermissions 
 
   return permissions;
 }
-
-/**
- * Utility function to check if user can edit a specific trip
- * @param tripId The ID of the trip to check
- * @returns Promise<boolean> indicating if user has edit access
- */
-export async function canEditTrip(tripId: string): Promise<boolean> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-
-    // Check if user is the owner
-    const { data: tripData } = await supabase
-      .from('trips')
-      .select('user_id')
-      .eq('trip_id', tripId)
-      .single();
-
-    if (tripData?.user_id === user.id) return true;
-
-    // Check if trip is shared with edit permission
-    const { data: shareData } = await supabase
-      .from('trip_shares')
-      .select('permission_level, share_status')
-      .eq('trip_id', tripId)
-      .eq('shared_with_email', user.email)
-      .single();
-
-    if (!shareData || shareData.share_status === 'pending') return false;
-    return shareData.permission_level === 'edit';
-  } catch (error) {
-    console.error('Error checking edit permission:', error);
-    return false;
-  }
-}

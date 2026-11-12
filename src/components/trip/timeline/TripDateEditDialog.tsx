@@ -49,7 +49,6 @@ export default function TripDateEditDialog({
     if (range?.from && range?.to) {
       const newArrival = format(range.from, 'yyyy-MM-dd');
       const newDeparture = format(range.to, 'yyyy-MM-dd');
-      console.log('TripDateEditDialog saving dates:', { newArrival, newDeparture });
       onArrivalChange(newArrival);
       onDepartureChange(newDeparture);
       setIsSaving(true);

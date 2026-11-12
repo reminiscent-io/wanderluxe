@@ -44,14 +44,8 @@ const envSchema = z.object({
   // demo style when unset so the map still renders.
   VITE_GOOGLE_MAPS_MAP_ID: z.string().optional(),
 
-  // Unsplash API for trip imagery (optional - will use placeholders if missing)
-  VITE_UNSPLASH_ACCESS_KEY: z.string().optional(),
-
   // Travel document parsing endpoint (optional feature)
   VITE_PARSE_TRAVEL_DOC_URL: z.string().url().optional().or(z.literal('')),
-
-  // Admin email for special permissions (has fallback)
-  VITE_ADMIN_EMAIL: z.string().email().optional(),
 
   // Photo cache TTL in milliseconds (has defaults)
   VITE_PLACE_PHOTO_CACHE_TTL_MS: z
@@ -87,9 +81,7 @@ function validateEnv(): Env {
     VITE_SUPABASE_ANON_KEY: getVar('VITE_SUPABASE_ANON_KEY'),
     VITE_GOOGLE_MAPS_API_KEY: getVar('VITE_GOOGLE_MAPS_API_KEY'),
     VITE_GOOGLE_MAPS_MAP_ID: getVar('VITE_GOOGLE_MAPS_MAP_ID'),
-    VITE_UNSPLASH_ACCESS_KEY: getVar('VITE_UNSPLASH_ACCESS_KEY'),
     VITE_PARSE_TRAVEL_DOC_URL: getVar('VITE_PARSE_TRAVEL_DOC_URL'),
-    VITE_ADMIN_EMAIL: getVar('VITE_ADMIN_EMAIL'),
     VITE_PLACE_PHOTO_CACHE_TTL_MS: getVar('VITE_PLACE_PHOTO_CACHE_TTL_MS'),
     VITE_POSTHOG_KEY: getVar('VITE_POSTHOG_KEY'),
     VITE_POSTHOG_HOST: getVar('VITE_POSTHOG_HOST'),
@@ -147,18 +139,6 @@ Vercel:
 }
 
 // Validate environment variables immediately on module import
-export const env = validateEnv();
+const env = validateEnv();
 
-// Export individual variables for convenience
-export const {
-  VITE_SUPABASE_URL,
-  VITE_SUPABASE_ANON_KEY,
-  VITE_GOOGLE_MAPS_API_KEY,
-  VITE_GOOGLE_MAPS_MAP_ID,
-  VITE_UNSPLASH_ACCESS_KEY,
-  VITE_PARSE_TRAVEL_DOC_URL,
-  VITE_ADMIN_EMAIL,
-  VITE_PLACE_PHOTO_CACHE_TTL_MS,
-  VITE_POSTHOG_KEY,
-  VITE_POSTHOG_HOST,
-} = env;
+export const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = env;

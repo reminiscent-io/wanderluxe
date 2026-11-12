@@ -1,5 +1,5 @@
 // src/components/trip/transportation/TransportationFormFields.tsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { UseFormReturn, Controller, useWatch } from "react-hook-form";
 import { Loader2, Search, Globe, ChevronDown } from "lucide-react";
@@ -82,10 +82,6 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
 
   // watch cost for formatted display
   const cost = useWatch({ control, name: "cost" }) as number | null;
-  const [costDisplay, setCostDisplay] = useState(cost?.toString() ?? "");
-  useEffect(() => {
-    setCostDisplay(cost?.toString() ?? "");
-  }, [cost]);
 
   const canLookup = Boolean(flightNumber?.trim()) && Boolean(travelRange?.start);
 
@@ -361,7 +357,7 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
           <Controller
             control={control}
             name="cost"
-            render={({ field }) => (
+            render={() => (
               <div className="flex-1">
                 <Input
                   type="text"
@@ -369,9 +365,6 @@ export default function TransportationFormFields({ form, tripArrivalDate, tripId
                   onChange={(e) => {
                     const numericValue = Number(e.target.value.replace(/,/g, ''));
                     setValue("cost", Number.isNaN(numericValue) ? null : numericValue);
-                  }}
-                  onBlur={(e) => {
-                    // The field value is already set by onChange, this ensures visual formatting
                   }}
                   placeholder="0"
                 />

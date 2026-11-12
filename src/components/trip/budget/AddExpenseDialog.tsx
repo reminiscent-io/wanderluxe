@@ -67,7 +67,6 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
         event_category: 'Budget',
         user_id: user.id
       });
-      console.log('Add expense dialog opened by user:', user.id);
     }
   }, [open, user]);
 

@@ -64,7 +64,6 @@ vi.mock('@/components/trip/TimelineView', () => ({ default: () => <div data-test
 vi.mock('@/components/trip/BudgetView', () => ({ default: () => <div /> }));
 vi.mock('@/components/trip/BookingView', () => ({ default: () => <div /> }));
 vi.mock('@/components/trip/ai-assistant/AIAssistantPanel', () => ({ default: () => <div /> }));
-vi.mock('@/components/trip/ai-assistant/AIAssistantDrawer', () => ({ default: () => <div /> }));
 vi.mock('@/components/SEO', () => ({ default: (): null => null, SITE_URL: 'https://wanderluxe.io' }));
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

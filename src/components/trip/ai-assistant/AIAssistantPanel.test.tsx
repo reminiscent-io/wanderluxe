@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type React from 'react';
 import AIAssistantPanel from './AIAssistantPanel';
 
 vi.mock('@/hooks/useAIAssistant', () => ({
@@ -37,7 +38,11 @@ vi.mock('@/services/placeCardAddService', () => ({
   undoPlaceCardItem: vi.fn(),
 }));
 
-vi.mock('./ChatMessageList', () => ({ default: () => <div data-testid="message-list" /> }));
+vi.mock('./ChatMessageList', () => ({
+  default: ({ onAddPlaceCard }: { onAddPlaceCard?: unknown }) => (
+    <div data-testid="message-list" data-can-add-place-cards={String(typeof onAddPlaceCard === 'function')} />
+  ),
+}));
 vi.mock('./ChatInput', () => ({ default: () => <div data-testid="chat-input" /> }));
 vi.mock('./UsageMeter', () => ({ default: () => null }));
 vi.mock('./PaywallModal', () => ({ default: () => null }));
@@ -47,7 +52,9 @@ vi.mock('./PromptChips', () => ({ default: () => null }));
 // which validates env at import time. Covered by DiscoverHint.test.tsx.
 vi.mock('@/components/discovery/DiscoverHint', () => ({ default: () => null }));
 
-const renderPanel = (props: { onCollapse?: () => void } = {}) => {
+type PanelProps = Omit<React.ComponentProps<typeof AIAssistantPanel>, 'tripId'>;
+
+const renderPanel = (props: PanelProps = {}) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -74,5 +81,29 @@ describe('AIAssistantPanel collapse button', () => {
     renderPanel({ onCollapse: vi.fn() });
     expect(screen.getByTestId('message-list')).toBeInTheDocument();
     expect(screen.getByTestId('chat-input')).toBeInTheDocument();
+  });
+});
+
+describe('AIAssistantPanel fullscreen (mobile)', () => {
+  it('renders nothing while closed', () => {
+    renderPanel({ fullscreen: { open: false, onOpenChange: vi.fn() } });
+    expect(screen.queryByTestId('message-list')).not.toBeInTheDocument();
+  });
+
+  it('minimizes through onOpenChange', () => {
+    const onOpenChange = vi.fn();
+    renderPanel({ fullscreen: { open: true, onOpenChange } });
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize assistant' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  // The mobile drawer used to be a separate copy that never wired this up,
+  // so place cards showed no "Add to trip" button on phones.
+  it.each([
+    ['dock', {}],
+    ['fullscreen', { fullscreen: { open: true, onOpenChange: vi.fn() } }],
+  ])('wires place-card adds in %s mode', (_mode, props) => {
+    renderPanel(props as PanelProps);
+    expect(screen.getByTestId('message-list')).toHaveAttribute('data-can-add-place-cards', 'true');
   });
 });

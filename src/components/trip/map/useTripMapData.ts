@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTripDays } from '@/hooks/use-trip-days';
-import { useTimelineEvents } from '@/hooks/use-timeline-events';
+import { useTripStays } from '@/hooks/useTripStays';
 import { useTransportationEvents } from '@/hooks/use-transportation-events';
 import { useTripReservations } from '../calendar/useTripReservations';
 import { buildDayFrames, buildTripStops, tripDatesFrom } from './buildStops';
@@ -24,7 +24,7 @@ export interface TripMapData {
  */
 export function useTripMapData(tripId: string, destinationBias?: LatLng | null): TripMapData {
   const { days } = useTripDays(tripId);
-  const { events: stays } = useTimelineEvents(tripId);
+  const { stays } = useTripStays(tripId);
   const { transportationData } = useTransportationEvents(tripId);
   const { data: reservations, isLoading: reservationsLoading } = useTripReservations(tripId);
 

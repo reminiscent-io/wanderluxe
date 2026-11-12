@@ -220,7 +220,6 @@ router.post('/api/stripe/create-checkout', async (req: Request, res: Response) =
       return res.status(500).json({ error: 'Stripe is not configured. Please contact support.' });
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     if (!hasSupabaseUrl || !hasServiceRoleKey) {
       console.error('Supabase environment variables are not configured:', { hasSupabaseUrl, hasServiceRoleKey });
       return res.status(500).json({ error: 'Server configuration error. Please contact support.' });

@@ -54,7 +54,6 @@ export async function addOwnerToTripShares(tripId: string, userId: string) {
         created_at: new Date().toISOString(),
       });
 
-    console.log('Successfully added owner to trip_shares');
   } catch (error) {
     console.error('Error adding owner to trip_shares:', error);
     // Do not throw; trip creation should still succeed

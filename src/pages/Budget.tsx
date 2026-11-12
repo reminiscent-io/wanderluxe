@@ -662,7 +662,7 @@ const Budget = () => {
                 <CardContent className="p-5">
                   <h2 className="text-lg font-display text-earth-600 mb-3">Biggest splurges</h2>
                   <div className="divide-y divide-sand-100">
-                    {topExpenses.map((expense, i) => (
+                    {topExpenses.map((expense) => (
                       <div key={expense.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                         {/* Category icon */}
                         <div

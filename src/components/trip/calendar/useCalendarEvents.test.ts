@@ -5,8 +5,8 @@ import { useCalendarEvents } from './useCalendarEvents';
 vi.mock('@/hooks/use-trip-days', () => ({
   useTripDays: () => ({ days: [{ day_id: 'd1', trip_id: 't1', date: '2026-06-30', title: null, description: null, image_url: null, created_at: '', activities: [{ id: 'a1', day_id: 'd1', trip_id: 't1', title: 'Louvre', start_time: '14:30:00', end_time: '16:00:00', cost: null, currency: null, order_index: 0, created_at: '', is_paid: false }] }] }),
 }));
-vi.mock('@/hooks/use-timeline-events', () => ({
-  useTimelineEvents: () => ({ events: [{ stay_id: 's1', trip_id: 't1', hotel: 'Lutetia', hotel_checkin_date: '2026-06-30', hotel_checkout_date: '2026-07-02', checkin_time: '15:00', checkout_time: '11:00', hotel_details: null, hotel_url: null, cost: null, currency: null, hotel_address: null, hotel_phone: null, hotel_place_id: null, hotel_website: null, created_at: '' }] }),
+vi.mock('@/hooks/useTripStays', () => ({
+  useTripStays: () => ({ stays: [{ stay_id: 's1', trip_id: 't1', hotel: 'Lutetia', hotel_checkin_date: '2026-06-30', hotel_checkout_date: '2026-07-02', checkin_time: '15:00', checkout_time: '11:00', hotel_details: null, hotel_url: null, cost: null, currency: null, hotel_address: null, hotel_phone: null, hotel_place_id: null, hotel_website: null, created_at: '' }] }),
 }));
 vi.mock('@/hooks/use-transportation-events', () => ({
   useTransportationEvents: () => ({ transportationData: [{ id: 'tr1', trip_id: 't1', type: 'flight', provider: null, details: null, confirmation_number: null, start_date: '2026-06-30', start_time: '09:00:00', end_date: '2026-06-30', end_time: '11:00:00', departure_location: 'JFK', arrival_location: 'CDG', cost: null, currency: null, is_paid: false, created_at: '' }] }),

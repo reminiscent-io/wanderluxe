@@ -17,7 +17,6 @@ interface SpendingInsightsProps {
   totalBudget: number;
   totalSpent: number;
   selectedCurrency: string;
-  tripDaysRemaining?: number;
 }
 
 const SpendingInsights: React.FC<SpendingInsightsProps> = ({
@@ -25,7 +24,6 @@ const SpendingInsights: React.FC<SpendingInsightsProps> = ({
   totalBudget,
   totalSpent,
   selectedCurrency,
-  tripDaysRemaining = 0
 }) => {
   const insights = useMemo(() => {
     const result: Array<{

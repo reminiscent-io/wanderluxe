@@ -158,7 +158,6 @@ export default function SecondaryPanel(props: SecondaryPanelProps) {
         <TravelersPanel
           {...headerProps}
           tripId={trip?.id || ""}
-          tripDestination={trip?.destination || "Trip"}
           onAdd={onTravelerAdd}
           onEdit={onTravelerEdit}
           isMobile={isMobile}
