@@ -22,8 +22,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Globe, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { Globe, ChevronDown } from 'lucide-react';
 import TimezoneSelect from '../_shared/TimezoneSelect';
+import AdvancedSection from '../_shared/AdvancedSection';
 import { useResolveTimezone } from '@/hooks/useResolveTimezone';
 import { useTripTimezone } from '@/hooks/useTripTimezone';
 import { defaultReservationEnd, durationMinutes, formatDurationShort } from '@/utils/timeUtils';
@@ -153,7 +154,6 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
 
   /* ------------------------------ Timezone auto-fill ---------------------------- */
   const [tzOpen, setTzOpen] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const { tripTimezone } = useTripTimezone(tripId || defaultValues?.trip_id);
   const watchedPlaceId = form.watch('place_id');
   const { timeZoneId: placeTz } = useResolveTimezone(watchedPlaceId ?? null);
@@ -204,14 +204,9 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
   const spanMinutes = durationMinutes(watchedStart, watchedEnd);
   const durationLabel = spanMinutes === null ? null : formatDurationShort(spanMinutes);
 
-  // What the collapsed Advanced section holds, e.g. "Notes, 2 travelers".
+  // Shown in the collapsed Advanced section's trigger.
   const watchedNotes = form.watch('notes');
-  const watchedTravelers = form.watch('travelers');
-  const travelerCount = watchedTravelers?.length ?? 0;
-  const advancedSummary = [
-    watchedNotes?.trim() ? 'Notes' : null,
-    travelerCount ? `${travelerCount} traveler${travelerCount === 1 ? '' : 's'}` : null,
-  ].filter(Boolean).join(', ');
+  const travelerCount = form.watch('travelers')?.length ?? 0;
 
   /* ------------------- Track place_id changes ---------------------------------- */
   const [placeIdChanged, setPlaceIdChanged] = useState(false);
@@ -662,26 +657,8 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
           />
         </div>
 
-        {/* Advanced (collapsible): notes + travelers. Closed by default; the
-            trigger names what's filled in so a collapsed section never hides
-            data the user already entered. Values survive the collapse because
-            react-hook-form keeps unmounted fields (shouldUnregister: false). */}
-        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-accent rounded-md border border-border transition-colors"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <SlidersHorizontal className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="truncate">
-                  Advanced{advancedSummary ? `: ${advancedSummary}` : ''}
-                </span>
-              </span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pt-3">
+        {/* Advanced (collapsible): notes + travelers. */}
+        <AdvancedSection notesLabel="Notes" notes={watchedNotes} travelerCount={travelerCount}>
             <FormField
               control={form.control}
               name="notes"
@@ -713,8 +690,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
                 </FormItem>
               )}
             />
-          </CollapsibleContent>
-        </Collapsible>
+        </AdvancedSection>
 
         {/* Buttons */}
         <div className={ENTITY_DIALOG_FOOTER}>

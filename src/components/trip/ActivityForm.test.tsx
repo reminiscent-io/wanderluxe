@@ -173,3 +173,19 @@ describe('ActivityDialog initialData seeding', () => {
     await waitFor(() => expect(start().value).toBe('15:00'));
   });
 });
+
+describe('ActivityForm Advanced section', () => {
+  it('keeps description and travelers behind a collapsed Advanced section that names what it holds', async () => {
+    const { state } = renderForm({ ...savedActivity, description: 'Skip-the-line', travelers: ['t1', 't2'] });
+
+    expect(screen.queryByLabelText('Description')).toBeNull();
+    const trigger = screen.getByRole('button', { name: 'Advanced: Description, 2 travelers' });
+
+    fireEvent.click(trigger);
+    const description = screen.getByLabelText('Description') as HTMLTextAreaElement;
+    expect(description.value).toBe('Skip-the-line');
+
+    fireEvent.change(description, { target: { value: 'Meet at the pyramid' } });
+    await waitFor(() => expect(state.current.description).toBe('Meet at the pyramid'));
+  });
+});
