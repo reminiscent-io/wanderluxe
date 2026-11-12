@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import app from './app';
 
-// Long-running server for local dev and Replit/Cloud Run. Vercel doesn't run
+// Long-running server for local dev (`npm run dev:server`). Vercel doesn't run
 // this file: it imports ./app as a function (see scripts/build-vercel-output.ts).
-// Cloud Run sets PORT env var; fall back to 5001 (5000 used by macOS AirPlay)
+// PORT defaults to 5001 (5000 is taken by macOS AirPlay).
 const PORT = process.env.PORT || 5001;
 const httpServer = createServer(app);
 

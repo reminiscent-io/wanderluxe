@@ -57,12 +57,11 @@ for (const host of [
   if (host) allowedOrigins.push(`https://${host}`);
 }
 
-// The wanderluxe.io pattern must be anchored so the domain is either the apex
-// (preceded by the scheme separator `//`) or a true subdomain (preceded by `.`).
-// A bare `wanderluxe\.io$` would also match attacker domains like
-// `evilwanderluxe.io`, which combined with `credentials: true` would leak
-// authenticated responses. (The replit patterns already require a leading `.`.)
-const allowedOriginPatterns = [/\.replit\.dev(:\d+)?$/, /\.repl\.co(:\d+)?$/, /(\/\/|\.)wanderluxe\.io(:\d+)?$/];
+// Anchored so the domain is either the apex (preceded by the scheme separator
+// `//`) or a true subdomain (preceded by `.`). A bare `wanderluxe\.io$` would
+// also match attacker domains like `evilwanderluxe.io`, which combined with
+// `credentials: true` would leak authenticated responses.
+const allowedOriginPatterns = [/(\/\/|\.)wanderluxe\.io(:\d+)?$/];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -266,7 +265,7 @@ if (fs.existsSync(distPath)) {
 }
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Server error:', err);
   res.status(500).json({
     error: 'Internal Server Error',

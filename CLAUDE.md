@@ -18,11 +18,11 @@ npm run type-check      # TypeScript type checking
 npm run lint            # ESLint code quality check
 ```
 
-> **Note**: The project uses **npm** (Node 22+ — `concurrently` 10 in `npm run dev` requires it; Replit runs Node 24). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. `package-lock.json`'s `resolved` URLs point at `https://registry.npmjs.org/`. They used to point at Replit's `http://package-firewall.replit.internal`, which only resolves on Replit and broke the Vercel install with ENOTFOUND; an `npm install` run on Replit can write those URLs back, so check the lockfile diff before committing and `sed` them back to the registry if they reappear. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
+> **Note**: The project uses **npm** (Node 22+ — `concurrently` 10 in `npm run dev` requires it). `.npmrc` sets `legacy-peer-deps=true` so installs resolve. You can also run binaries directly via `npx` (e.g. `npx tsc --noEmit`, `npx vitest run`).
 
 ### Building & Testing
 ```bash
-npm run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer) → build:server
+npm run build           # Full pipeline: build:sitemap → vite build → prerender (puppeteer)
 npm run build:dev       # Development build
 npm run preview         # Preview production build (port 8080)
 npm run test            # Run tests (Vitest) — there is no CI, so run this before pushing
@@ -97,7 +97,7 @@ src/
 
 server/
 ├── app.ts                # Express app (canonical-host redirects, CORS, static serving + cache headers); no listen, so Vercel can import it
-├── index.ts              # HTTP server around app.ts (local dev, Replit/Cloud Run)
+├── index.ts              # HTTP server around app.ts (local dev only; Vercel imports app.ts directly)
 ├── securityHeaders.ts    # helmet CSP + security headers (also stamped onto Vercel CDN routes at build)
 ├── lib/                  # icalFeed (iCal builder), mcpTools (MCP tool registry), tripWrites, tripDates, budgetSummary,
 │                         #   sitemap, printDesign (Print Studio OpenAI call + trip payload), printSnapshot
@@ -166,7 +166,7 @@ PostgreSQL database
 - Security: RLS policies enforce trip ownership and share permissions
 
 #### 5. **AI Chat Integration**
-- Chat interface: `AIAssistantPanel` (`src/components/trip/ai-assistant/`) — combined chat + document extraction surface, mounted via `AIAssistantDrawer` (mobile full-screen) and `AssistantDock` (desktop: docked beside the timeline, collapsible to a floating button, floating overlay over the full-width calendar)
+- Chat interface: `AIAssistantPanel` (`src/components/trip/ai-assistant/`) — combined chat + document extraction surface, mounted full-screen on mobile (`fullscreen` prop: a `FullScreenModal`, with chat state kept outside it so closing doesn't drop the conversation) and inside `AssistantDock` (desktop: docked beside the timeline, collapsible to a floating button, floating overlay over the full-width calendar)
 - Backend: client calls Express (`POST /api/trips/:id/assistant`, streaming SSE via `useAIAssistant`), which **proxies to the `ai-chat` Edge Function**. The Edge Function drives Gemini 2.5 Flash with `find_place` (Google Places) + `search_web` (Serper) function calling and returns the 429s, so chat-behaviour changes need an Edge Function redeploy. Only the anon route (`/api/trips/:tripId/assistant/anon`) calls Gemini from Express, with no tools. Strict link policy: only tool-returned URLs are allowed, others are rewritten to Google Search
 - Structured outputs: ` ```create_items ` blocks add accommodations/transportation/activities/reservations to the itinerary; ` ```place_cards ` render rich cards with "Add to trip" and, for stays, "Book on Expedia" affiliate links
 - Document extraction: `parse-travel-doc` Edge Function (Gemini vision OCR, images/PDFs ≤15 MB, up to 10 items per document)
@@ -433,7 +433,6 @@ Required in `.env`:
 - `AERODATABOX_API_KEY` - (Edge Function secret) RapidAPI key for AeroDataBox; consumed by the `flight-status-proxy` Edge Function. Required for the flight-number lookup button in the transportation dialog. Free tier: 600 calls/month.
 - `STRIPE_SECRET_KEY` - Stripe payment processing
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook verification
-- `VITE_UNSPLASH_ACCESS_KEY` / `VITE_ADMIN_EMAIL` - declared in the `src/config/env.ts` schema but not read anywhere (admin access is `profiles.is_admin`)
 - `VITE_PARSE_TRAVEL_DOC_URL` - Travel document parsing endpoint
 - `MCP_PUBLIC_BASE_URL` - Public base URL advertised by the MCP server (OAuth discovery)
 - `OPENAI_API_KEY` - (server) ChatGPT API key for Print Studio design generation (`server/routes/print-design.ts`); the route 503s without it
@@ -449,7 +448,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `OPENWEATHERMAP_API_KEY` - `weather-proxy` (5-day forecasts)
 - `MAILGUN_API_KEY` / `MAILGUN_DOMAIN` - `send-trip-reminders` (reminder emails; domain defaults to `mail.wanderluxe.io`)
 - `EXCHANGE_RATE_API` - `update-exchange-rates` (ExchangeRate-API key)
-- `UNSPLASH_ACCESS_KEY` - `generate-image` / `fetch-unsplash-metadata` (server-side counterpart of `VITE_UNSPLASH_ACCESS_KEY`)
+- `UNSPLASH_ACCESS_KEY` - `generate-image` / `fetch-unsplash-metadata`
 - `CRON_SECRET` - auth for scheduled functions (`send-trip-reminders`, `update-exchange-rates`)
 - `ALLOWED_ORIGIN` - CORS origin for Edge Functions (defaults to `https://wanderluxe.io`)
 
@@ -458,7 +457,7 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - **A new entity column has many write sites**; patching one silently drops the field elsewhere. Activities: `TimelineContent.tsx` (`buildActivityPayload`), `useSidebarState.ts`, `ActivityDialog.tsx`, `placeCardAddService.ts`, `bulkImportService.ts`. Accommodations: `AccommodationDialog.tsx` (inline payload) and `calendarMutations.ts` (rebuilds the form field by field; an omitted field is written as NULL). Server: `server/lib/tripWrites.ts` + `mcpTools.ts` and the iCal query in `server/routes/calendar.ts` use explicit column lists. Grep `from('<table>')` and trace one field from form to every read surface
 - **FK delete rules aren't in `supabase/migrations/`** (the base schema predates them). `accommodations_days.day_id → trip_days` is NO ACTION, so delete those rows before deleting trip days (`tripWrites.ts` does)
 - **Merged ≠ applied**: check the live schema before assuming a migration is in prod. The typed client doesn't error on unknown columns passed as variables, so `tsc` won't catch a missing generated type
-- **Edge Functions reject `localhost:8080`**: every function imports `getCorsHeaders` from `supabase/functions/_shared/cors.ts`, whose allowlist is `ALLOWED_ORIGIN` + `*.replit.*`. A deploy must ship the `_shared/` files next to `index.ts` (the Supabase MCP `deploy_edge_function` takes a file list; the dashboard's single-file editor does not). Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function
+- **Edge Functions reject `localhost:8080`**: every function imports `getCorsHeaders` from `supabase/functions/_shared/cors.ts`, which allows only `ALLOWED_ORIGIN`. A deploy must ship the `_shared/` files next to `index.ts` (the Supabase MCP `deploy_edge_function` takes a file list; the dashboard's single-file editor does not). Places, timezone and coordinate lookups fail in local dev by design; verify them with `curl` against the deployed function
 - **Tests in a checkout without `.env`** (e.g. a fresh worktree) fail at collection when the import graph reaches `@/integrations/supabase/client`, because `validateEnv()` throws. Add `vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }))` inline, as ~25 test files already do; don't loosen `validateEnv`
 - **TypeScript**: `strict` is **off** (`strict: false` in `tsconfig.app.json`, `strictNullChecks: false` in `tsconfig.json`); only `noImplicitAny` is on
 - **`npm run type-check` is not a clean baseline**: `tsc -b` currently exits with ~300 pre-existing errors across `src/` and `supabase/functions/`. A red run does not mean your change broke something; compare against a pre-change run, or grep the output for the files you touched
@@ -477,6 +476,4 @@ Edge Function secrets (set via `supabase secrets set`, not `.env`):
 - `express-rate-limit` counts in memory, so on Vercel each function instance keeps its own window
 - Env vars: same names as `.env` (§ Environment Variables). `VITE_*` must be present at **build** time; Vite inlines them
 
-**Replit** (legacy, Cloud Run; serves wanderluxe.io until DNS moves to Vercel, then gets deleted): `npm run build` then `npm run start` → `node dist/server/index.js` (`server/index.ts` wraps `server/app.ts` in an HTTP server; `server/build.js` bundles it). Cloud Run injects `PORT` (local default 5001).
-
-Either way: database migrations go through the Supabase dashboard/CLI, Edge Functions deploy via Supabase.
+Database migrations go through the Supabase dashboard/CLI, Edge Functions deploy via Supabase.

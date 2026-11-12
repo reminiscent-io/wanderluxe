@@ -369,7 +369,6 @@ npm run preview          # Preview production build (port 8080)
 npm run test             # Run tests (Vitest) — there's no CI, so run this before pushing
 npm run test:watch       # Watch mode
 npm run test:coverage    # Coverage report
-npm run test:ui          # Vitest browser UI
 
 # 📊 Evals (on-demand only, never part of npm test; they hit the prod Supabase project)
 npm run evals:seed       # Seed eval-user fixtures (run first)

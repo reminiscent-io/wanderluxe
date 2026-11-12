@@ -1,5 +1,5 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "wanderluxe",
   "private": true,
   "version": "7.4.0",
   "type": "module",
@@ -7,8 +7,7 @@
     "dev": "concurrently \"vite\" \"NODE_ENV=development npx tsx server/index.ts\"",
     "dev:frontend": "vite",
     "dev:server": "NODE_ENV=development npx tsx server/index.ts",
-    "build": "npm run build:sitemap && vite build && npm run prerender && npm run build:server",
-    "build:server": "node server/build.js",
+    "build": "npm run build:sitemap && vite build && npm run prerender",
     "build:vercel": "npm run build && npx tsx scripts/build-vercel-output.ts",
     "build:sitemap": "npx tsx scripts/generate-sitemap.ts",
     "build:print-showcase": "npx tsx scripts/build-print-showcase.ts",
@@ -16,12 +15,10 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview --port 8080 --host 0.0.0.0",
-    "start": "NODE_ENV=production node dist/server/index.js",
     "type-check": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
     "evals": "vitest run --config evals/vitest.config.ts",
     "evals:chat": "vitest run --config evals/vitest.config.ts evals/chat",
     "evals:parsing": "vitest run --config evals/vitest.config.ts evals/parsing",
@@ -138,12 +135,5 @@
     "typescript-eslint": "^8.54.0",
     "vite": "^8.0.16",
     "vitest": "^4.1.0"
-  },
-  "allowScripts": {
-    "@swc/core@1.15.41": true,
-    "core-js@3.49.0": true,
-    "esbuild@0.25.11": true,
-    "esbuild@0.28.1": true,
-    "puppeteer@24.37.3": true
   }
 }
