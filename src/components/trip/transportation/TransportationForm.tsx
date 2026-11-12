@@ -14,6 +14,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { getJunctionTravelerIds, setJunctionTravelers } from "@/services/travelers";
 import { useTripTimezone } from "@/hooks/useTripTimezone";
+import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
 
 type Transportation = Tables<"transportation">;
 
@@ -209,7 +210,7 @@ export default function TransportationForm({
           tripId={tripId}
         />
 
-        <div className="sticky bottom-0 z-10 bg-background flex items-center justify-between pt-4 -mt-px border-t border-sand-200">
+        <div className={ENTITY_DIALOG_FOOTER}>
           <div>
             {initialData && onDelete && (
               <Button

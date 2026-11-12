@@ -45,6 +45,7 @@ import { Label } from "@/components/ui/label";
 import TimezoneSelect from "@/components/trip/_shared/TimezoneSelect";
 import { useResolveTimezone } from "@/hooks/useResolveTimezone";
 import { useTripTimezone } from "@/hooks/useTripTimezone";
+import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
 
 /* -------------------------------------------------------------------------- */
 /* Schema                                                                     */
@@ -648,7 +649,7 @@ export default function AccommodationForm({
         />
 
         {/* Actions */}
-        <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-sand-200">
+        <div className={ENTITY_DIALOG_FOOTER}>
           <div>
             {initialData && onDelete && (
               <Button

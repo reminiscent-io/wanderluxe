@@ -11,6 +11,7 @@ import { ActivityFormData } from "@/types/trip";
 import type { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { ENTITY_DIALOG_CONTENT, ENTITY_DIALOG_SCROLL } from '@/components/trip/_shared/entityDialogLayout';
 
 /** ---------------------- small helpers (robust & local) ---------------------- */
 
@@ -261,7 +262,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet className={ENTITY_DIALOG_CONTENT} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditMode ? "Edit Activity" : "Add New Activity"}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -269,7 +270,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = (props) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto scrollbar-none">
+        <div className={ENTITY_DIALOG_SCROLL}>
           <ActivityForm
             activity={finalActivity}
             onActivityChange={finalOnChange}

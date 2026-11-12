@@ -34,6 +34,7 @@ import {
   getPhotoUrl,
   type PlacePhotoMeta,
 } from "@/utils/googleMapsLoader";
+import { ENTITY_DIALOG_FOOTER } from '@/components/trip/_shared/entityDialogLayout';
 
 /* ------------------------------ helpers ------------------------------ */
 /** Prefer our proxy photo URL; fall back to direct Google endpoint only if a public key exists. */
@@ -497,13 +498,13 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
             control={form.control}
             name="reservation_date"
             render={({ field }) => (
-              <FormItem className="relative z-50 sm:col-span-2">
+              <FormItem className="sm:col-span-2">
                 <FormLabel>
                   Reservation Date <span className="text-red-500">*</span>
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger className="relative z-50">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a date" />
                     </SelectTrigger>
                   </FormControl>
@@ -689,7 +690,7 @@ const RestaurantReservationForm: React.FC<RestaurantReservationFormProps> = ({
         />
 
         {/* Buttons */}
-        <div className="sticky bottom-0 z-10 bg-background flex justify-between items-center pt-4 -mt-px border-t border-sand-200">
+        <div className={ENTITY_DIALOG_FOOTER}>
           <div>
             {defaultValues?.id && onDelete && (
               <Button

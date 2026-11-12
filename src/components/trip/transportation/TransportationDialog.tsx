@@ -11,6 +11,7 @@ import TransportationForm from './TransportationForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { ENTITY_DIALOG_CONTENT, ENTITY_DIALOG_SCROLL } from '@/components/trip/_shared/entityDialogLayout';
 
 type TransportationType = Tables<'transportation'>;
 
@@ -142,7 +143,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet className={ENTITY_DIALOG_CONTENT} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {initialData ? 'Edit Transportation' : 'Add Transportation'}
@@ -151,7 +152,7 @@ const TransportationDialog: React.FC<TransportationDialogProps> = ({
             {initialData ? 'Update your travel details' : 'Add a new flight, train, or car journey'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto scrollbar-none">
+        <div className={ENTITY_DIALOG_SCROLL}>
           <TransportationForm
             initialData={initialData || undefined}
             onSubmit={handleSubmit}

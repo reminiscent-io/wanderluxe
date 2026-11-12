@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Tables } from '@/integrations/supabase/types';
+import { ENTITY_DIALOG_CONTENT, ENTITY_DIALOG_SCROLL } from '@/components/trip/_shared/entityDialogLayout';
 
 type ReservationData = Partial<Tables<'reservations'>> & Record<string, unknown>;
 
@@ -117,7 +118,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent mobileSheet onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent mobileSheet className={ENTITY_DIALOG_CONTENT} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0 z-40">
           <DialogTitle>{title || (initialData?.id ? 'Edit Reservation' : 'Add Reservation')}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -127,7 +128,7 @@ const RestaurantReservationDialog: React.FC<RestaurantReservationDialogProps> = 
         {/* overflow-x-hidden is load-bearing: `overflow-y: auto` alone makes
             the other axis `auto` too, so any over-wide descendant turns this
             into a horizontal scroller with no scrollbar to reveal it. */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
+        <div className={ENTITY_DIALOG_SCROLL}>
           <RestaurantReservationForm
             onSubmit={handleSubmit}
             isSubmitting={controlledIsSubmitting ?? isSubmitting}
