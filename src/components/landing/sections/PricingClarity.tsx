@@ -11,11 +11,12 @@ const freeFeatures = [
   "Share with anyone, to view or edit",
   "Timeline, calendar, and map views",
   "Simple PDF itinerary and calendar sync",
+  "One Print Studio edition a day",
 ];
 
 const proFeatures = [
   "Everything in Free",
-  "Print Studio: your itinerary as a designed edition",
+  "Print Studio: up to 10 designed editions a day",
   "A custom palette, type, and theme for every trip",
   "Every line of copy is yours to rewrite",
   "Early access to new features",
@@ -53,9 +54,9 @@ const PricingClarity = () => {
           </h2>
           <p className="font-sans text-lg text-earth-500 mt-4 max-w-xl mx-auto leading-relaxed [text-wrap:pretty]">
             Planning, sharing, exporting, and AI chat cost nothing, on as many
-            trips as you like. Every trip prints as a simple PDF for free; the
-            $3.99 a month buys the Print Studio, which designs the same
-            itinerary as a keepsake edition.
+            trips as you like. Every trip prints as a simple PDF for free, and the
+            Print Studio designs one keepsake edition a day for anyone signed
+            in. $3.99 a month buys up to ten a day.
           </p>
         </motion.div>
 

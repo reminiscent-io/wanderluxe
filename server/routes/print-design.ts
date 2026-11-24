@@ -8,10 +8,14 @@
 //   → 200 { id, finalized_at, finalized_by }
 //   → 400/401/403/404 with { code, message }
 //
+// GET /api/print-design/quota
+//   → 200 { tier, limit, used, remaining, resetsAt }
+//
 // Authorization: generating needs a valid Supabase JWT + trip access
-// (owner/shared/public) + subscription_tier === 'pro'. Generations are capped
-// per user per day (counted from trip_print_designs, which this route alone
-// writes).
+// (owner/shared/public). Every signed-in member gets FREE_DAILY_DESIGNS a day;
+// Pro gets PRO_DAILY_DESIGNS. The count lives in print_design_usage, which only
+// the service role can touch (see 20261117000000_print_design_daily_quota.sql),
+// and is spent atomically before the OpenAI call and refunded if it fails.
 //
 // Finalizing needs trip *edit* permission and no Pro check: the edition
 // already exists, and the person proofreading a shared trip is often not the
@@ -31,8 +35,28 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
-// A design is a deliberate, ~$0.03 action; 10 per person per day is plenty.
-const DAILY_DESIGN_LIMIT = 10;
+// A design is a deliberate, ~$0.03 action. One a day lets every member make a
+// real edition of their own trip; Pro's 10 a day is plenty to iterate on one.
+export const FREE_DAILY_DESIGNS = 1;
+export const PRO_DAILY_DESIGNS = 10;
+
+export function dailyDesignLimit(tier: string | null | undefined): number {
+  return tier === 'pro' ? PRO_DAILY_DESIGNS : FREE_DAILY_DESIGNS;
+}
+
+/** The quota day, in UTC: the YYYY-MM-DD key and the moment it rolls over. */
+export function quotaDay(now: Date = new Date()): { date: string; resetsAt: string } {
+  const date = now.toISOString().slice(0, 10);
+  const next = new Date(`${date}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return { date, resetsAt: next.toISOString() };
+}
+
+export function limitMessage(tier: string | null | undefined): string {
+  return tier === 'pro'
+    ? `You can design ${PRO_DAILY_DESIGNS} editions a day. Your count resets at midnight UTC.`
+    : 'You have used today’s free edition. You get another tomorrow, or Pro designs up to 10 a day.';
+}
 
 async function getUserFromToken(authHeader: string): Promise<{ id: string; email: string } | null> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -160,48 +184,64 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Pro gate — this is the paid feature.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.subscription_tier !== 'pro') {
-      return res.status(403).json({ code: 'PRO_REQUIRED', message: 'Print Studio is a WanderLuxe Pro feature' });
-    }
-
     const hasAccess = await canAccessTrip(supabase, user.id, tripId, user.email);
     if (!hasAccess) {
       return res.status(403).json({ code: 'FORBIDDEN', message: 'Access denied to this trip' });
     }
 
-    // Per-user daily cap, counted from the designs this route has stored.
-    const todayStartUtc = new Date();
-    todayStartUtc.setUTCHours(0, 0, 0, 0);
-    const { count: todayCount } = await supabase
-      .from('trip_print_designs')
-      .select('id', { count: 'exact', head: true })
-      .eq('created_by', user.id)
-      .gte('created_at', todayStartUtc.toISOString());
-
-    if ((todayCount ?? 0) >= DAILY_DESIGN_LIMIT) {
-      return res.status(429).json({
-        code: 'DAILY_LIMIT_REACHED',
-        message: `You can generate ${DAILY_DESIGN_LIMIT} designs per day. Your designs reset at midnight UTC.`,
-        limit: DAILY_DESIGN_LIMIT,
-      });
-    }
-
     // Every row on the trip, read server-side so the payload is truthful: the
     // same reads a finalized edition snapshots, projected the way the page
     // prints them. buildTripPayload drops every cost before the model sees it.
+    // Read before spending an edition, so a missing trip costs nothing.
     const rows = await fetchTripSnapshot(supabase, tripId);
     if (!rows) {
       return res.status(404).json({ code: 'NOT_FOUND', message: 'Trip not found' });
     }
 
-    const { design, model } = await generatePrintDesign(OPENAI_API_KEY, rows, themePrompt);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single();
+    const tier = profile?.subscription_tier === 'pro' ? 'pro' : 'free';
+    const limit = dailyDesignLimit(tier);
+    const { date } = quotaDay();
+
+    // Spend one edition up front (atomic, so a double tap can't spend the last
+    // one twice) and give it back if anything below fails.
+    const { data: consumed, error: consumeErr } = await supabase.rpc('consume_print_design', {
+      p_user_id: user.id,
+      p_date: date,
+      p_limit: limit,
+    });
+    if (consumeErr) {
+      console.error('consume_print_design failed:', consumeErr);
+      return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Could not check your daily editions' });
+    }
+    const spend = Array.isArray(consumed) ? consumed[0] : consumed;
+    if (!spend?.allowed) {
+      return res.status(429).json({
+        code: 'DAILY_LIMIT_REACHED',
+        message: limitMessage(tier),
+        tier,
+        limit,
+      });
+    }
+
+    const refund = () =>
+      supabase.rpc('refund_print_design', { p_user_id: user.id, p_date: date }).then(
+        ({ error }) => { if (error) console.error('refund_print_design failed:', error); },
+        (err: unknown) => console.error('refund_print_design failed:', err)
+      );
+
+    let generated: Awaited<ReturnType<typeof generatePrintDesign>>;
+    try {
+      generated = await generatePrintDesign(OPENAI_API_KEY, rows, themePrompt);
+    } catch (err) {
+      await refund();
+      throw err;
+    }
+    const { design, model } = generated;
 
     const { data: inserted, error: insertErr } = await supabase
       .from('trip_print_designs')
@@ -217,6 +257,7 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
 
     if (insertErr || !inserted) {
       console.error('Failed to store print design:', insertErr);
+      await refund();
       return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Failed to save the design' });
     }
 
@@ -226,6 +267,44 @@ router.post('/api/trips/:tripId/print-design', printDesignLimiter, async (req: R
       return res.status(error.status).json({ code: 'DESIGN_FAILED', message: error.message });
     }
     console.error('Print design error:', error);
+    return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
+  }
+});
+
+// How many editions the signed-in member has left today. The dialog reads it
+// to choose between the theme field and the upsell; the POST above is still
+// the gate, so a stale answer here costs a toast, never an extra edition.
+router.get('/api/print-design/quota', async (req: Request, res: Response) => {
+  try {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return res.status(503).json({ code: 'CONFIG_ERROR', message: 'Print Studio is not configured on this server' });
+    }
+
+    const user = await getUserFromToken(req.headers.authorization || '');
+    if (!user) {
+      return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Please sign in' });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { date, resetsAt } = quotaDay();
+
+    const [{ data: profile }, { data: usage }] = await Promise.all([
+      supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
+      supabase
+        .from('print_design_usage')
+        .select('design_count')
+        .eq('user_id', user.id)
+        .eq('date', date)
+        .maybeSingle(),
+    ]);
+
+    const tier = profile?.subscription_tier === 'pro' ? 'pro' : 'free';
+    const limit = dailyDesignLimit(tier);
+    const used = (usage as { design_count?: number } | null)?.design_count ?? 0;
+
+    return res.json({ tier, limit, used, remaining: Math.max(limit - used, 0), resetsAt });
+  } catch (error) {
+    console.error('Print quota error:', error);
     return res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
   }
 });

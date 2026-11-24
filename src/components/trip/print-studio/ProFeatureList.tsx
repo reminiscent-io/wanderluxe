@@ -6,7 +6,7 @@ import React from 'react';
 import { Check } from 'lucide-react';
 
 export const PRO_FEATURES = [
-  'A custom theme designed for each trip',
+  'Up to 10 editions a day, each with its own theme',
   'Every activity, stay, and reservation included',
   'Every line of copy is yours to rewrite',
   'Print it, or save it as a PDF',
