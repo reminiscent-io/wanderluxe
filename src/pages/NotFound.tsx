@@ -18,7 +18,7 @@ const NotFound = () => {
       <SEO title="Page not found" noIndex />
       <main className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="max-w-md text-center">
-          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-4">
+          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-4">
             404
           </p>
           <h1 className="font-display text-4xl md:text-5xl text-earth-700 leading-[1.05]">
@@ -35,7 +35,7 @@ const NotFound = () => {
               <Link to="/">Back to the homepage</Link>
             </Button>
           </div>
-          <p className="mt-6 text-sm text-earth-400">
+          <p className="mt-6 text-sm text-earth-500">
             Looking for how something works? Read the{" "}
             <Link to="/guide" className="text-earth-600 underline underline-offset-4 hover:text-earth-800">
               guide

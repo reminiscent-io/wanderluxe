@@ -80,7 +80,7 @@ export default function WeatherDetailModal({
                   <p className="text-sm font-medium text-earth-700 capitalize">{forecast.description}</p>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-2xl font-semibold text-earth-800">{forecast.tempHigh}°F</span>
-                    <span className="text-earth-400">/</span>
+                    <span className="text-earth-500">/</span>
                     <span className="text-lg text-earth-500">{forecast.tempLow}°F</span>
                   </div>
                   <p className="text-xs text-earth-500 mt-0.5">
@@ -116,7 +116,7 @@ export default function WeatherDetailModal({
                     </div>
                     <div className="text-right text-sm whitespace-nowrap">
                       <span className="font-medium text-earth-800">{day.tempHigh}°</span>
-                      <span className="text-earth-400"> / </span>
+                      <span className="text-earth-500"> / </span>
                       <span className="text-earth-500">{day.tempLow}°</span>
                     </div>
                   </div>

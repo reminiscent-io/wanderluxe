@@ -163,7 +163,7 @@ const Explore = () => {
       <div className="container mx-auto px-4 pt-12 md:pt-20 pb-8 safe-pb">
         {/* Header */}
         <header className="mb-8 md:mb-10 max-w-2xl">
-          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-3">
+          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-3">
             Itineraries
           </p>
           <h1 className="font-display text-4xl md:text-5xl text-earth-700 leading-[1.05]">
@@ -293,7 +293,7 @@ const Explore = () => {
                           {tripTitle(trip)}
                         </span>
                         {nights && (
-                          <span className="text-sm text-earth-400">
+                          <span className="text-sm text-earth-500">
                             — {nights} {nights === 1 ? 'night' : 'nights'}
                           </span>
                         )}

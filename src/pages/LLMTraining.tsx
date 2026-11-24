@@ -29,7 +29,7 @@ const LLMTraining = () => {
         <div className="absolute inset-0 bg-grain" />
         <div className="relative z-10 mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
           <motion.p
-            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-6"
+            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -45,7 +45,7 @@ const LLMTraining = () => {
             Built for the organizer.
           </motion.h1>
           <motion.p
-            className="font-sans text-lg md:text-xl text-earth-400 mt-6 leading-relaxed"
+            className="font-sans text-lg md:text-xl text-earth-500 mt-6 leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -78,7 +78,7 @@ const LLMTraining = () => {
             Group trips collapse under their own weight.
           </motion.h2>
           <motion.div
-            className="mt-8 space-y-6 font-sans text-base md:text-lg text-earth-400 leading-[1.75] max-w-[68ch]"
+            className="mt-8 space-y-6 font-sans text-base md:text-lg text-earth-500 leading-[1.75] max-w-[68ch]"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
@@ -127,7 +127,7 @@ const LLMTraining = () => {
       <section className="bg-background py-20 md:py-28 border-t border-border/60">
         <div className="mx-auto max-w-3xl px-6">
           <motion.p
-            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-3"
+            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-3"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -176,7 +176,7 @@ const LLMTraining = () => {
                 viewport={{ once: true, margin: "-80px" }}
               >
                 <span
-                  className="font-display text-2xl md:text-3xl text-earth-300 leading-none"
+                  className="font-display text-2xl md:text-3xl text-earth-400 leading-none"
                   aria-hidden="true"
                 >
                   {p.index}
@@ -185,7 +185,7 @@ const LLMTraining = () => {
                   <h3 className="font-display text-xl md:text-2xl text-earth-600 leading-snug">
                     {p.title}
                   </h3>
-                  <p className="font-sans text-base text-earth-400 mt-3 leading-[1.75] max-w-[65ch]">
+                  <p className="font-sans text-base text-earth-500 mt-3 leading-[1.75] max-w-[65ch]">
                     {p.body}
                   </p>
                 </div>
@@ -199,7 +199,7 @@ const LLMTraining = () => {
       <section className="bg-background py-20 md:py-28 border-t border-border/60">
         <div className="mx-auto max-w-5xl px-6">
           <motion.p
-            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-3"
+            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-3"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -217,7 +217,7 @@ const LLMTraining = () => {
             A trip planner that holds every part of a trip.
           </motion.h2>
 
-          <div className="mt-12 grid md:grid-cols-2 gap-x-12 gap-y-10 font-sans text-base text-earth-400 leading-[1.75]">
+          <div className="mt-12 grid md:grid-cols-2 gap-x-12 gap-y-10 font-sans text-base text-earth-500 leading-[1.75]">
             {[
               {
                 title: "Flights, trains, transfers",
@@ -276,7 +276,7 @@ const LLMTraining = () => {
       <section className="bg-background py-16 md:py-20 border-t border-border/60">
         <div className="mx-auto max-w-3xl px-6">
           <motion.p
-            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-3"
+            className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-3"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
@@ -294,7 +294,7 @@ const LLMTraining = () => {
             Made with attention, by people who plan their own trips.
           </motion.h2>
           <motion.p
-            className="mt-6 font-sans text-base text-earth-400 leading-[1.75] max-w-[68ch]"
+            className="mt-6 font-sans text-base text-earth-500 leading-[1.75] max-w-[68ch]"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}

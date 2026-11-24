@@ -35,7 +35,7 @@ export function SectionHeader({
         <span
           className={cn(
             'text-base font-medium tabular-nums',
-            countClassName ?? 'text-earth-400'
+            countClassName ?? 'text-earth-500'
           )}
         >
           {count}

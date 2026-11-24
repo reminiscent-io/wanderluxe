@@ -58,7 +58,7 @@ function InsightCard({ insight }: { insight: AdminInsight }) {
         <div className="flex items-center gap-2 text-xs text-earth-500">
           <Clock className="h-3 w-3" />
           {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
-          <span className="text-earth-400">via {insight.model}</span>
+          <span className="text-earth-500">via {insight.model}</span>
         </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4 text-earth-400" />
@@ -156,7 +156,7 @@ export function AIInsightsSection() {
             <div className="mb-3 flex items-center gap-2 text-xs text-earth-500">
               <Clock className="h-3 w-3" />
               {formatDistanceToNow(new Date(latestInsight.created_at), { addSuffix: true })}
-              <span className="text-earth-400">via {latestInsight.model}</span>
+              <span className="text-earth-500">via {latestInsight.model}</span>
             </div>
           )}
           {streamingContent && (

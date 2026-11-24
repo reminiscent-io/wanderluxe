@@ -195,9 +195,10 @@ behaves like paper aged in soft afternoon light.
   disabled states, subtle dividers between content blocks.
 - **Stitched Edge** (`#DDD4C8`, `hsl(30 18% 87%)`): Borders. Always
   this; never a cool gray.
-- **Wet Sand** (`#8A7F6C`, sand-500): Mid-neutrals — calendar
-  selection, secondary text on warm backgrounds, divider hairlines on
-  dark surfaces.
+- **Wet Sand** (`#8A7F6C`, sand-500 / earth-400): Mid-neutrals — calendar
+  selection, icons, divider hairlines on dark surfaces. Never body or
+  small text: it reaches only 3.7–3.9:1 on cream and white. Secondary
+  text uses earth-500 (`#6B6354`, 5.6:1 on cream).
 - **Smoked Walnut** (`#5C544A`, earth-600): The deep-neutral text tone
   for muted-foreground content.
 - **Espresso Ink** (`#211F1B`, `hsl(30 10% 12%)`): Primary text. Warm

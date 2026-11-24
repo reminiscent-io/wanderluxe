@@ -45,7 +45,7 @@ export default function RelatedItineraries({
     <section aria-labelledby="related-itineraries-heading" className="mt-16 pt-10 border-t border-sand-200">
       <div className="flex items-end justify-between gap-4 mb-6">
         <div>
-          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-2">
+          <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-2">
             Keep exploring
           </p>
           <h2 id="related-itineraries-heading" className="font-display text-2xl md:text-3xl text-earth-700">

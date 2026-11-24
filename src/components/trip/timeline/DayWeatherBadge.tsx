@@ -40,7 +40,7 @@ function FullTempDisplay({ showCurrent, currentWeather, forecast }: {
       <>
         <span className="font-semibold">{currentWeather.temp}°</span>
         {forecast && (
-          <span className="text-earth-400 text-[10px]">
+          <span className="text-earth-500 text-[10px]">
             ({forecast.tempHigh}°/{forecast.tempLow}°)
           </span>
         )}
@@ -51,8 +51,8 @@ function FullTempDisplay({ showCurrent, currentWeather, forecast }: {
     return (
       <>
         <span>{forecast.tempHigh}°</span>
-        <span className="text-earth-400">/</span>
-        <span className="text-earth-400">{forecast.tempLow}°</span>
+        <span className="text-earth-500">/</span>
+        <span className="text-earth-500">{forecast.tempLow}°</span>
       </>
     );
   }
@@ -84,7 +84,7 @@ function WeatherTooltipBody({ showCurrent, currentWeather, forecast, includeTime
           <p>High: {forecast.tempHigh}°F / Low: {forecast.tempLow}°F</p>
         </div>
       )}
-      <p className="text-[10px] text-earth-400 mt-1">Click for details</p>
+      <p className="text-[10px] text-earth-500 mt-1">Click for details</p>
     </>
   );
 }

@@ -255,7 +255,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         type="button"
         onClick={onLoadHistory}
         disabled={isLoadingMore}
-        className="flex items-center gap-1.5 text-[13px] text-sand-500 hover:text-earth-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors h-9 px-4 rounded-full hover:bg-sand-100"
+        className="flex items-center gap-1.5 text-[13px] text-earth-500 hover:text-earth-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors h-9 px-4 rounded-full hover:bg-sand-100"
       >
         {isLoadingMore ? (
           <>

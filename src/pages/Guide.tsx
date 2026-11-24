@@ -203,7 +203,7 @@ const Guide: React.FC = () => {
           <div className="mx-auto max-w-3xl">
 
             <header className="mb-14">
-              <p className="font-sans text-sm uppercase tracking-[0.18em] text-earth-400 mb-4">
+              <p className="font-sans text-sm uppercase tracking-[0.18em] text-earth-500 mb-4">
                 Guide
               </p>
               <h1 className="font-display text-4xl md:text-5xl text-foreground leading-[1.05]">

@@ -59,7 +59,7 @@ export default function CookieConsentBanner() {
             </Button>
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="ml-auto flex items-center gap-1 text-xs text-sand-500 hover:text-sand-700 transition-colors"
+              className="ml-auto flex items-center gap-1 text-xs text-earth-500 hover:text-earth-600 transition-colors"
             >
               Customize
               {showDetails ? (
@@ -77,7 +77,7 @@ export default function CookieConsentBanner() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium text-sand-800">Essential Cookies</Label>
-                  <p className="text-xs text-sand-500">Required for the website to function properly</p>
+                  <p className="text-xs text-earth-500">Required for the website to function properly</p>
                 </div>
                 <Switch checked disabled className="data-[state=checked]:bg-earth-500" />
               </div>
@@ -88,7 +88,7 @@ export default function CookieConsentBanner() {
                   <Label htmlFor="analytics-switch" className="text-sm font-medium text-sand-800">
                     Analytics Cookies
                   </Label>
-                  <p className="text-xs text-sand-500">Help us understand how you use our site</p>
+                  <p className="text-xs text-earth-500">Help us understand how you use our site</p>
                 </div>
                 <Switch
                   id="analytics-switch"
@@ -104,7 +104,7 @@ export default function CookieConsentBanner() {
                   <Label htmlFor="marketing-switch" className="text-sm font-medium text-sand-800">
                     Marketing Cookies
                   </Label>
-                  <p className="text-xs text-sand-500">Used for personalized content and ads</p>
+                  <p className="text-xs text-earth-500">Used for personalized content and ads</p>
                 </div>
                 <Switch
                   id="marketing-switch"

@@ -46,7 +46,7 @@ const markdownComponents: Components = {
     <ul className="list-disc pl-5 mb-2 last:mb-0 space-y-0.5 marker:text-sand-400" {...props} />
   ),
   ol: ({ ...props }) => (
-    <ol className="list-decimal pl-5 mb-2 last:mb-0 space-y-0.5 marker:text-sand-500" {...props} />
+    <ol className="list-decimal pl-5 mb-2 last:mb-0 space-y-0.5 marker:text-earth-500" {...props} />
   ),
   li: ({ ...props }) => (
     <li className="leading-relaxed" {...props} />
@@ -310,7 +310,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {!hasExtractedItems && (
           <div
             className={cn(
-              'flex items-center gap-1.5 mt-0.5 text-[11px] text-sand-500 transition-opacity duration-150',
+              'flex items-center gap-1.5 mt-0.5 text-[11px] text-earth-500 transition-opacity duration-150',
               'opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100',
               isUser ? 'flex-row-reverse pr-1.5' : 'flex-row pl-1.5'
             )}
