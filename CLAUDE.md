@@ -219,7 +219,7 @@ Key tables:
 - `trip_invite_links` - Link-based invites (permission + optional expiry)
 - `profiles` - User profiles (auto-created on signup; holds `subscription_tier` + AI limits)
 - `ai_chat_threads` / `ai_chat_messages` - AI conversation history
-- `user_ai_usage` - AI usage tracking (daily message/import counts + per-minute rate-limit window)
+- `user_ai_usage` - AI usage tracking (daily message/import counts + per-minute rate-limit window). Clients get SELECT on their own row only: every write goes through the SECURITY DEFINER `increment_ai_usage`/`increment_ai_import_usage` RPCs or the service role, since a client UPDATE would reset the OCR cap and chat rate window
 - `trip_print_designs` - Print Studio editions (AI palette/fonts/motif/copy per trip). The Express route (service role) writes `design`; `copy_overrides` is the one column a browser may write (column-level GRANT + RLS `can_edit_trip`, frozen once `finalized_at` is set); `content_snapshot`/`finalized_at`/`finalized_by` are server-only
 - `currencies` / `exchange_rates` - Multi-currency support
 - `weather_cache` - Cached weather data (6h TTL)
