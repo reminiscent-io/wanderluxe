@@ -71,9 +71,10 @@ const PrintStudioShowcase = () => {
             The plan you made, set as something to keep
           </h2>
           <p className="mt-4 font-sans text-lg text-earth-500 leading-relaxed [text-wrap:pretty]">
-            Every trip can be a clean printed PDF, free. For $3.99 a month, the Studio takes the
+            Every trip can be a clean printed PDF, free. Once a day, free, the Studio takes the
             same itinerary and designs it: a palette, typefaces, a motif, and a line written for
-            each day. Then you rewrite any line you like and print it.
+            each day. Then you rewrite any line you like and print it. Pro, $3.99 a month, designs
+            up to ten a day.
           </p>
         </motion.div>
 

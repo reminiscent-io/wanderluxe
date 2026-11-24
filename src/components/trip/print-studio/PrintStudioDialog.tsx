@@ -1,9 +1,11 @@
 // Print dialog: the single Print entry point for a trip. The body holds the
 // free Simple PDF section (pdfmake export) above the Studio edition section.
-// The Studio half shows Pro members the theme field, free users the
-// StudioTeaser preview of their own trip, and anyone the generating panel
-// while an edition is being made, followed by the trip's earlier editions
-// (RLS lets any trip member read them; only generation is gated).
+// The Studio half shows the theme field to anyone with an edition left today
+// (every member gets one a day, Pro gets ten; GET /api/print-design/quota),
+// the StudioTeaser preview of their own trip once a free member has spent
+// theirs, and the generating panel while an edition is being made, followed by
+// the trip's earlier editions (RLS lets any trip member read them; only
+// generation is gated).
 // `initialSection="studio"` scrolls the body to the Studio half on open.
 //
 // Layout contract: header and footer are fixed, the middle region is the only
@@ -104,6 +106,26 @@ async function getToken(): Promise<string | null> {
   return data?.session?.access_token ?? null;
 }
 
+interface PrintQuota {
+  tier: 'free' | 'pro';
+  limit: number;
+  used: number;
+  remaining: number;
+  resetsAt: string;
+}
+
+const PRINT_QUOTA_KEY = ['print-design-quota'] as const;
+
+async function fetchPrintQuota(): Promise<PrintQuota> {
+  const token = await getToken();
+  if (!token) throw new Error('Not signed in');
+  const resp = await fetch('/api/print-design/quota', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok) throw new Error(`Quota request failed: ${resp.status}`);
+  return resp.json();
+}
+
 /**
  * Three bands of the edition's own palette — a paint chip, not a pie chart.
  * It is the only place the list shows what an edition actually looks like.
@@ -170,6 +192,18 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
     },
   });
 
+  const { data: quota } = useQuery({
+    queryKey: PRINT_QUOTA_KEY,
+    enabled: open && !!user,
+    queryFn: fetchPrintQuota,
+    staleTime: 30_000,
+  });
+
+  // Optimistic until the quota says otherwise: most members opening this have
+  // today's edition unspent, and the server is the gate either way, so a
+  // failed or pending read costs at most a toast, never an extra edition.
+  const canDesign = isPro || (quota ? quota.remaining > 0 : true);
+
   const handleGenerate = async () => {
     const token = await getToken();
     if (!token) {
@@ -185,7 +219,11 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
       () => setGeneratingStep((i) => Math.min(i + 1, GENERATING_STEPS.length - 1)),
       4000
     );
-    track('print_studio_generate', { trip_id: tripId, has_theme: !!theme.trim() });
+    track('print_studio_generate', {
+      trip_id: tripId,
+      has_theme: !!theme.trim(),
+      tier: isPro ? 'pro' : 'free',
+    });
 
     try {
       const resp = await fetch(`/api/trips/${tripId}/print-design`, {
@@ -202,14 +240,18 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
 
       if (!resp.ok || !body?.id) {
         const message =
-          body?.code === 'PRO_REQUIRED' ? 'Print Studio is a Pro feature.'
-          : body?.code === 'DAILY_LIMIT_REACHED' ? body.message || 'Daily design limit reached.'
+          body?.code === 'DAILY_LIMIT_REACHED' ? body.message || 'Daily design limit reached.'
           : body?.code === 'CONFIG_ERROR' ? 'Print Studio is not available right now.'
           : body?.message || 'Design generation failed. Please try again.';
         toast.error(message);
+        // A spent quota flips a free member to the preview and upgrade.
+        if (body?.code === 'DAILY_LIMIT_REACHED') {
+          void queryClient.invalidateQueries({ queryKey: PRINT_QUOTA_KEY });
+        }
         return;
       }
 
+      void queryClient.invalidateQueries({ queryKey: PRINT_QUOTA_KEY });
       await queryClient.invalidateQueries({ queryKey: ['print-designs', tripId] });
       setTheme('');
       onOpenChange(false);
@@ -431,7 +473,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
             <div className="flex items-baseline justify-between gap-3">
               <h3 className="text-sm font-semibold text-foreground">Studio edition</h3>
               <span className="shrink-0 text-xs uppercase tracking-wider text-muted-foreground">
-                Pro
+                {isPro ? 'Pro' : 'One free a day'}
               </span>
             </div>
             <p className="mt-1 mb-3 text-sm text-muted-foreground">
@@ -441,10 +483,31 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
 
             {isGenerating ? (
               generatingPanel
-            ) : isPro ? (
-              themeField
+            ) : canDesign ? (
+              <>
+                {themeField}
+                {!isPro && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    This is today&rsquo;s free edition.{' '}
+                    <button
+                      type="button"
+                      onClick={handleUpgrade}
+                      disabled={isUpgrading}
+                      className="font-medium text-foreground underline underline-offset-2 hover:text-earth-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-60"
+                    >
+                      Pro designs up to 10 a day
+                    </button>
+                    .
+                  </p>
+                )}
+              </>
             ) : (
-              <StudioTeaser tripId={tripId} destination={tripDestination} enabled={open} />
+              <>
+                <p className="mb-3 text-sm text-foreground">
+                  You&rsquo;ve used today&rsquo;s free edition. Another one arrives tomorrow.
+                </p>
+                <StudioTeaser tripId={tripId} destination={tripDestination} enabled={open} />
+              </>
             )}
           </div>
 
@@ -462,7 +525,7 @@ const PrintStudioDialog: React.FC<PrintStudioDialogProps> = ({
             >
               Cancel
             </Button>
-          ) : isPro ? (
+          ) : canDesign ? (
             <Button
               variant="sunset"
               onClick={handleGenerate}

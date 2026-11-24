@@ -1,6 +1,6 @@
 # Print Studio
 
-The paid (Pro) feature: an AI-art-directed printable edition of a trip, laid out on Letter pages. CLAUDE.md §23 carries the short version; this is the full contract. Read it before changing anything under `src/lib/printDesign/`, `src/components/trip/print-studio/`, `src/components/landing/print-showcase/`, `server/routes/print-design.ts` or `server/lib/print*.ts`.
+An AI-art-directed printable edition of a trip, laid out on Letter pages: one a day for every signed-in member, up to ten a day for Pro. CLAUDE.md §23 carries the short version; this is the full contract. Read it before changing anything under `src/lib/printDesign/`, `src/components/trip/print-studio/`, `src/components/landing/print-showcase/`, `server/routes/print-design.ts` or `server/lib/print*.ts`.
 
 ## File map
 
@@ -30,7 +30,7 @@ The paid (Pro) feature: an AI-art-directed printable edition of a trip, laid out
 
 ## Entry and tiers
 
-One **Print** button in the TimelineView toolbar opens `PrintStudioDialog`, which holds both halves: a free **Simple PDF** section (`SimplePdfSection.tsx`, the pdfmake export of CLAUDE.md §7) above a **Studio edition** section. Pro members get the theme field. Free members see the first day page of their own trip rendered by `PrintDocument` in the fixed `SAMPLE_TEASER_DESIGN`, with no AI call and no invented prose, and the upgrade button beneath. Anyone with trip access can open existing editions.
+One **Print** button in the TimelineView toolbar opens `PrintStudioDialog`, which holds both halves: a free **Simple PDF** section (`SimplePdfSection.tsx`, the pdfmake export of CLAUDE.md §7) above a **Studio edition** section. Anyone with an edition left today gets the theme field: every signed-in member has one a day, Pro has ten. The dialog reads `GET /api/print-design/quota` to decide, optimistically (the POST is the real gate; a 429 refetches the quota and flips the view). A free member who has spent today's edition sees the first day page of their own trip rendered by `PrintDocument` in the fixed `SAMPLE_TEASER_DESIGN`, with no AI call and no invented prose, and the upgrade button beneath. Anyone with trip access can open existing editions.
 
 ## Division of labor (the design invariant)
 
@@ -124,7 +124,7 @@ An edition renders from **current** trip data until someone finalizes it, so a d
 
 ## Server
 
-`POST /api/trips/:tripId/print-design`: JWT auth + trip access + `subscription_tier === 'pro'` + 10 generations/user/day (counted from `trip_print_designs`), plus a per-IP limiter (12 per 10 min). Both routes 503 without `OPENAI_API_KEY`; `OPENAI_MODEL` overrides the default `gpt-4.1`.
+`POST /api/trips/:tripId/print-design`: JWT auth + trip access + a daily edition (`FREE_DAILY_DESIGNS` = 1, `PRO_DAILY_DESIGNS` = 10 by `subscription_tier`, UTC days), plus a per-IP limiter (12 per 10 min). The count lives in `print_design_usage`, not in `trip_print_designs` (members can delete those rows, and a deleted trip cascades them) and not in `user_ai_usage` (members can UPDATE their own row): RLS on, no policies, no grants to `anon`/`authenticated`. `consume_print_design` spends one atomically before the OpenAI call, and `refund_print_design` gives it back if generation or the insert fails. `GET /api/print-design/quota` returns `{ tier, limit, used, remaining, resetsAt }`. Both routes 503 without `OPENAI_API_KEY`; `OPENAI_MODEL` overrides the default `gpt-4.1`.
 
 Generation reads the trip with `fetchTripSnapshot` (the same reads finalizing uses), serializes it (clamped: ≤40 days, ≤20 items/day), calls OpenAI chat completions with `response_format: json_schema (strict)`, sanitizes, and stores the row. User theme text is quoted and pinned as "styling preference only", so the prompt-injection blast radius is copy text, which is length-clamped.
 

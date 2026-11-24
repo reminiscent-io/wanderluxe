@@ -690,6 +690,24 @@ export type Database = {
         }
         Relationships: []
       }
+      print_design_usage: {
+        Row: {
+          date: string
+          design_count: number
+          user_id: string
+        }
+        Insert: {
+          date: string
+          design_count?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          design_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_imports_limit: number | null
@@ -1517,6 +1535,14 @@ export type Database = {
       admin_get_user_count: { Args: never; Returns: number }
       can_access_trip: { Args: { check_trip_id: string }; Returns: boolean }
       can_edit_trip: { Args: { check_trip_id: string }; Returns: boolean }
+      consume_print_design: {
+        Args: { p_date: string; p_limit: number; p_user_id: string }
+        Returns: { allowed: boolean; used: number }[]
+      }
+      refund_print_design: {
+        Args: { p_date: string; p_user_id: string }
+        Returns: undefined
+      }
       current_email: { Args: never; Returns: string }
       get_ai_import_usage: {
         Args: { check_date: string; check_user_id: string }
