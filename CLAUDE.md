@@ -30,6 +30,7 @@ npx vitest run src/path/to/file.test.ts   # Single file
 npm run test:watch      # Watch mode
 npm run test:coverage   # Coverage report
 npx knip                # Dead files / exports / dependencies (config in knip.json; not part of npm test)
+npm run contrast        # WCAG AA text-contrast scan (axe-core + puppeteer) of public routes at desktop + phone width; starts its own Vite server from .env, exits 1 on any failure. `-- --url <base>` scans a deployed site, `-- /route` adds routes
 npm run evals           # Eval harness (LLM + integration; on-demand only, never part of npm test)
 npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
 npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
