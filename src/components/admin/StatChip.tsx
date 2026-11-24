@@ -17,7 +17,7 @@ export function StatChip({ label, value, subtitle, trend, className }: StatChipP
         className,
       )}
     >
-      <span className="text-xs font-medium text-sand-500">{label}</span>
+      <span className="text-xs font-medium text-earth-500">{label}</span>
       <div className="flex items-baseline gap-2">
         <span className="text-xl font-semibold text-earth-900">
           {typeof value === 'number' ? value.toLocaleString() : value}

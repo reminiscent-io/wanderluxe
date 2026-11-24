@@ -30,6 +30,7 @@ npx vitest run src/path/to/file.test.ts   # Single file
 npm run test:watch      # Watch mode
 npm run test:coverage   # Coverage report
 npx knip                # Dead files / exports / dependencies (config in knip.json; not part of npm test)
+npm run contrast        # WCAG AA text-contrast scan (axe-core + puppeteer) of public routes at desktop + phone width; starts its own Vite server from .env, exits 1 on any failure. `-- --url <base>` scans a deployed site, `-- /route` adds routes
 npm run evals           # Eval harness (LLM + integration; on-demand only, never part of npm test)
 npm run evals:seed      # Create/reset eval-user fixture data (run before evals)
 npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | evals:mcp
@@ -46,7 +47,7 @@ npm run evals:chat      # One suite at a time: evals:chat | evals:parsing | eval
 - **AI**: Google Gemini 2.5 Flash for chat + doc parsing (hardcoded in Edge Function + Express; no env override); OpenAI (default `gpt-4.1`, `OPENAI_MODEL` override) for Print Studio design generation
 - **Calendar**: FullCalendar (trip calendar view) + ical-generator (token-gated iCal feed)
 - **MCP**: built-in Model Context Protocol server (`server/routes/mcp.ts`, OAuth 2.1 via Supabase)
-- **Payments**: Stripe (Pro subscription, $3.99/mo — gates the Print Studio; AI chat is unlimited on every tier)
+- **Payments**: Stripe (Pro subscription, $3.99/mo — raises the Print Studio from 1 edition/day to 10; AI chat is unlimited on every tier)
 - **External APIs**: Google Places, Google Time Zone, OpenWeatherMap (weather), AeroDataBox (flights), Serper (web search), Expedia Group affiliate (booking), Mailgun (share + reminder emails), Unsplash, ExchangeRate-API
 - **Analytics**: PostHog + Google Analytics/GTM, consent-gated via `ConsentContext`
 - **Testing**: Vitest
@@ -220,6 +221,7 @@ Key tables:
 - `profiles` - User profiles (auto-created on signup; holds `subscription_tier` + AI limits)
 - `ai_chat_threads` / `ai_chat_messages` - AI conversation history
 - `user_ai_usage` - AI usage tracking (daily message/import counts + per-minute rate-limit window). Clients get SELECT on their own row only: every write goes through the SECURITY DEFINER `increment_ai_usage`/`increment_ai_import_usage` RPCs or the service role, since a client UPDATE would reset the OCR cap and chat rate window
+- `print_design_usage` - Print Studio daily edition count per user (service role only: no policies, no client grants, so it can't be reset from the browser)
 - `trip_print_designs` - Print Studio editions (AI palette/fonts/motif/copy per trip). The Express route (service role) writes `design`; `copy_overrides` is the one column a browser may write (column-level GRANT + RLS `can_edit_trip`, frozen once `finalized_at` is set); `content_snapshot`/`finalized_at`/`finalized_by` are server-only
 - `currencies` / `exchange_rates` - Multi-currency support
 - `weather_cache` - Cached weather data (6h TTL)
@@ -284,7 +286,7 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 11. **Stripe Integration**
 - Pro subscription billing via `server/routes/stripe.ts` — checkout, webhook, billing portal, cancel-at-period-end + reactivate (UI in `Profile.tsx`)
-- **WanderLuxe Pro = $3.99/mo** (inline `price_data`, `unit_amount: 399` — no Stripe price-ID env var) and gates the **Print Studio** (see §23). The webhook sets `profiles.subscription_tier`; AI limits are identical on both tiers (`ai_messages_limit=-1`, `ai_imports_limit=20`) — chat is free product-wide, the OCR cap is universal abuse protection
+- **WanderLuxe Pro = $3.99/mo** (inline `price_data`, `unit_amount: 399` — no Stripe price-ID env var) and raises the **Print Studio** from 1 edition a day (every signed-in member) to 10 (see §23). The webhook sets `profiles.subscription_tier`; AI limits are identical on both tiers (`ai_messages_limit=-1`, `ai_imports_limit=20`) — chat is free product-wide, the OCR cap is universal abuse protection
 - Stripe SDK v20+ in dependencies
 
 #### 12. **Admin Dashboard**
@@ -362,9 +364,9 @@ The timeline is the default itinerary view; each day renders as a `CompactDayCar
 - `src/components/discovery/DiscoverHint.tsx` + `useFirstRun` — a single dismissible line that appears once, in place, beside the feature it describes. Deliberately not a tour
 - Keys (`DiscoveryKey`): `first-trip` (a trip with days but no items; renders the three-way "Nothing planned yet" banner in `TimelineView`, and blank days collapse to one line via `quietEmptyDays` until the first item lands), `map-view`, `calendar-sync`, `share-trip` (3+ items, nobody else on the trip), `doc-import`, `live-collab`. State mirrors to `localStorage` (`wl.discovery`) and reads synchronously on first render so a dismissed hint never flashes back
 
-#### 23. **Print Studio (Pro feature)**
+#### 23. **Print Studio (1 edition/day free, 10/day Pro)**
 Full contract: **`docs/print-studio.md` — read it before changing `src/lib/printDesign/`, `components/trip/print-studio/`, `components/landing/print-showcase/`, `server/routes/print-design.ts` or `server/lib/print*.ts`.** Core rules:
-- One **Print** button (TimelineView toolbar) opens `PrintStudioDialog`: a free Simple PDF section (§7) above the Studio edition. Free members see the first day page of their own trip in the fixed `SAMPLE_TEASER_DESIGN` (no AI call)
+- One **Print** button (TimelineView toolbar) opens `PrintStudioDialog`: a free Simple PDF section (§7) above the Studio edition. Every signed-in member gets 1 edition a day, Pro 10 (UTC days, `print_design_usage`, spent by `consume_print_design` and refunded on failure; `GET /api/print-design/quota` drives the dialog). A free member who has spent today's sees the first day page of their own trip in the fixed `SAMPLE_TEASER_DESIGN` (no AI call)
 - **An edition is fixed Letter pages** (816 × 1056 CSS px, `@page { size: 8.5in 11in; margin: 0 }` injected by the edition page). `buildPrintTrip` (`src/lib/printDesign/trip.ts`, shared client/server) reads every field of the trip; `planEdition` (`plan.ts`) decides the pages from day density, trip length and the design's per-day places (pairs, chapters, banners, bookings); `PrintDocument` measures every page and replans on overflow (`fit.ts`: tighten first, split only between items). Photos are never cropped
 - **The model is creative director only**: OpenAI returns a `PrintDesignSpec` (palette, font pairing, motif, layout, cover copy, and per day a headline, caption, place and feature flag) through a strict json_schema; it never decides pages, and every item prints from the trip rows, so model output can degrade style, never content. The payload is built from the same projection (weekdays included, money and codes stripped)
 - `sanitizePrintDesign` (`spec.ts`) fixes **legibility and facts, not taste**: only text colours move (OKLCH lightness) until they clear `PALETTE_FLOORS`; prose that fails the house voice (`voice.ts` `findSlop`) or names the wrong weekday is dropped. The edition page re-sanitizes the stored model output on read

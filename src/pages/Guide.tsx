@@ -140,7 +140,7 @@ const SECTIONS: Section[] = [
       {
         icon: Printer,
         title: 'Print it, simply or designed',
-        body: 'Every trip exports as a simple PDF, free: a proper typeset itinerary to print, email, or keep on your phone for the flight when there is no signal. With Pro, the Print Studio designs the same itinerary as a keepsake edition, with a palette, a typeface pairing, a motif and a line of copy for each day, and every line it writes is yours to rewrite. Either way, the bookings and times come from your itinerary.',
+        body: 'Every trip exports as a simple PDF, free: a proper typeset itinerary to print, email, or keep on your phone for the flight when there is no signal. Once a day, free, the Print Studio designs the same itinerary as a keepsake edition (Pro makes up to ten a day), with a palette, a typeface pairing, a motif and a line of copy for each day, and every line it writes is yours to rewrite. Either way, the bookings and times come from your itinerary.',
         to: (p) => (p ? `${p}/timeline?print=1` : null),
         actionLabel: 'Open it',
       },
@@ -203,7 +203,7 @@ const Guide: React.FC = () => {
           <div className="mx-auto max-w-3xl">
 
             <header className="mb-14">
-              <p className="font-sans text-sm uppercase tracking-[0.18em] text-earth-400 mb-4">
+              <p className="font-sans text-sm uppercase tracking-[0.18em] text-earth-500 mb-4">
                 Guide
               </p>
               <h1 className="font-display text-4xl md:text-5xl text-foreground leading-[1.05]">

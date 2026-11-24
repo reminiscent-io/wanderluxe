@@ -398,7 +398,7 @@ const Budget = () => {
         >
           <div>
             <h1 className="text-2xl font-display text-earth-600">Trip Spend</h1>
-            <p className="text-sm text-sand-500">All trips</p>
+            <p className="text-sm text-earth-500">All trips</p>
           </div>
           <CurrencySelector
             value={selectedCurrency}
@@ -408,7 +408,7 @@ const Budget = () => {
         </motion.div>
 
         {!isLoading && !ratesLoading && unconvertedCurrencies.length > 0 && (
-          <p className="text-xs text-sand-500">
+          <p className="text-xs text-earth-500">
             No exchange rate available for {unconvertedCurrencies.join(', ')} — spending in
             {unconvertedCurrencies.length > 1 ? ' those currencies is' : ' that currency is'} not
             included below.
@@ -441,7 +441,7 @@ const Budget = () => {
                   <Sparkles className="w-8 h-8 text-sunset-500" />
                 </div>
                 <h3 className="text-xl font-display text-earth-600 mb-2">Start tracking your spend</h3>
-                <p className="text-sand-500 mb-6 max-w-sm mx-auto">
+                <p className="text-earth-500 mb-6 max-w-sm mx-auto">
                   Add expenses to any trip to see your spending patterns here.
                 </p>
                 <a href="/my-trips">
@@ -466,19 +466,19 @@ const Budget = () => {
               className="grid grid-cols-3 gap-3"
             >
               <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
-                <p className="text-xs text-sand-500 mb-1">Total Spent</p>
+                <p className="text-xs text-earth-500 mb-1">Total Spent</p>
                 <p className="text-lg sm:text-2xl font-display text-sunset-500 leading-tight">
                   {formatCurrencyWithSymbol(totalSpent, selectedCurrency)}
                 </p>
               </div>
               <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
-                <p className="text-xs text-sand-500 mb-1">Trips</p>
+                <p className="text-xs text-earth-500 mb-1">Trips</p>
                 <p className="text-lg sm:text-2xl font-display text-earth-600 leading-tight">
                   {tripsWithExpenses}
                 </p>
               </div>
               <div className="rounded-card bg-card shadow-warm-sm p-4 sm:p-5">
-                <p className="text-xs text-sand-500 mb-1">Avg / Trip</p>
+                <p className="text-xs text-earth-500 mb-1">Avg / Trip</p>
                 <p className="text-lg sm:text-2xl font-display text-earth-600 leading-tight">
                   {formatCurrencyWithSymbol(avgPerTrip, selectedCurrency)}
                 </p>
@@ -523,7 +523,7 @@ const Budget = () => {
                       {/* Center label */}
                       {largestCategory && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <p className="text-xs text-sand-500">{CATEGORY_LABELS[largestCategory.name]}</p>
+                          <p className="text-xs text-earth-500">{CATEGORY_LABELS[largestCategory.name]}</p>
                           <p className="text-sm font-display text-earth-600">
                             {totalSpent > 0 ? Math.round((largestCategory.value / totalSpent) * 100) : 0}%
                           </p>
@@ -558,7 +558,7 @@ const Budget = () => {
                                 />
                               </div>
                             </div>
-                            <span className="text-xs text-sand-500 w-10 text-right">{pct}%</span>
+                            <span className="text-xs text-earth-500 w-10 text-right">{pct}%</span>
                           </div>
                         );
                       })}
@@ -679,7 +679,7 @@ const Budget = () => {
                           <p className="text-sm font-medium text-earth-700 truncate">
                             {expense.description}
                           </p>
-                          <p className="text-xs text-sand-500 truncate">{expense.location}</p>
+                          <p className="text-xs text-earth-500 truncate">{expense.location}</p>
                         </div>
                         {/* Amount */}
                         <div className="text-right flex-shrink-0">

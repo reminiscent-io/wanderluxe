@@ -55,6 +55,28 @@ const renderDialog = (onOpenChange = vi.fn()) => {
   return onOpenChange;
 };
 
+/**
+ * Routes the dialog's two calls: the quota read answers with `remaining`
+ * (one value per read, the last repeating), generation with `generate`.
+ */
+const stubFetch = (remaining: number[], generate?: () => Promise<Response>) => {
+  let reads = 0;
+  const fetchMock = vi.fn((url: string) => {
+    if (url === '/api/print-design/quota') {
+      const left = remaining[Math.min(reads++, remaining.length - 1)];
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ tier, limit: tier === 'pro' ? 10 : 1, used: 0, remaining: left, resetsAt: '' }),
+          { status: 200 }
+        )
+      );
+    }
+    return generate ? generate() : new Promise<Response>(() => {});
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+};
+
 beforeEach(() => {
   tier = 'pro';
   designRows = [];
@@ -144,8 +166,9 @@ describe('PrintStudioDialog — theme suggestions', () => {
 });
 
 describe('PrintStudioDialog — non-Pro', () => {
-  it('shows the upsell but still opens editions the trip already has', async () => {
+  it('shows the upsell once today is spent but still opens editions the trip already has', async () => {
     tier = 'free';
+    stubFetch([0]);
     designRows = [
       {
         id: 'design-1',
@@ -156,7 +179,7 @@ describe('PrintStudioDialog — non-Pro', () => {
     ];
     renderDialog();
 
-    expect(screen.getByRole('button', { name: /unlock the print studio/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /unlock the print studio/i })).toBeInTheDocument();
 
     const edition = await screen.findByRole('button', { name: /costiera/i });
     fireEvent.click(edition);
@@ -173,12 +196,44 @@ describe('PrintStudioDialog — one door, two tiers', () => {
     expect(screen.queryByTestId('studio-teaser')).not.toBeInTheDocument();
   });
 
-  it('offers a free member the Simple PDF and a preview of their own trip', async () => {
+  it('lets a free member design today’s free edition', async () => {
     tier = 'free';
+    stubFetch([1]);
     renderDialog();
     expect(screen.getByTestId('simple-pdf')).toBeInTheDocument();
-    expect(screen.getByTestId('studio-teaser')).toBeInTheDocument();
+    expect(await screen.findByText(/today’s free edition/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /design my edition/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /pro designs up to 10 a day/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('studio-teaser')).not.toBeInTheDocument();
+  });
+
+  it('shows a free member who has spent today a preview of their own trip', async () => {
+    tier = 'free';
+    stubFetch([0]);
+    renderDialog();
+    expect(screen.getByTestId('simple-pdf')).toBeInTheDocument();
+    expect(await screen.findByTestId('studio-teaser')).toBeInTheDocument();
+    expect(screen.getByText(/another one arrives tomorrow/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/theme/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /unlock the print studio/i })).toBeInTheDocument();
+  });
+
+  it('flips to the preview when the server says today is already spent', async () => {
+    tier = 'free';
+    // The dialog thinks one is left (opened in another tab, say); the server
+    // disagrees, and the refetched quota agrees with the server.
+    stubFetch([1, 0], () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({ code: 'DAILY_LIMIT_REACHED', message: 'You have used today’s free edition.' }),
+          { status: 429 }
+        )
+      )
+    );
+    renderDialog();
+    fireEvent.click(await screen.findByRole('button', { name: /design my edition/i }));
+    expect(await screen.findByTestId('studio-teaser')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /unlock the print studio/i })).toBeInTheDocument();
   });
 

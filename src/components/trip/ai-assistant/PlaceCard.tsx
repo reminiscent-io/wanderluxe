@@ -115,7 +115,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ card, onAdd, compact = false }) =
         )}
 
         {card.address && (
-          <p className="mt-auto pt-1 text-[11px] text-sand-500 line-clamp-1" title={card.address}>
+          <p className="mt-auto pt-1 text-[11px] text-earth-500 line-clamp-1" title={card.address}>
             {card.address}
           </p>
         )}

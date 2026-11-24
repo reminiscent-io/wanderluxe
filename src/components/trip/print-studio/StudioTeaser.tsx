@@ -60,9 +60,9 @@ const StudioTeaser: React.FC<StudioTeaserProps> = ({ tripId, destination, enable
       </div>
       <div className="min-w-0">
         <p className="text-sm text-earth-600">
-          Your trip, in a sample style. Pro lays the whole trip out on Letter pages and designs it
+          Your trip, in a sample style. The Studio lays the whole trip out on Letter pages and designs it
           around your theme: palette, typefaces, illustration and a headline for every day, all
-          yours to rewrite.
+          yours to rewrite. Pro designs up to ten a day.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           <span className="font-semibold tabular-nums text-foreground">$3.99</span> / month

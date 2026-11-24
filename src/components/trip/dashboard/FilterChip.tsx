@@ -29,7 +29,7 @@ export function FilterChip({ active, onClick, label, count, icon }: FilterChipPr
     >
       {icon}
       <span>{label}</span>
-      <span className={cn('text-xs tabular-nums', active ? 'opacity-70' : 'text-earth-400')}>
+      <span className={cn('text-xs tabular-nums', active ? 'opacity-70' : 'text-earth-500')}>
         {count}
       </span>
     </button>
