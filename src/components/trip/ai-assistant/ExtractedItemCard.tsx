@@ -173,7 +173,7 @@ const ExtractedItemCard: React.FC<ExtractedItemCardProps> = ({
               </span>
             )}
             {item.status === 'skipped' && (
-              <span className="text-xs text-sand-500 flex items-center gap-0.5">
+              <span className="text-xs text-earth-500 flex items-center gap-0.5">
                 <X className="w-3 h-3" /> Skipped
               </span>
             )}

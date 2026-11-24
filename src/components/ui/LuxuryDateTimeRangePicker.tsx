@@ -129,7 +129,7 @@ export default function LuxuryDateTimeRangePicker({
               onClick={() => setIsOpen(true)}
               className={cn(
                 "w-full justify-start text-left font-normal bg-white border-sand-300 text-sand-900 h-auto py-3 px-4 hover:bg-sand-50 transition-colors",
-                !value.start && "text-sand-500"
+                !value.start && "text-earth-500"
               )}
             >
               <CalendarIcon className="mr-3 h-4 w-4 flex-shrink-0 text-sand-600" />

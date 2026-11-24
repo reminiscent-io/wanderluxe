@@ -150,7 +150,7 @@ export function MonthlyActivityChart({
         )}
       >
         <div className="text-xs font-medium text-earth-600 mb-2">Travel Activity</div>
-        <div className="flex items-center justify-center text-earth-400 text-sm h-20">
+        <div className="flex items-center justify-center text-earth-500 text-sm h-20">
           No travel data yet
         </div>
       </motion.div>

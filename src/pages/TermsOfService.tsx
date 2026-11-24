@@ -14,13 +14,13 @@ const TermsOfService: React.FC = () => {
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-20">
           <div className="mx-auto max-w-3xl">
             <header className="mb-12 md:mb-16">
-              <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-4">
+              <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-4">
                 Legal
               </p>
               <h1 className="font-display text-4xl md:text-5xl text-earth-600 leading-[1.05]">
                 Terms of Service.
               </h1>
-              <p className="mt-4 font-sans text-sm text-earth-400">
+              <p className="mt-4 font-sans text-sm text-earth-500">
                 Last updated May 2026.
               </p>
             </header>

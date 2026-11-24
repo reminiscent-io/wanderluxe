@@ -225,7 +225,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
                           "w-full justify-start pl-6 h-8 text-xs font-sans",
                           secondaryPanel === child.key
                             ? "bg-earth-50 text-earth-600"
-                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
+                            : "text-earth-500 hover:text-earth-600 hover:bg-sand-50"
                         )}
                       >
                         <child.icon className="mr-2 h-3 w-3" />
@@ -247,7 +247,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
                           "w-full justify-start pl-6 h-8 text-xs font-sans",
                           secondaryPanel === child.key
                             ? "bg-earth-50 text-earth-600"
-                            : "text-sand-500 hover:text-earth-500 hover:bg-sand-50"
+                            : "text-earth-500 hover:text-earth-600 hover:bg-sand-50"
                         )}
                       >
                         <child.icon className="mr-2 h-3 w-3" />
@@ -314,7 +314,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start text-sand-500 hover:text-red-600 hover:bg-red-50"
+                className="w-full justify-start text-earth-500 hover:text-red-600 hover:bg-red-50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Trip
@@ -358,7 +358,7 @@ const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>(({ tripId, tripPat
                 "px-1.5 py-0.5 text-[10px] font-medium rounded-full shrink-0",
                 subscriptionTier === 'pro'
                   ? "bg-amber-100 text-amber-700"
-                  : "bg-sand-100 text-sand-500"
+                  : "bg-sand-100 text-earth-600"
               )}>
                 {subscriptionTier === 'pro' ? 'Pro' : 'Free'}
               </span>

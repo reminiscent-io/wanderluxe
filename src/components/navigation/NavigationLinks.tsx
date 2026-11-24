@@ -30,7 +30,7 @@ const NavigationLinks = () => {
           onClick={() => handleNavigation(item)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="text-sand-500 font-bold transition-colors"
+          className="text-earth-500 font-bold transition-colors"
         >
           {item}
         </motion.button>

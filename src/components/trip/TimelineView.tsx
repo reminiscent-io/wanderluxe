@@ -370,7 +370,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ tripId, tripDates: initialT
             aria-labelledby="first-trip-heading"
             className="rounded-card border border-sunset-200 bg-sunset-50 p-5 sm:p-6"
           >
-            <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-400 mb-2">
+            <p className="font-sans text-xs uppercase tracking-[0.2em] text-earth-500 mb-2">
               Nothing planned yet
             </p>
             <h3 id="first-trip-heading" className="font-display text-xl text-foreground leading-snug">
