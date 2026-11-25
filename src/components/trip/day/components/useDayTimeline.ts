@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import { extractIata as strictIata } from '@/components/trip/map/placeLocator';
 import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
 import {
   TimelineItem,
@@ -116,10 +117,50 @@ function getTransportTypeLabel(type: string): string {
   }
 }
 
-function getTransportDisplayInfo(
+/*
+ * Roughly what two lines of a row title hold on a 375px phone (about 24
+ * characters a line at 15px), less slack for where words happen to break. A
+ * character count is a stand-in for measuring, so it errs short: a title that
+ * would have fit by a hair shortens instead. Below 375px a long pair can still
+ * clamp; the full names are in the detail dialog.
+ */
+const FLIGHT_TITLE_BUDGET = 42;
+const TRAILING_IATA = /\s*\([A-Z]{3}\)\s*$/;
+
+/**
+ * A flight row has one job: say where from and where to. Places read better
+ * than codes (not everyone on the trip knows what ISP is), so the endpoints
+ * print as typed while the pair fits in the title's two lines. When it does
+ * not, the title sheds the least first: the parenthetical codes, then the
+ * names, leaving "JFK → CDG". An endpoint with no code is never shortened,
+ * and every other transport type prints as typed.
+ */
+function flightRoute(t: Transportation): { from: string; to: string } {
+  const typed = { from: t.departure_location || 'Departure', to: t.arrival_location || 'Arrival' };
+  if (t.type !== 'flight') return typed;
+
+  const fits = (r: { from: string; to: string }) => `${r.from} → ${r.to}`.length <= FLIGHT_TITLE_BUDGET;
+  if (fits(typed)) return typed;
+
+  const fromCode = strictIata(typed.from);
+  const toCode = strictIata(typed.to);
+  const named = {
+    from: fromCode ? typed.from.replace(TRAILING_IATA, '') || fromCode : typed.from,
+    to: toCode ? typed.to.replace(TRAILING_IATA, '') || toCode : typed.to,
+  };
+  if (fits(named)) return named;
+
+  return { from: fromCode || typed.from, to: toCode || typed.to };
+}
+
+export function getTransportDisplayInfo(
   t: Transportation,
   normalizedDay: string,
 ): { displayTime: string | undefined; title: string; isStartDay: boolean; isEndDay: boolean; isMultiDay: boolean } {
+  const { from, to } = flightRoute(t);
+  // One endpoint alone always fits, so the halves of an overnight leg print as typed.
+  const typedFrom = t.departure_location || 'Departure';
+  const typedTo = t.arrival_location || 'Arrival';
   const startDate = t.start_date;
   const endDate = t.end_date || startDate;
   const isStartDay = normalizedDay === startDate;
@@ -129,7 +170,7 @@ function getTransportDisplayInfo(
   if (!isMultiDay) {
     return {
       displayTime: t.start_time || undefined,
-      title: `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+      title: `${from} → ${to}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -142,7 +183,7 @@ function getTransportDisplayInfo(
       displayTime: t.start_time || undefined,
       title: isRentalCar
         ? `Rental Car Pickup: ${t.departure_location || 'Pickup'}`
-        : `${t.departure_location || 'Departure'} →`,
+        : `${typedFrom} →`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -155,7 +196,7 @@ function getTransportDisplayInfo(
       displayTime: t.end_time || undefined,
       title: isRentalCar
         ? `Rental Car Return: ${t.arrival_location || 'Return'}`
-        : `→ ${t.arrival_location || 'Arrival'}`,
+        : `→ ${typedTo}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -165,7 +206,7 @@ function getTransportDisplayInfo(
   const typeLabel = getTransportTypeLabel(t.type);
   return {
     displayTime: undefined,
-    title: `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+    title: `${typeLabel} (In Transit): ${from} → ${to}`,
     isStartDay,
     isEndDay,
     isMultiDay,

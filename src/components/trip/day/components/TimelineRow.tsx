@@ -12,7 +12,7 @@ import {
   getTimelineIcon,
   CATEGORY_ICON_CLASS,
   CATEGORY_ROW_CLASS,
-  parseTimeToHM,
+  buildMetaParts,
 } from './timeline-utils';
 
 type Props = {
@@ -28,46 +28,6 @@ type Props = {
   onHotelClick?: (h: HotelStay) => void;
   onTransportationClick?: (t: Transportation) => void;
   onReservationClick?: (r: RestaurantReservation) => void;
-};
-
-/** Compute duration string from start_time/end_time like "2h 30m" */
-const computeDuration = (startTime?: string, endTime?: string): string | null => {
-  if (!startTime || !endTime) return null;
-  const start = parseTimeToHM(startTime);
-  const end = parseTimeToHM(endTime);
-  if (!start || !end) return null;
-  const mins = (end.h * 60 + end.m) - (start.h * 60 + start.m);
-  if (mins <= 0) return null;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h && m) return `${h}h ${m}m`;
-  if (h) return `${h}h`;
-  return `${m}m`;
-};
-
-/**
- * The single meta line under the title. Everything that used to be its own
- * badge row collapses into one clamped sentence joined by middots, so every
- * row is exactly two lines tall regardless of how much metadata it carries.
- */
-const buildMetaParts = (item: TimelineItem): string[] => {
-  const parts: string[] = [];
-  if (item.description) parts.push(item.description);
-
-  if (item.type === 'dining' && item.data?.address) parts.push(String(item.data.address));
-  if (item.type === 'hotel' && item.data?.hotel_phone) parts.push(String(item.data.hotel_phone));
-  if (item.type === 'transportation') {
-    if (item.data?.provider) parts.push(String(item.data.provider));
-    if (item.data?.confirmation_number) parts.push(String(item.data.confirmation_number));
-  }
-
-  const duration = computeDuration(
-    item.time,
-    item.endTime || (item.data?.__arrive_time_on_this_day as string | undefined),
-  );
-  if (duration) parts.push(duration);
-
-  return parts;
 };
 
 /** Build footer links for any event type */
@@ -188,13 +148,17 @@ const TimelineRow: React.FC<Props> = ({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className={cn('text-ui-md font-medium line-clamp-1', isPast ? 'text-earth-500' : 'text-foreground')}>
+          {/* Two lines, not one: on a phone a single line cut the part of the
+              title that said whose house or which airport. */}
+          <div className={cn('text-ui-md font-medium line-clamp-2', isPast ? 'text-earth-500' : 'text-foreground')}>
             {item.title}
           </div>
 
-          {/* Meta row: one clamped line, avatars pinned right */}
-          <div className="mt-0.5 flex items-center gap-3">
-            <div className="min-w-0 flex-1 text-ui-sm text-earth-500 line-clamp-1">
+          {/* Meta row, avatars pinned right. A note the traveler wrote gets
+              two lines, since its second half is usually the point; an
+              address or a phone number stays on one. */}
+          <div className="mt-0.5 flex items-start gap-3">
+            <div className={cn('min-w-0 flex-1 text-ui-sm text-earth-500', item.description ? 'line-clamp-2' : 'line-clamp-1')}>
               {metaParts.join(' · ')}
               {item.type === 'dining' && item.data?.rating ? (
                 <span className="ml-2 inline-flex items-center gap-1 align-baseline tabular-nums text-amber-600">

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatTimeRange, groupSimilarEvents, generateGroupTitle, type TimelineItem } from './timeline-utils';
+import { Anchor, Mountain, Utensils } from 'lucide-react';
+import { formatTimeRange, groupSimilarEvents, generateGroupTitle, getEventCategory, getTimelineIcon, buildMetaParts, type TimelineItem } from './timeline-utils';
 
 describe('formatTimeRange with zone suffixes', () => {
   it('is unchanged with no suffixes', () => {
@@ -79,5 +80,46 @@ describe('groupSimilarEvents', () => {
     const a = flight('a', '08:00', 'JFK (JFK)', 'SXM (SXM)');
     const b = item({ id: 'b', type: 'transportation', time: '09:00', data: { type: 'train', departure_location: 'BOS (BOS)', arrival_location: 'SXM (SXM)' } as TimelineItem['data'] });
     expect(groupSimilarEvents([a, b], DAY)).toHaveLength(2);
+  });
+});
+
+describe('getEventCategory / getTimelineIcon for activities', () => {
+  const activity = (title: string) => ({ type: 'activity' as const, title });
+
+  it('reads a meal named in the title as dining', () => {
+    expect(getEventCategory(activity('Thanksgiving Dinner at the Lowes'))).toBe('clay');
+    expect(getEventCategory(activity('Family dinner at the Lowes'))).toBe('clay');
+    expect(getTimelineIcon(activity('Brunch with Gregg'))).toBe(Utensils);
+  });
+
+  it('leaves an ordinary activity as sage with the mountain', () => {
+    expect(getEventCategory(activity('Hike Caumsett'))).toBe('sage');
+    expect(getTimelineIcon(activity('Hike Caumsett'))).toBe(Mountain);
+  });
+
+  it('matches whole words only', () => {
+    expect(getEventCategory(activity('Launch party'))).toBe('sage');
+    expect(getEventCategory(activity('Dinnerware shopping'))).toBe('sage');
+  });
+
+  it('keeps water ahead of food', () => {
+    expect(getEventCategory(activity('Sunset dinner cruise'))).toBe('ocean');
+    expect(getTimelineIcon(activity('Sunset dinner cruise'))).toBe(Anchor);
+  });
+});
+
+describe('buildMetaParts', () => {
+  const row = (over: Partial<TimelineItem>): TimelineItem => ({
+    type: 'activity', id: 'a', title: 'x', icon: null, time: '11:00', endTime: '17:00', ...over,
+  });
+
+  it('drops a duration that would stand alone', () => {
+    expect(buildMetaParts(row({}))).toEqual([]);
+  });
+
+  it('keeps the duration beside other metadata', () => {
+    expect(buildMetaParts(row({ description: 'Bring pie' }))).toEqual(['Bring pie', '6h']);
+    expect(buildMetaParts(row({ type: 'dining', time: '18:45', endTime: '20:15', data: { address: '417 New York Ave' } })))
+      .toEqual(['417 New York Ave', '1h 30m']);
   });
 });

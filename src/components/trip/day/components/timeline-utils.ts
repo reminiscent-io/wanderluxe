@@ -156,6 +156,52 @@ export const humanizeMinutes = (mins: number) => {
   return `${m}m`;
 };
 
+/** Compute duration string from start_time/end_time like "2h 30m" */
+const computeDuration = (startTime?: string, endTime?: string): string | null => {
+  if (!startTime || !endTime) return null;
+  const start = parseTimeToHM(startTime);
+  const end = parseTimeToHM(endTime);
+  if (!start || !end) return null;
+  const mins = (end.h * 60 + end.m) - (start.h * 60 + start.m);
+  if (mins <= 0) return null;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+};
+
+/**
+ * The meta line under the title. Everything that used to be its own badge row
+ * collapses into one sentence joined by middots.
+ *
+ * Duration is a convenience, not a fact of its own: the gutter already shows
+ * start over finish. So it rides along when there is other metadata and is
+ * dropped when it would be the only thing on the line, where "6h" alone under
+ * a title reads as a stray value.
+ */
+export const buildMetaParts = (item: TimelineItem): string[] => {
+  const parts: string[] = [];
+  if (item.description) parts.push(item.description);
+
+  if (item.type === 'dining' && item.data?.address) parts.push(String(item.data.address));
+  if (item.type === 'hotel' && item.data?.hotel_phone) parts.push(String(item.data.hotel_phone));
+  if (item.type === 'transportation') {
+    if (item.data?.provider) parts.push(String(item.data.provider));
+    if (item.data?.confirmation_number) parts.push(String(item.data.confirmation_number));
+  }
+
+  if (parts.length === 0) return parts;
+
+  const duration = computeDuration(
+    item.time,
+    item.endTime || (item.data?.__arrive_time_on_this_day as string | undefined),
+  );
+  if (duration) parts.push(duration);
+
+  return parts;
+};
+
 // Categorize time into periods for grouping
 export type TimePeriod = 'early-morning' | 'morning' | 'afternoon' | 'evening' | 'night' | 'no-time';
 
@@ -207,13 +253,24 @@ export type EventCategory = 'ocean' | 'clay' | 'sage' | 'slate' | 'lodging';
  */
 const WATER_WORDS = /\b(boat|sail|sailing|cruise|kayak|snorkel|dive|diving|yacht|catamaran|ferry|paddle|surf|surfing|canoe|raft|rafting|marina|swim|swimming)\b/i;
 
+/*
+ * Meals show up as activities too: "Thanksgiving dinner at Mom's" is not a
+ * reservation, so it never reaches the dining table. Same inference, same
+ * narrow list of words that name a meal outright. Water is tested first, so a
+ * "dinner cruise" stays ocean.
+ */
+const FOOD_WORDS = /\b(breakfast|brunch|lunch|dinner|supper|drinks|cocktails|happy hour|tasting|bbq|barbecue|picnic)\b/i;
+
 export const getEventCategory = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): EventCategory => {
   if (item.type === 'hotel') return 'lodging';
   if (item.type === 'dining') return 'clay';
   if (item.type === 'transportation') {
     return item.data?.type === 'ferry' ? 'ocean' : 'slate';
   }
-  return WATER_WORDS.test(item.title || '') ? 'ocean' : 'sage';
+  const title = item.title || '';
+  if (WATER_WORDS.test(title)) return 'ocean';
+  if (FOOD_WORDS.test(title)) return 'clay';
+  return 'sage';
 };
 
 /** Icon colour per category. Shape already differentiates types, so colour
@@ -255,9 +312,13 @@ const getEventIconComponent = (eventType: TimelineType, transportType?: string):
   }
 };
 
-/** Water activities get an anchor regardless of entity type. */
+/** Water activities get an anchor and meals a fork, regardless of entity type. */
 export const getTimelineIcon = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): React.ComponentType<{ className?: string }> => {
-  if (item.type === 'activity' && getEventCategory(item) === 'ocean') return Anchor;
+  if (item.type === 'activity') {
+    const category = getEventCategory(item);
+    if (category === 'ocean') return Anchor;
+    if (category === 'clay') return Utensils;
+  }
   return getEventIconComponent(item.type, item.data?.type as string | undefined);
 };
 
