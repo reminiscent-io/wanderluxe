@@ -18,22 +18,37 @@ const leg = (over: Partial<Transportation>) => ({
 }) as Transportation;
 
 describe('getTransportDisplayInfo titles', () => {
-  it('shortens a flight to its IATA codes', () => {
-    expect(getTransportDisplayInfo(leg({}), '2026-11-27').title).toBe('RDU → ISP');
+  const title = (over: Partial<Transportation>, day = '2026-11-27') => getTransportDisplayInfo(leg(over), day).title;
+
+  it('prints a flight as typed when the pair fits two lines', () => {
+    expect(title({ departure_location: 'Raleigh (RDU)', arrival_location: 'Islip (ISP)' })).toBe('Raleigh (RDU) → Islip (ISP)');
   });
 
-  it('keeps an endpoint without a code as typed', () => {
-    expect(getTransportDisplayInfo(leg({ arrival_location: 'Islip' }), '2026-11-27').title).toBe('RDU → Islip');
+  it('sheds the codes before the names', () => {
+    expect(title({})).toBe('Raleigh-Durham → Long Island MacArthur');
+  });
+
+  it('falls back to codes when the names alone are still too long', () => {
+    expect(title({
+      departure_location: 'John F. Kennedy International Airport (JFK)',
+      arrival_location: 'Charles de Gaulle Airport (CDG)',
+    })).toBe('JFK → CDG');
+  });
+
+  it('never shortens an endpoint that has no code', () => {
+    expect(title({
+      departure_location: 'John F. Kennedy International Airport (JFK)',
+      arrival_location: 'Somewhere outside Paris, to be confirmed',
+    })).toBe('JFK → Somewhere outside Paris, to be confirmed');
   });
 
   it('leaves other transport types alone', () => {
-    const train = leg({ type: 'train', departure_location: 'Penn Station (NYP)', arrival_location: 'Huntington' });
-    expect(getTransportDisplayInfo(train, '2026-11-27').title).toBe('Penn Station (NYP) → Huntington');
+    expect(title({ type: 'train', departure_location: 'Pennsylvania Station, New York (NYP)', arrival_location: 'Huntington Station' }))
+      .toBe('Pennsylvania Station, New York (NYP) → Huntington Station');
   });
 
-  it('uses the code on both halves of an overnight flight', () => {
-    const redEye = leg({ end_date: '2026-11-28' });
-    expect(getTransportDisplayInfo(redEye, '2026-11-27').title).toBe('RDU →');
-    expect(getTransportDisplayInfo(redEye, '2026-11-28').title).toBe('→ ISP');
+  it('prints each half of an overnight flight as typed', () => {
+    expect(title({ end_date: '2026-11-28' })).toBe('Raleigh-Durham (RDU) →');
+    expect(title({ end_date: '2026-11-28' }, '2026-11-28')).toBe('→ Long Island MacArthur (ISP)');
   });
 });

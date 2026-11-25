@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Anchor, Mountain, Utensils } from 'lucide-react';
-import { formatTimeRange, groupSimilarEvents, generateGroupTitle, getEventCategory, getTimelineIcon, type TimelineItem } from './timeline-utils';
+import { formatTimeRange, groupSimilarEvents, generateGroupTitle, getEventCategory, getTimelineIcon, buildMetaParts, type TimelineItem } from './timeline-utils';
 
 describe('formatTimeRange with zone suffixes', () => {
   it('is unchanged with no suffixes', () => {
@@ -105,5 +105,21 @@ describe('getEventCategory / getTimelineIcon for activities', () => {
   it('keeps water ahead of food', () => {
     expect(getEventCategory(activity('Sunset dinner cruise'))).toBe('ocean');
     expect(getTimelineIcon(activity('Sunset dinner cruise'))).toBe(Anchor);
+  });
+});
+
+describe('buildMetaParts', () => {
+  const row = (over: Partial<TimelineItem>): TimelineItem => ({
+    type: 'activity', id: 'a', title: 'x', icon: null, time: '11:00', endTime: '17:00', ...over,
+  });
+
+  it('drops a duration that would stand alone', () => {
+    expect(buildMetaParts(row({}))).toEqual([]);
+  });
+
+  it('keeps the duration beside other metadata', () => {
+    expect(buildMetaParts(row({ description: 'Bring pie' }))).toEqual(['Bring pie', '6h']);
+    expect(buildMetaParts(row({ type: 'dining', time: '18:45', endTime: '20:15', data: { address: '417 New York Ave' } })))
+      .toEqual(['417 New York Ave', '1h 30m']);
   });
 });
