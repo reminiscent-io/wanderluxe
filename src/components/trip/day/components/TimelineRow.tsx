@@ -47,8 +47,8 @@ const computeDuration = (startTime?: string, endTime?: string): string | null =>
 
 /**
  * The single meta line under the title. Everything that used to be its own
- * badge row collapses into one clamped sentence joined by middots, so every
- * row is exactly two lines tall regardless of how much metadata it carries.
+ * badge row collapses into one clamped sentence joined by middots, so the
+ * metadata never adds more than one line however much of it there is.
  */
 const buildMetaParts = (item: TimelineItem): string[] => {
   const parts: string[] = [];
@@ -188,7 +188,9 @@ const TimelineRow: React.FC<Props> = ({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className={cn('text-ui-md font-medium line-clamp-1', isPast ? 'text-earth-500' : 'text-foreground')}>
+          {/* Two lines, not one: on a phone a single line cut the part of the
+              title that said whose house or which airport. */}
+          <div className={cn('text-ui-md font-medium line-clamp-2', isPast ? 'text-earth-500' : 'text-foreground')}>
             {item.title}
           </div>
 

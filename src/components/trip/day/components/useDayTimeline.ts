@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { DayActivity, HotelStay, Transportation, RestaurantReservation } from '@/types/trip';
+import { extractIata as strictIata } from '@/components/trip/map/placeLocator';
 import { effectiveTz, shouldShowBadge, tzAbbrev, transportTzLabels } from '@/utils/timezoneLabel';
 import {
   TimelineItem,
@@ -116,10 +117,24 @@ function getTransportTypeLabel(type: string): string {
   }
 }
 
-function getTransportDisplayInfo(
+/**
+ * A flight row has one job: say where from and where to. "Raleigh-Durham
+ * (RDU) → Long Island MacArthur (ISP)" loses its destination to the clamp on
+ * a phone, so a flight endpoint that carries an IATA code shows the code
+ * alone. Anything without a code, and every other transport type, prints as
+ * typed; the full names stay one tap away in the detail dialog.
+ */
+function endpointLabel(t: Transportation, location: string | null | undefined, fallback: string): string {
+  if (!location) return fallback;
+  return (t.type === 'flight' && strictIata(location)) || location;
+}
+
+export function getTransportDisplayInfo(
   t: Transportation,
   normalizedDay: string,
 ): { displayTime: string | undefined; title: string; isStartDay: boolean; isEndDay: boolean; isMultiDay: boolean } {
+  const from = endpointLabel(t, t.departure_location, 'Departure');
+  const to = endpointLabel(t, t.arrival_location, 'Arrival');
   const startDate = t.start_date;
   const endDate = t.end_date || startDate;
   const isStartDay = normalizedDay === startDate;
@@ -129,7 +144,7 @@ function getTransportDisplayInfo(
   if (!isMultiDay) {
     return {
       displayTime: t.start_time || undefined,
-      title: `${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+      title: `${from} → ${to}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -142,7 +157,7 @@ function getTransportDisplayInfo(
       displayTime: t.start_time || undefined,
       title: isRentalCar
         ? `Rental Car Pickup: ${t.departure_location || 'Pickup'}`
-        : `${t.departure_location || 'Departure'} →`,
+        : `${from} →`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -155,7 +170,7 @@ function getTransportDisplayInfo(
       displayTime: t.end_time || undefined,
       title: isRentalCar
         ? `Rental Car Return: ${t.arrival_location || 'Return'}`
-        : `→ ${t.arrival_location || 'Arrival'}`,
+        : `→ ${to}`,
       isStartDay,
       isEndDay,
       isMultiDay,
@@ -165,7 +180,7 @@ function getTransportDisplayInfo(
   const typeLabel = getTransportTypeLabel(t.type);
   return {
     displayTime: undefined,
-    title: `${typeLabel} (In Transit): ${t.departure_location || 'Departure'} → ${t.arrival_location || 'Arrival'}`,
+    title: `${typeLabel} (In Transit): ${from} → ${to}`,
     isStartDay,
     isEndDay,
     isMultiDay,

@@ -207,13 +207,24 @@ export type EventCategory = 'ocean' | 'clay' | 'sage' | 'slate' | 'lodging';
  */
 const WATER_WORDS = /\b(boat|sail|sailing|cruise|kayak|snorkel|dive|diving|yacht|catamaran|ferry|paddle|surf|surfing|canoe|raft|rafting|marina|swim|swimming)\b/i;
 
+/*
+ * Meals show up as activities too: "Thanksgiving dinner at Mom's" is not a
+ * reservation, so it never reaches the dining table. Same inference, same
+ * narrow list of words that name a meal outright. Water is tested first, so a
+ * "dinner cruise" stays ocean.
+ */
+const FOOD_WORDS = /\b(breakfast|brunch|lunch|dinner|supper|drinks|cocktails|happy hour|tasting|bbq|barbecue|picnic)\b/i;
+
 export const getEventCategory = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): EventCategory => {
   if (item.type === 'hotel') return 'lodging';
   if (item.type === 'dining') return 'clay';
   if (item.type === 'transportation') {
     return item.data?.type === 'ferry' ? 'ocean' : 'slate';
   }
-  return WATER_WORDS.test(item.title || '') ? 'ocean' : 'sage';
+  const title = item.title || '';
+  if (WATER_WORDS.test(title)) return 'ocean';
+  if (FOOD_WORDS.test(title)) return 'clay';
+  return 'sage';
 };
 
 /** Icon colour per category. Shape already differentiates types, so colour
@@ -255,9 +266,13 @@ const getEventIconComponent = (eventType: TimelineType, transportType?: string):
   }
 };
 
-/** Water activities get an anchor regardless of entity type. */
+/** Water activities get an anchor and meals a fork, regardless of entity type. */
 export const getTimelineIcon = (item: Pick<TimelineItem, 'type' | 'title' | 'data'>): React.ComponentType<{ className?: string }> => {
-  if (item.type === 'activity' && getEventCategory(item) === 'ocean') return Anchor;
+  if (item.type === 'activity') {
+    const category = getEventCategory(item);
+    if (category === 'ocean') return Anchor;
+    if (category === 'clay') return Utensils;
+  }
   return getEventIconComponent(item.type, item.data?.type as string | undefined);
 };
 
