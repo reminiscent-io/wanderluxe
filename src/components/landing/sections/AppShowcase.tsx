@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { motion } from "framer-motion";
 
 const shots = [
   {
@@ -32,25 +31,17 @@ const AppShowcase = () => {
   return (
     <section className="bg-background pt-10 pb-16 md:pt-14 md:pb-24 overflow-hidden">
       <div className="mx-auto max-w-6xl px-6">
-        <motion.p
+        <p
           className="text-center font-sans text-sm uppercase tracking-widest text-earth-500 mb-8"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
         >
           Inside the app
-        </motion.p>
+        </p>
 
         <ul className="no-scrollbar -mx-6 flex snap-x snap-mandatory list-none gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-6 md:overflow-visible md:px-0">
-          {shots.map((shot, i) => (
-            <motion.li
+          {shots.map((shot) => (
+            <li
               key={shot.src}
               className="w-[62%] shrink-0 snap-center md:w-auto"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: i * 0.12 }}
-              viewport={{ once: true, margin: "-60px" }}
             >
               <div
                 className="overflow-hidden rounded-2xl shadow-warm-xl ring-1 ring-earth-100 md:[transform:rotate(var(--tilt))]"
@@ -69,7 +60,7 @@ const AppShowcase = () => {
               <p className="mt-5 text-center font-sans text-sm text-earth-500 md:mt-6">
                 {shot.caption}
               </p>
-            </motion.li>
+            </li>
           ))}
         </ul>
       </div>

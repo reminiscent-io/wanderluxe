@@ -7,7 +7,6 @@
 // belong in the landing page's first paint.
 
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,12 +58,8 @@ const PrintStudioShowcase = () => {
   return (
     <section id="print-studio" className="bg-background py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <motion.div
+        <div
           className="max-w-2xl"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true, margin: '-80px' }}
         >
           <p className="font-sans text-sm uppercase tracking-widest text-earth-500">Print Studio</p>
           <h2 className="mt-3 font-display text-3xl md:text-4xl text-earth-600 [text-wrap:balance]">
@@ -76,7 +71,7 @@ const PrintStudioShowcase = () => {
             each day. Then you rewrite any line you like and print it. Pro, $3.99 a month, designs
             up to ten a day.
           </p>
-        </motion.div>
+        </div>
 
         <div ref={hostRef} className="mt-10" data-testid="showcase-host">
           {nearViewport ? (

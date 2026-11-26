@@ -16,7 +16,7 @@ afterEach(() => {
 
 describe('prerenderedBoot', () => {
   it('reports the landing page as prerendered when #root already holds markup', async () => {
-    const mod = await boot('/', '<main><h1>Plan the trip together.</h1></main>');
+    const mod = await boot('/', '<main><h1>Plan the trip together</h1></main>');
     expect(mod.arrivedPrerendered('/')).toBe(true);
   });
 

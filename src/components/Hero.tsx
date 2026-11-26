@@ -37,23 +37,13 @@ const LOGO_CLASS =
 /**
  * Landing hero.
  *
- * Two layouts, chosen by CSS alone so the prerendered HTML is identical at
- * every width:
- *
- * - Phones (under `md`): a split. The slideshow fills the top half of the
- *   screen with the wordmark over it; the headline, the lede and the button
- *   sit on cream paper beneath, where they read without a scrim and the
- *   button lands in thumb reach. On most phones the section ends short of the
- *   fold, so the featured itineraries peek in and say "keep going" better
- *   than a bouncing chevron did.
- * - `md` and up: the photograph fills the viewport below the fixed header and
- *   the copy sits over it. Wide screens have the room for that. (A plain
- *   100vh here put the last 64px, chevron included, under the fold.)
- *
- * The split is fixed from first paint rather than collapsing on a timer once
- * the slideshow advances. A layout that moves on its own counts as layout
- * shift, moves the button while someone is reaching for it, and most phone
- * visitors have scrolled before the first crossfade anyway.
+ * One layout at every width, so the prerendered HTML is identical: the
+ * slideshow fills the hero and the headline, lede and buttons sit on a
+ * translucent cream panel over it. The panel is what makes the copy readable,
+ * so the photo keeps its colour instead of being darkened under a scrim. On a
+ * phone the panel sits at the bottom (thumb reach) and the hero stops short of
+ * the fold so the demo below peeks in; on md+ it is centred under the
+ * wordmark.
  *
  * The global header already carries Sign In / My Trips, so the hero no longer
  * floats a second copy of that button over the photo.
@@ -127,7 +117,7 @@ const Hero = () => {
 
   return (
     <section
-      className="relative w-full overflow-hidden md:h-[var(--hero-h)]"
+      className="relative h-[calc(var(--hero-h)-3.5rem)] min-h-[540px] w-full overflow-hidden md:h-[var(--hero-h)]"
       style={
         {
           "--hero-h":
@@ -135,12 +125,9 @@ const Hero = () => {
         } as CSSProperties
       }
     >
-      {/*
-        The photograph. Half the screen on a phone (svh, so it holds still while
-        the browser chrome collapses on scroll; plain vh for browsers without
-        it), the whole viewport on md+.
-      */}
-      <div className="relative h-[50vh] min-h-[300px] overflow-hidden supports-[height:1svh]:h-[50svh] md:absolute md:inset-0 md:h-auto md:min-h-0">
+      {/* The photograph fills the hero at every width. On a phone the hero
+          stops 56px short of the fold so the demo below peeks in. */}
+      <div className="absolute inset-0 overflow-hidden">
         <div ref={parallaxRef} className="absolute inset-0">
           {/* initial={false} only affects the first slide; later slides still crossfade. */}
           <AnimatePresence initial={!skipEntrance}>
@@ -175,12 +162,14 @@ const Hero = () => {
                 />
               </motion.div>
 
-              {/* Scrim. On a phone only the wordmark sits on the photo, so it
-                  stays light; on md+ there is a headline to read over it. */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/25 to-black/45 md:from-black/30 md:via-black/40 md:to-black/60" />
+              {/* Light scrim only: the copy sits on its own translucent panel,
+                  so the photo no longer has to be darkened for it. */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/35" />
 
-              {/* Unsplash attribution — above the gradient scrim */}
-              <div className="absolute bottom-4 right-4 z-10 rounded bg-foreground/60 px-2 py-1 text-xs text-background opacity-80 transition-opacity hover:opacity-100 focus-within:opacity-100">
+              {/* Unsplash attribution — above the gradient scrim. Plain white
+                  text with a shadow for legibility; no chip behind it. Top
+                  corner on a phone, where the copy panel sits at the bottom. */}
+              <div className="absolute right-3 top-3 z-10 md:bottom-4 md:right-4 md:top-auto text-xs text-white opacity-90 drop-shadow-[0_1px_3px_rgba(33,31,27,0.7)] transition-opacity hover:opacity-100 focus-within:opacity-100">
                 <a
                   href={`https://unsplash.com/@${current.username}?utm_source=wanderluxe&utm_medium=referral`}
                   target="_blank"
@@ -203,34 +192,22 @@ const Hero = () => {
           </AnimatePresence>
         </div>
 
-        {/* Phone: the wordmark is the photograph's caption. pointer-events-none
-            keeps the attribution link under it clickable. */}
-        <motion.div
-          initial={skipEntrance ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="pointer-events-none relative z-10 flex h-full items-center justify-center md:hidden"
-        >
-          <LogoFromSupabase
-            logoName="White Full"
-            className={LOGO_CLASS}
-            fallbackClassName="font-display text-3xl text-white"
-            fallbackText="WanderLuxe"
-          />
-        </motion.div>
       </div>
 
-      {/* Copy: on paper under the photograph on a phone, over it on md+. The
-          md+ overlay covers the whole photo, so it lets pointer events through
-          (the photo credit sits beneath it) and only its content takes them. */}
+      {/* Copy: a translucent cream panel over the photograph, so the image
+          shows through and the text still reads at full contrast. On a phone
+          it is kept compact, about the bottom third of the hero (thumb reach);
+          centred on md+. The wrapper covers the
+          whole photo, so it lets pointer events through (the photo credit sits
+          beneath it) and only its content takes them. */}
       <motion.div
         initial={skipEntrance ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative z-10 bg-background px-6 pb-10 pt-8 text-center md:pointer-events-none md:absolute md:inset-0 md:flex md:items-center md:justify-center md:bg-transparent md:p-0"
+        className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center p-4 pb-12 text-center md:items-center md:p-6"
       >
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 sm:gap-7 md:pointer-events-auto md:gap-8 md:px-6">
-          {/* md+: the wordmark leads the copy, as before */}
+        <div className="pointer-events-auto mx-auto flex w-full max-w-2xl flex-col items-center gap-6 md:gap-8">
+          {/* md+: the wordmark sits on the photo above the panel */}
           <LogoFromSupabase
             logoName="White Full"
             className={`hidden md:block ${LOGO_CLASS}`}
@@ -238,15 +215,15 @@ const Hero = () => {
             fallbackText="WanderLuxe"
           />
 
-          <div className="space-y-3 md:space-y-4">
-            <h1 className="font-display text-4xl leading-[1.05] text-earth-600 [text-wrap:balance] sm:text-5xl md:text-6xl md:text-white md:drop-shadow-[0_2px_16px_rgba(33,31,27,0.55)]">
-              Plan the trip together.
+          <div className="flex w-full flex-col items-center gap-4 rounded-card bg-background/80 px-5 py-5 shadow-warm-xl ring-1 ring-white/50 backdrop-blur-md sm:gap-6 sm:px-6 sm:py-7 md:gap-7 md:px-12 md:py-10">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
+            {/* font-display, the same face as "Trip Timeline" and every other
+                heading in the app. */}
+            <h1 className="font-display text-[1.75rem] leading-[1.05] text-foreground [text-wrap:balance] sm:text-5xl md:text-6xl">
+              Plan the trip together
             </h1>
-            {/* earth-500 on cream clears AA at 16px (≈5.8:1); the page's usual
-                earth-400 body tone does not (≈3.8:1). */}
-            <p className="mx-auto max-w-xl font-sans text-base leading-relaxed text-earth-500 sm:text-lg md:text-white/85 md:drop-shadow-[0_1px_8px_rgba(33,31,27,0.5)]">
+            <p className="mx-auto max-w-xl font-sans text-sm leading-snug text-earth-600 sm:text-lg sm:leading-relaxed">
               Flights, hotels, dinners and days on one itinerary everyone can see and edit.
-              Paste a confirmation and it lands on the right day. Free, with no limit on trips.
             </p>
           </div>
 
@@ -254,37 +231,41 @@ const Hero = () => {
             initial={skipEntrance ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex w-full flex-col items-center gap-4 sm:w-auto sm:flex-row sm:gap-6"
+            className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:gap-6"
           >
             <Button
               variant="sunset"
               size="lg"
-              className="h-12 w-full px-8 text-base shadow-warm-lg sm:w-auto"
+              className="h-11 w-full px-8 text-base shadow-warm-lg sm:h-12 sm:w-auto"
               asChild
             >
               <Link to={primaryDestination}>{primaryLabel}</Link>
             </Button>
             <Link
               to="/explore"
-              className="rounded-sm text-sm font-medium text-earth-500 underline underline-offset-4 hover:text-earth-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-500 focus-visible:ring-offset-2 md:text-white/90 md:no-underline md:hover:text-white md:hover:underline md:focus-visible:ring-white/70 md:focus-visible:ring-offset-transparent"
+              className="rounded-sm text-sm font-medium text-earth-600 underline underline-offset-4 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-earth-500 focus-visible:ring-offset-2"
             >
               See example itineraries
             </Link>
           </motion.div>
+          </div>
         </div>
       </motion.div>
 
-      {/* Scroll-down hint, md+ only: on a phone the next section peeks in. */}
+      {/* Scroll-down hint. On a phone it sits in the gap under the panel. It
+          bobs three times and then holds still: enough to be noticed, without
+          moving forever at the edge of the screen. */}
       <motion.div
-        className="absolute bottom-8 left-1/2 z-10 hidden md:block"
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-2 left-1/2 z-10 md:bottom-8"
         initial={{ opacity: skipEntrance ? 1 : 0, x: "-50%" }}
         animate={{ opacity: 1, x: "-50%", y: [0, 8, 0] }}
         transition={{
           opacity: { delay: 3, duration: 1 },
-          y: { delay: 3, duration: 2, repeat: Infinity, ease: "easeInOut" },
+          y: { delay: 3, duration: 2, repeat: 2, ease: "easeInOut" },
         }}
       >
-        <ChevronDown className="h-8 w-8 text-white/60" />
+        <ChevronDown className="h-7 w-7 text-white/80 drop-shadow-[0_1px_3px_rgba(33,31,27,0.6)] md:h-8 md:w-8" />
       </motion.div>
     </section>
   );
