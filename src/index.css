@@ -3,90 +3,100 @@
 @tailwind utilities;
 
 /* Metric-matched fallbacks for the Google Fonts faces (display=swap, loaded in
-   index.html). Until DM Serif Display / DM Sans arrive, text sets in local
+   index.html). Until Fraunces / Figtree arrive, text sets in local
    Georgia / Arial scaled to the same advance widths and vertical metrics, so
    the swap repaints glyphs without moving anything. They sit second in every
    font stack (tailwind.config.ts, calendarTheme.css, mapTheme.css).
 
    size-adjust is calibrated from rendered widths in Chrome over real headings
-   and UI copy, not from average character width: DM Sans gets wider with
-   weight faster than Arial does, so each weight has its own face. The
-   ascent/descent overrides are the web font's metrics (DM Serif 1036/335, DM
-   Sans 992/310 per 1000 upm) divided by size-adjust, since the overrides are
+   and UI copy, not from average character width: Figtree and Arial do not widen
+   with weight at the same rate, so each weight has its own face. The
+   ascent/descent overrides are the web font's metrics (Fraunces 978/255,
+   Figtree 950/250 per 1000 upm) divided by size-adjust, since the overrides are
    scaled by it too.
 
-   DM Serif Display ships a single weight, so `font-bold` on it is synthesized,
-   and synthetic bold adds no advance width. Its fallback must be regular-only
-   for the same reason: Georgia's real Bold is ~18% wider, and it wrapped the
-   trip hero title onto a second line until the web font landed.
+   Fraunces is loaded as a 400-600 weight range with automatic optical sizing,
+   so `font-semibold` gets a real face and `font-bold` clamps to 600 (no
+   synthetic bold). Georgia has only regular and bold, so the fallback maps
+   400-500 to regular and 600-700 to bold.
 
-   No single size-adjust fits every serif string: against Georgia, DM Serif's
-   lowercase runs wide and its capitals and digits narrow. 100% matches
-   sentence-case headings, which is what the landing h1 needs (at 375px DM
-   Serif wraps it by 1.5px), and sets "N Days in X" titles about 3% wide,
-   which only matters for a title within 3% of wrapping.
+   No single size-adjust fits every size: optical sizing makes Fraunces run
+   wider at small sizes than large ones (400 against Georgia: 105% at 20px,
+   102% at 48px). The values below are taken at 24-30px, where most headings
+   sit, so a 48px hero heading sets about 2% wide in the fallback.
 
    Where local() finds nothing (Android, Linux) the face is skipped and the
    stack falls through to Georgia / system-ui as it did before. */
 @font-face {
-  font-family: "DM Serif Display Fallback";
+  font-family: "Fraunces Fallback";
   src: local("Georgia");
   font-style: normal;
-  font-weight: 400;
-  size-adjust: 100%;
-  ascent-override: 103.6%;
-  descent-override: 33.5%;
+  font-weight: 400 500;
+  size-adjust: 104%;
+  ascent-override: 94.04%;
+  descent-override: 24.52%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "DM Serif Display Fallback";
+  font-family: "Fraunces Fallback";
+  src: local("Georgia Bold"), local("Georgia-Bold");
+  font-style: normal;
+  font-weight: 600 700;
+  size-adjust: 92%;
+  ascent-override: 106.3%;
+  descent-override: 27.72%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Fraunces Fallback";
   src: local("Georgia Italic"), local("Georgia-Italic");
   font-style: italic;
-  font-weight: 400;
-  size-adjust: 93.5%;
-  ascent-override: 110.8%;
-  descent-override: 35.83%;
+  font-weight: 400 700;
+  size-adjust: 97%;
+  ascent-override: 100.82%;
+  descent-override: 26.29%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "DM Sans Fallback";
+  font-family: "Figtree Fallback";
   src: local("Arial"), local("ArialMT");
   font-weight: 400;
-  size-adjust: 102.9%;
-  ascent-override: 96.4%;
-  descent-override: 30.13%;
+  size-adjust: 99.6%;
+  ascent-override: 95.38%;
+  descent-override: 25.1%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "DM Sans Fallback";
+  font-family: "Figtree Fallback";
   src: local("Arial"), local("ArialMT");
   font-weight: 500;
-  size-adjust: 104.7%;
-  ascent-override: 94.75%;
-  descent-override: 29.61%;
+  size-adjust: 100.5%;
+  ascent-override: 94.53%;
+  descent-override: 24.88%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "DM Sans Fallback";
+  font-family: "Figtree Fallback";
   src: local("Arial Bold"), local("Arial-BoldMT");
   font-weight: 600;
-  size-adjust: 100.1%;
-  ascent-override: 99.1%;
-  descent-override: 30.97%;
+  size-adjust: 95.4%;
+  ascent-override: 99.58%;
+  descent-override: 26.21%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "DM Sans Fallback";
+  font-family: "Figtree Fallback";
   src: local("Arial Bold"), local("Arial-BoldMT");
   font-weight: 700;
-  size-adjust: 101.7%;
-  ascent-override: 97.54%;
-  descent-override: 30.48%;
+  size-adjust: 96.5%;
+  ascent-override: 98.45%;
+  descent-override: 25.91%;
   line-gap-override: 0%;
 }
 

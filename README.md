@@ -95,7 +95,7 @@ WanderLuxe leverages modern, battle-tested technologies to deliver a fast, secur
 ### Frontend
 - ⚛️ **React 19** + **TypeScript** — Type-safe, component-driven UI
 - ⚡ **Vite 8** — Lightning-fast builds and HMR
-- 🎨 **Tailwind CSS** — Warm editorial palette with DM Serif Display & DM Sans typography
+- 🎨 **Tailwind CSS** — Warm editorial palette with Fraunces & Figtree typography
 - 🧩 **Shadcn/ui** + **Radix UI** — Accessible, composable components
 - 🗓️ **FullCalendar** + **dnd-kit** — Calendar editing & drag-and-drop
 - 🗺️ **Google Maps** (`@vis.gl/react-google-maps`) — Interactive trip map & route playback
@@ -329,7 +329,7 @@ wanderluxe/
 WanderLuxe's aesthetic is inspired by **1980s–90s editorial travel magazines** — warm, sophisticated, and intentional:
 
 - 🎨 **Color Palette** — Warm cream backgrounds, sand/earth neutrals, sunset-orange accents, and bronze primary tones — no cold grays
-- ✍️ **Typography** — DM Serif Display for editorial headings, DM Sans for clean body text, with careful tracking and hierarchy
+- ✍️ **Typography** — Fraunces for editorial headings, Figtree for clean body text, with careful tracking and hierarchy
 - 🧩 **Components** — Rounded cards (`0.75rem`), brown-tinted warm shadows, grain texture overlays on hero sections
 - 📱 **Responsive** — Mobile-first design that scales beautifully to desktop
 - ✨ **Animations** — Delicate fade-in/slide-up transitions, parallax hero scroll, subtle image warmth filters
