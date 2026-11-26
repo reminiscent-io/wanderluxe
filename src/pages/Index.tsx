@@ -1,5 +1,6 @@
 import { MotionConfig } from "framer-motion";
 import Hero from "../components/Hero";
+import PasteDemo from "../components/landing/sections/PasteDemo";
 import WhySignUp from "../components/landing/WhySignUp";
 import FeaturedDestinations from "../components/landing/FeaturedDestinations";
 import SEO, { SITE_URL, DEFAULT_OG_IMAGE } from "../components/SEO";
@@ -53,6 +54,7 @@ const Index = () => {
           forever. "user" drops the transforms and keeps the fades. */}
       <MotionConfig reducedMotion="user">
         <Hero />
+        <PasteDemo />
         <FeaturedDestinations />
         <WhySignUp />
       </MotionConfig>

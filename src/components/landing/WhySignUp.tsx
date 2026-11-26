@@ -1,4 +1,3 @@
-import HookSection from "./sections/HookSection";
 import AppShowcase from "./sections/AppShowcase";
 import ValueProps from "./sections/ValueProps";
 import PrintStudioShowcase from "./sections/PrintStudioShowcase";
@@ -8,7 +7,6 @@ import FinalCTA from "./sections/FinalCTA";
 const WhySignUp = () => {
   return (
     <>
-      <HookSection />
       <AppShowcase />
       <ValueProps />
       <PrintStudioShowcase />

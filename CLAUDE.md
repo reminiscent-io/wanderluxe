@@ -265,8 +265,8 @@ All tables have RLS policies: users can only access their own trips or shared tr
 
 #### 10. **Styling System**
 - **Framework**: Tailwind CSS with custom config
-- **Typography**: DM Serif Display (headings h1-h3, `font-display`), DM Sans (body/UI, `font-sans`) via Google Fonts
-  - Each stack's second entry is a metric-matched local fallback (`DM Serif Display Fallback` = Georgia, `DM Sans Fallback` = Arial, one face per weight; `size-adjust` + ascent/descent overrides in `src/index.css`) so the `display=swap` font swap moves nothing. Put it in any new `font-family` stack. DM Serif Display has no bold face: `font-bold` on it is synthesized, so its fallback deliberately has no bold either
+- **Typography**: Fraunces (headings h1-h3, `font-display`, loaded as a 400–600 weight range), Figtree (body/UI, `font-sans`) via Google Fonts. The PDF export and Print Studio bundle their own files and still use DM Serif Display / DM Sans
+  - Each stack's second entry is a metric-matched local fallback (`Fraunces Fallback` = Georgia, regular/bold/italic faces; `Figtree Fallback` = Arial, one face per weight; `size-adjust` + ascent/descent overrides in `src/index.css`) so the `display=swap` font swap moves nothing. Put it in any new `font-family` stack. Fraunces is loaded 400–600, so `font-semibold` is a real face and `font-bold` clamps to 600; its fallback maps 400–500 to Georgia and 600–700 to Georgia Bold
 - **Colors**: Warm editorial travel palette via CSS custom properties + Tailwind scales
   - Sand/Earth: warm neutrals for text and backgrounds
   - Sunset (50-900): orange accent scale; 700→800 is the sunset button fill, 500/600 are non-text accents only

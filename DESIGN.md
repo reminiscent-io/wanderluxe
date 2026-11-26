@@ -19,31 +19,31 @@ colors:
   chili-red: "#EC4032"
 typography:
   display:
-    fontFamily: "DM Serif Display, Georgia, serif"
+    fontFamily: "Fraunces, Georgia, serif"
     fontSize: "clamp(1.875rem, 5vw, 3rem)"
     fontWeight: 400
     lineHeight: 1.1
     letterSpacing: "-0.02em"
   headline:
-    fontFamily: "DM Serif Display, Georgia, serif"
+    fontFamily: "Fraunces, Georgia, serif"
     fontSize: "1.875rem"
     fontWeight: 400
     lineHeight: 1.15
     letterSpacing: "-0.015em"
   title:
-    fontFamily: "DM Sans, system-ui, sans-serif"
+    fontFamily: "Figtree, system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "DM Sans, system-ui, sans-serif"
+    fontFamily: "Figtree, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.75
     letterSpacing: "normal"
   label:
-    fontFamily: "DM Sans, system-ui, sans-serif"
+    fontFamily: "Figtree, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 500
     lineHeight: 1.4
@@ -128,8 +128,8 @@ nothing looks templated, and the warmth is the credential.
 
 The aesthetic descends directly from 1980s–90s editorial travel
 magazines — Condé Nast Traveler, Cereal, Kinfolk — translated into a
-working software product. DM Serif Display carries the headlines; DM
-Sans does the legible work. Photography is treated generously, never
+working software product. Fraunces carries the headlines; Figtree
+does the legible work. Photography is treated generously, never
 cropped into thumbnails. Color is restrained: tinted neutrals everywhere
 and a single warm bronze accent doing 90% of the chromatic work, with
 the citrus-peel sunset orange held in reserve for the moments that
@@ -224,40 +224,44 @@ buttons on the same screen is a bug. Three is a marketing email.
 
 ## 3. Typography
 
-**Display Font:** DM Serif Display (then DM Serif Display Fallback, Georgia, serif)
-**Body Font:** DM Sans (then DM Sans Fallback, system-ui, sans-serif)
-**Swap fallbacks:** DM Serif Display Fallback and DM Sans Fallback are not
+**Display Font:** Fraunces (then Fraunces Fallback, Georgia, serif)
+**Body Font:** Figtree (then Figtree Fallback, system-ui, sans-serif)
+**Swap fallbacks:** Fraunces Fallback and Figtree Fallback are not
 extra typefaces. They are local Georgia and Arial with `size-adjust` and
 ascent/descent overrides (`src/index.css`), so the page sets at the web
 fonts' widths and line heights before they arrive and nothing moves when
 they swap in.
 **Mono Font:** ui-monospace, SFMono-Regular, Menlo, Consolas
 
-**Character:** A high-contrast magazine pairing. DM Serif Display is the
-editorial voice — slim, slightly literary, with confident terminals; it
-sets headlines like a feature article, not a marketing banner. DM Sans
-does the working life — body, labels, dense UI — at a generous 1.75
-line-height that gives every block of copy the airiness of a
-well-typeset page.
+**Character:** A warm editorial pairing. Fraunces is the editorial
+voice: a soft, old-style serif set at regular weight (loaded 400-600 with
+automatic optical sizing), so headlines read like a feature article
+without the heaviness of a display face. Figtree does the working life —
+body, labels, dense UI — with open letterforms that stay clear at the
+13-15px sizes of timeline rows, at a generous 1.75 line-height that gives
+every block of copy the airiness of a well-typeset page.
+
+**Not yet migrated:** the PDF export and Print Studio bundle their own
+font files and still set in DM Serif Display and DM Sans.
 
 ### Hierarchy
-- **Display** (DM Serif Display, 400, `clamp(1.875rem, 5vw, 3rem)`,
+- **Display** (Fraunces, 400, `clamp(1.875rem, 5vw, 3rem)`,
   line-height 1.1, tracking -0.02em): Hero headlines, marketing surface
   H1s, the trip name on the trip-detail hero.
-- **Headline** (DM Serif Display, 400, 1.875rem / 30px, line-height
+- **Headline** (Fraunces, 400, 1.875rem / 30px, line-height
   1.15): Section headings inside the app — page titles, dialog titles
   when feature-significant.
-- **Title** (DM Sans, 600, 1.25rem / 20px, line-height 1.25): H4s and
+- **Title** (Figtree, 600, 1.25rem / 20px, line-height 1.25): H4s and
   card titles — the workhorse heading for dense UI surfaces.
-- **Body** (DM Sans, 400, 1rem / 16px, line-height 1.75): Paragraph
+- **Body** (Figtree, 400, 1rem / 16px, line-height 1.75): Paragraph
   text. Cap line length at **65–75ch**. The 1.75 line-height is
   load-bearing — do not tighten it.
-- **Label** (DM Sans, 500, 0.875rem / 14px, line-height 1.4):
+- **Label** (Figtree, 500, 0.875rem / 14px, line-height 1.4):
   Buttons, form labels, metadata, timeline timestamps.
 
 ### Named Rules
 
-**The Serif-Earns-Its-Place Rule.** DM Serif Display is reserved for
+**The Serif-Earns-Its-Place Rule.** Fraunces is reserved for
 H1–H3 and trip names. Do not set buttons, labels, body copy, or UI
 chrome in serif. The serif's job is to anchor narrative — its dilution
 costs more than its decoration adds.
@@ -512,7 +516,7 @@ When chrome sits on top of imagery (hero cards, photo overlays):
   Sunset orange is the *exception*, not the rule.
 - **Do** set every drop-shadow with `rgba(139, 119, 93, ·)` via the
   `shadow-warm-*` family. Black drop-shadows break the warmth contract.
-- **Do** lead with DM Serif Display for H1–H3 and trip names. Sans-serif
+- **Do** lead with Fraunces for H1–H3 and trip names. Sans-serif
   H1s are forbidden in editorial surfaces.
 - **Do** cap body line length at 65–75ch.
 - **Do** keep `prefers-reduced-motion` honored — fades and slides

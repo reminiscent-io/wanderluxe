@@ -43,7 +43,7 @@ describe('Hero entrance', () => {
     boot.prerendered = true;
     const { container } = renderHero();
     expect(hiddenElements(container)).toEqual([]);
-    expect(screen.getByRole('heading', { name: 'Plan the trip together.' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Plan the trip together' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Start planning, free' })).toBeVisible();
   });
 

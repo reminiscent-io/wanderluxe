@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,12 +41,8 @@ const PricingClarity = () => {
     <section className="relative bg-sand-50 overflow-hidden">
       <div className="absolute inset-0 bg-grain" />
       <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 md:py-28">
-        <motion.div
+        <div
           className="text-center mb-14"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true, margin: "-80px" }}
         >
           <h2 className="font-display text-3xl md:text-4xl text-earth-600 [text-wrap:balance]">
             Free for the parts that should be free
@@ -58,15 +53,11 @@ const PricingClarity = () => {
             Print Studio designs one keepsake edition a day for anyone signed
             in. $3.99 a month buys up to ten a day.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Free card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            viewport={{ once: true }}
+          <div
           >
             <Card className="p-8 h-full border-earth-100">
               <p className="text-sm font-semibold uppercase tracking-wider text-earth-500">
@@ -86,14 +77,10 @@ const PricingClarity = () => {
                 <Link to="/auth?mode=signup">Start planning, free</Link>
               </Button>
             </Card>
-          </motion.div>
+          </div>
 
           {/* Pro card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
-            viewport={{ once: true }}
+          <div
           >
             <Card className="p-8 h-full border-earth-200">
               <p className="text-sm font-semibold uppercase tracking-wider text-earth-500">
@@ -121,7 +108,7 @@ const PricingClarity = () => {
                 <Link to="/auth?mode=signup">Start free, upgrade later</Link>
               </Button>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
