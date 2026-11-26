@@ -31,8 +31,12 @@ const HERO_IMAGES = [
   { url: "https://images.unsplash.com/photo-1586752488885-6ce47fdfd874", photographer: "Victor He", username: "victorhwn725" },
 ];
 
+// md+ only. The lockup is a square image with clear space around the mark, so
+// it is sized to hold its own against the headline (the wordmark inside is
+// about two thirds of the image width), capped by the hero's height so logo
+// plus panel always fit, and pulled in vertically to absorb the clear space.
 const LOGO_CLASS =
-  "h-auto w-[min(60vw,300px)] drop-shadow-[0_2px_12px_rgba(33,31,27,0.45)]";
+  "-my-8 h-auto w-[min(44vw,480px,calc(var(--hero-h)-21rem))] drop-shadow-[0_2px_12px_rgba(33,31,27,0.45)]";
 
 /**
  * Landing hero.
@@ -219,7 +223,7 @@ const Hero = () => {
           <div className="space-y-2 sm:space-y-3 md:space-y-4">
             {/* font-display, the same face as "Trip Timeline" and every other
                 heading in the app. */}
-            <h1 className="font-display text-[1.75rem] leading-[1.05] text-foreground [text-wrap:balance] sm:text-5xl md:text-6xl">
+            <h1 className="font-display text-[1.75rem] leading-[1.05] text-foreground [text-wrap:balance] sm:text-5xl">
               Plan the trip together
             </h1>
             <p className="mx-auto max-w-xl font-sans text-sm leading-snug text-earth-600 sm:text-lg sm:leading-relaxed">
